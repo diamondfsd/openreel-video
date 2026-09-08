@@ -1,6 +1,7 @@
 import type { Project, ProjectSettings } from "@openreel/core";
 import { normalizeProjectStoredFields } from "@openreel/core";
 import { v4 as uuidv4 } from "uuid";
+import { serializeProjectForAutoSave } from "./auto-save";
 
 interface FilePickerAcceptType {
   description: string;
@@ -183,6 +184,7 @@ class ProjectManager {
   private db: IDBDatabase | null = null;
   private listeners: Map<ProjectManagerEvent, Set<EventCallback>> = new Map();
   private currentFileHandle: ProjectFileRef | null = null;
+  private currentLunaProjectId: string | null = null;
 
   private parseProjectContent(content: string): Project {
     const trimmed = content.trim();
@@ -253,6 +255,8 @@ class ProjectManager {
 
   async createProject(
     options: {
+      id?: string;
+      lunaProjectId?: string;
       name?: string;
       templateId?: string;
       settings?: Partial<ProjectSettings>;
@@ -287,7 +291,7 @@ class ProjectManager {
       })) || [];
 
     const project: Project = {
-      id: uuidv4(),
+      id: options.id || uuidv4(),
       name: options.name || "Untitled Project",
       createdAt: Date.now(),
       modifiedAt: Date.now(),
@@ -304,11 +308,78 @@ class ProjectManager {
     };
 
     this.currentFileHandle = null;
+    this.currentLunaProjectId = options.lunaProjectId || null;
     this.emit("projectOpened", { project });
     return project;
   }
 
+  async loadLunaProject(projectId: string): Promise<Project> {
+    const normalizedProjectId = projectId.trim();
+    if (!normalizedProjectId) {
+      throw new Error("Missing Luna project id");
+    }
+
+    const bridge = window.openreel?.lunaProject;
+    if (!bridge) {
+      throw new Error("Luna project storage is unavailable");
+    }
+
+    const snapshot = await bridge.load(normalizedProjectId);
+    if (
+      snapshot.projectId !== normalizedProjectId ||
+      typeof snapshot.projectName !== "string"
+    ) {
+      throw new Error("Invalid Luna project response");
+    }
+
+    this.currentFileHandle = null;
+    this.currentLunaProjectId = normalizedProjectId;
+
+    if (!snapshot.editorDocument) {
+      return this.createProject({
+        id: normalizedProjectId,
+        lunaProjectId: normalizedProjectId,
+        name: snapshot.projectName,
+      });
+    }
+
+    const project = this.parseProjectContent(snapshot.editorDocument);
+    if (project.id !== normalizedProjectId) {
+      throw new Error("Luna project document id does not match");
+    }
+
+    this.emit("projectOpened", { project });
+    return project;
+  }
+
+  async saveLunaProject(projectId: string, project: Project): Promise<void> {
+    const normalizedProjectId = projectId.trim();
+    const bridge = window.openreel?.lunaProject;
+    if (!normalizedProjectId || !bridge) {
+      throw new Error("Luna project storage is unavailable");
+    }
+    if (project.id !== normalizedProjectId) {
+      throw new Error("Luna project id does not match");
+    }
+
+    await bridge.save(
+      normalizedProjectId,
+      serializeProjectForAutoSave(project),
+    );
+    this.currentLunaProjectId = normalizedProjectId;
+    this.emit("projectSaved", { project });
+  }
+
   async saveProject(project: Project): Promise<boolean> {
+    if (this.currentLunaProjectId) {
+      try {
+        await this.saveLunaProject(this.currentLunaProjectId, project);
+        return true;
+      } catch (error) {
+        console.error("[ProjectManager] Luna project save failed:", error);
+        return false;
+      }
+    }
     if (this.currentFileHandle) {
       return this.saveToFileHandle(project, this.currentFileHandle);
     }
@@ -316,6 +387,15 @@ class ProjectManager {
   }
 
   async saveProjectAs(project: Project): Promise<boolean> {
+    if (this.currentLunaProjectId) {
+      try {
+        await this.saveLunaProject(this.currentLunaProjectId, project);
+        return true;
+      } catch (error) {
+        console.error("[ProjectManager] Luna project save failed:", error);
+        return false;
+      }
+    }
     if (isDesktopFs()) {
       const filePath = await window.openreel!.fs.showSaveDialog({
         defaultPath: `${project.name}.oreel`,
@@ -429,6 +509,7 @@ class ProjectManager {
         console.error("[ProjectManager] Open (native) failed:", error);
         return null;
       }
+      this.currentLunaProjectId = null;
       this.currentFileHandle = { kind: "native", path: filePath };
       await this.addToRecent(project, this.currentFileHandle);
       this.emit("projectOpened", { project });
@@ -452,6 +533,7 @@ class ProjectManager {
         const content = await file.text();
         const project = this.parseProjectContent(content);
 
+        this.currentLunaProjectId = null;
         this.currentFileHandle = handle;
         await this.addToRecent(project, handle);
         this.emit("projectOpened", { project });
@@ -485,6 +567,7 @@ class ProjectManager {
         try {
           const content = await file.text();
           const project = this.parseProjectContent(content);
+          this.currentLunaProjectId = null;
           await this.addToRecent(project);
           this.emit("projectOpened", { project });
           resolve(project);
@@ -508,6 +591,7 @@ class ProjectManager {
             recentProject.fileHandle.path,
           );
           const project = this.parseProjectContent(content);
+          this.currentLunaProjectId = null;
           this.currentFileHandle = recentProject.fileHandle;
           await this.updateRecentTimestamp(recentProject.id);
           this.emit("projectOpened", { project });
@@ -533,6 +617,7 @@ class ProjectManager {
         const content = await file.text();
         const project = this.parseProjectContent(content);
 
+        this.currentLunaProjectId = null;
         this.currentFileHandle = handle;
         await this.updateRecentTimestamp(recentProject.id);
         this.emit("projectOpened", { project });
@@ -706,6 +791,10 @@ class ProjectManager {
 
   getCurrentFileHandle(): ProjectFileRef | null {
     return this.currentFileHandle;
+  }
+
+  getCurrentLunaProjectId(): string | null {
+    return this.currentLunaProjectId;
   }
 
   hasUnsavedChanges(project: Project): boolean {

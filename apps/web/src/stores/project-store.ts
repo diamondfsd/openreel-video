@@ -2951,6 +2951,7 @@ export const useProjectStore = create<ProjectState>()(
 
       // Auto-save methods
       initializeAutoSave: async () => {
+        if (projectManager.getCurrentLunaProjectId()) return;
         if (autoSaveInitialized) return;
         autoSaveInitialized = true;
         await initializeAutoSave();
@@ -3068,6 +3069,13 @@ export const useProjectStore = create<ProjectState>()(
           svgClips: graphicsEngine?.getAllSVGClips() || [],
           stickerClips: graphicsEngine?.getAllStickerClips() || [],
         };
+
+        const lunaProjectId = projectManager.getCurrentLunaProjectId();
+        if (lunaProjectId) {
+          await projectManager.saveLunaProject(lunaProjectId, fullProject);
+          return;
+        }
+
         await autoSaveManager.forceSave(fullProject);
       },
 

@@ -8,7 +8,8 @@ export type AppRoute =
   | "templates"
   | "recent"
   | "share"
-  | "motion";
+  | "motion"
+  | "luna-editor";
 
 export interface RouteParams {
   dimensions?: string;
@@ -19,6 +20,7 @@ export interface RouteParams {
   tab?: string;
   shareId?: string;
   compositionId?: string;
+  projectId?: string;
 }
 
 export interface RouterState {
@@ -48,6 +50,7 @@ function parseHash(hash: string): RouterState {
     "recent",
     "share",
     "motion",
+    "luna-editor",
   ];
 
   if (route === "share" && pathParts[1]) {

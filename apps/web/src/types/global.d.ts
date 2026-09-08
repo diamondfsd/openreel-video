@@ -170,6 +170,12 @@ export type OpenReelUpdaterStatus =
   | { state: "downloaded"; version: string }
   | { state: "error"; message: string };
 
+export interface OpenReelLunaProjectSnapshot {
+  projectId: string;
+  projectName: string;
+  editorDocument: string | null;
+}
+
 declare global {
   interface Window {
     openreel?: {
@@ -257,6 +263,10 @@ declare global {
         onStatus(cb: (status: OpenReelUpdaterStatus) => void): () => void;
         download(): Promise<void>;
         install(): Promise<void>;
+      };
+      lunaProject?: {
+        load(projectId: string): Promise<OpenReelLunaProjectSnapshot>;
+        save(projectId: string, editorDocument: string): Promise<void>;
       };
       crash: {
         report(payload: { message: string; stack?: string; type?: string; context?: unknown }): void;

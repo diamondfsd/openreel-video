@@ -19,6 +19,15 @@ export function useProjectRecovery() {
   const recoverFromAutoSave = useProjectStore((s) => s.recoverFromAutoSave);
 
   useEffect(() => {
+    if (typeof window !== "undefined" && window.openreel?.lunaProject) {
+      setState({
+        isChecking: false,
+        availableSaves: [],
+        showDialog: false,
+      });
+      return;
+    }
+
     const checkForRecovery = async () => {
       try {
         await autoSaveManager.initialize();

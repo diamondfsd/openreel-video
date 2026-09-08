@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef, lazy, Suspense } from "react";
+import { useEffect, useCallback, useRef, useState, lazy, Suspense } from "react";
 import { ToastContainer } from "./components/Toast";
 import { ScriptViewDialog } from "./components/editor/ScriptViewDialog";
 import { SearchModal } from "./components/editor/SearchModal";
@@ -10,6 +10,7 @@ import { useUIStore } from "./stores/ui-store";
 import { useProjectStore } from "./stores/project-store";
 import { useRouter } from "./hooks/use-router";
 import { useProjectRecovery } from "./hooks/useProjectRecovery";
+import { projectManager } from "./services/project-manager";
 import { SOCIAL_MEDIA_PRESETS, type SocialMediaCategory } from "@openreel/core";
 import { ToolcraftText as Text } from "@openreel/ui";
 
@@ -66,16 +67,56 @@ function App() {
 
   const { route, params, navigate, parsedDimensions, fps } = useRouter();
   const hasHandledInitialRoute = useRef(false);
+  const [lunaProjectReady, setLunaProjectReady] = useState(false);
+  const [lunaProjectError, setLunaProjectError] = useState(false);
   const isMotionHost =
     typeof window !== "undefined" &&
     window.location.hostname.startsWith("motion.");
   const isMotionSurface = isMotionHost || route === "motion";
+  const isLunaEditor = route === "luna-editor";
 
+  useEffect(() => {
+    if (!isLunaEditor) {
+      setLunaProjectReady(false);
+      setLunaProjectError(false);
+      return;
+    }
+
+    const projectId = params.projectId?.trim();
+    if (!projectId) {
+      setLunaProjectReady(false);
+      setLunaProjectError(true);
+      return;
+    }
+
+    let cancelled = false;
+    setLunaProjectReady(false);
+    setLunaProjectError(false);
+
+    projectManager
+      .loadLunaProject(projectId)
+      .then((project) => {
+        if (cancelled) return;
+        useProjectStore.getState().loadProject(project);
+        setLunaProjectReady(true);
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        console.error("[App] Failed to load Luna project:", error);
+        setLunaProjectError(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLunaEditor, params.projectId]);
 
   useEffect(() => {
     if (hasHandledInitialRoute.current) return;
 
     if (isMotionSurface) {
+      hasHandledInitialRoute.current = true;
+    } else if (route === "luna-editor") {
       hasHandledInitialRoute.current = true;
     } else if (route === "new") {
       hasHandledInitialRoute.current = true;
@@ -135,7 +176,7 @@ function App() {
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === "Escape" && route !== "editor") {
+      if (e.key === "Escape" && route !== "editor" && route !== "luna-editor") {
         navigate("editor");
       }
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -170,6 +211,16 @@ function App() {
         </Suspense>
       ) : isSharePage ? (
         <SharePage shareId={params.shareId!} />
+      ) : isLunaEditor ? (
+        lunaProjectError ? (
+          <LoadingSpinner message="项目打开失败" />
+        ) : lunaProjectReady ? (
+          <Suspense fallback={<LoadingSpinner message="正在加载编辑器..." />}>
+            <EditorInterface />
+          </Suspense>
+        ) : (
+          <LoadingSpinner message="正在打开项目..." />
+        )
       ) : showWelcome ? (
         <WelcomeScreen initialTab={initialTab} />
       ) : (
