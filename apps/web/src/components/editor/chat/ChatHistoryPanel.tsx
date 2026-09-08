@@ -9,7 +9,7 @@ function formatUpdatedAt(timestamp: number): string {
   const date = new Date(timestamp);
   const now = new Date();
   const sameDay = date.toDateString() === now.toDateString();
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat("zh-CN", {
     ...(sameDay
       ? { hour: "numeric", minute: "2-digit" }
       : { month: "short", day: "numeric" }),
@@ -46,13 +46,13 @@ export function ChatHistoryPanel({
     <div className="absolute inset-x-2 top-11 z-30 overflow-hidden rounded-xl border border-border bg-bg-1 shadow-xl">
       <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
         <div>
-          <div className="text-[12px] font-semibold text-fg">Conversations</div>
+          <div className="text-[12px] font-semibold text-fg">对话</div>
           <div className="mt-0.5 text-[10px] text-fg-muted">
-            Saved on this device for this project
+            已保存到此设备的当前项目
           </div>
         </div>
         <Button
-          label="New chat"
+          label="新建对话"
           size="sm"
           variant="secondary"
           onClick={() => {
@@ -71,10 +71,10 @@ export function ChatHistoryPanel({
               <MessageSquareText size={15} aria-hidden />
             </div>
             <div className="mt-2 text-[11px] font-medium text-fg-2">
-              No saved conversations yet
+              暂无已保存的对话
             </div>
             <div className="mt-1 max-w-48 text-[10px] leading-relaxed text-fg-muted">
-              Completed chats will appear here automatically.
+              完成的对话会自动显示在这里。
             </div>
           </div>
         ) : (
@@ -108,12 +108,12 @@ export function ChatHistoryPanel({
                         {conversation.title}
                       </span>
                       <span className="mt-0.5 block text-[9px] text-fg-muted">
-                        {conversation.messages.filter((message) => message.role === "user").length} requests · {formatUpdatedAt(conversation.updatedAt)}
+                        {conversation.messages.filter((message) => message.role === "user").length} 个请求 · {formatUpdatedAt(conversation.updatedAt)}
                       </span>
                     </span>
                   </button>
                   <IconButton
-                    label={`Delete ${conversation.title}`}
+                    label={`删除${conversation.title}`}
                     icon={<Trash2 size={12} aria-hidden />}
                     size="sm"
                     variant="ghost"

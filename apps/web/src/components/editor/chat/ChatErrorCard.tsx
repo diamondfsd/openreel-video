@@ -35,7 +35,7 @@ function extractUpstreamMessage(raw: string): string | null {
 }
 
 export function formatChatError(rawError: string): ChatErrorPresentation {
-  const raw = rawError.trim() || "The AI request failed.";
+  const raw = rawError.trim() || "AI 请求失败。";
   const upstream = extractUpstreamMessage(raw);
   const status = Number(raw.match(/\b([45]\d{2})\b/)?.[1] ?? 0);
   const searchable = `${raw} ${upstream ?? ""}`.toLowerCase();
@@ -49,22 +49,22 @@ export function formatChatError(rawError: string): ChatErrorPresentation {
     )
   ) {
     return {
-      title: "Authentication failed",
+      title: "身份验证失败",
       message:
         upstream ??
-        "The endpoint rejected the API key. Check the saved key and try again.",
+        "服务未接受此 API 密钥，请检查已保存的密钥后重试。",
       action: "api-keys",
-      actionLabel: "Check API key",
+      actionLabel: "检查 API 密钥",
       details,
     };
   }
 
   if (status === 429 || /rate limit|too many requests|quota/.test(searchable)) {
     return {
-      title: "Rate limit reached",
+      title: "请求次数已达上限",
       message:
         upstream ??
-        "The endpoint is receiving too many requests. Wait a moment and try again.",
+        "服务当前请求过多，请稍后重试。",
       action: null,
       details,
     };
@@ -76,11 +76,11 @@ export function formatChatError(rawError: string): ChatErrorPresentation {
     )
   ) {
     return {
-      title: "Couldn’t reach the endpoint",
+      title: "无法连接服务",
       message:
-        "Check the host URL and confirm the endpoint is online. In a browser, the host must also allow CORS requests from OpenReel.",
+        "请检查服务地址并确认服务在线。通过浏览器连接时，服务还必须允许来自 OpenReel 的 CORS 请求。",
       action: "general",
-      actionLabel: "Check endpoint",
+      actionLabel: "检查服务地址",
       details: raw,
     };
   }
@@ -91,24 +91,24 @@ export function formatChatError(rawError: string): ChatErrorPresentation {
     )
   ) {
     return {
-      title: "Conversation is too long",
+      title: "对话内容过长",
       message:
         upstream ??
-        "This model cannot fit the full conversation. Start a new chat and continue there.",
+        "当前模型无法容纳完整对话，请新建对话后继续。",
       action: "new-chat",
-      actionLabel: "Start new chat",
+      actionLabel: "新建对话",
       details,
     };
   }
 
   if (status === 404 || /model.+not found|unknown model|does not exist/.test(searchable)) {
     return {
-      title: "Model or route not found",
+      title: "未找到模型或服务路径",
       message:
         upstream ??
-        "Check that the base URL and model ID match what the endpoint exposes.",
+        "请检查基础 URL 和模型 ID 是否与服务提供的信息一致。",
       action: "general",
-      actionLabel: "Check endpoint",
+      actionLabel: "检查服务地址",
       details,
     };
   }
@@ -120,16 +120,16 @@ export function formatChatError(rawError: string): ChatErrorPresentation {
   ) {
     const keyIssue = /secure storage|unlock|api key/.test(searchable);
     return {
-      title: "AI setup needed",
+      title: "需要设置 AI",
       message: upstream ?? raw,
       action: keyIssue ? "api-keys" : "general",
-      actionLabel: keyIssue ? "Open API keys" : "Open AI settings",
+      actionLabel: keyIssue ? "打开 API 密钥" : "打开 AI 设置",
       details,
     };
   }
 
   return {
-    title: "AI request failed",
+    title: "AI 请求失败",
     message: upstream ?? raw,
     action: null,
     details,
@@ -167,7 +167,7 @@ export function ChatErrorCard({
           </div>
         </div>
         <IconButton
-          label="Dismiss error"
+          label="关闭错误"
           icon={<X size={13} aria-hidden />}
           size="sm"
           variant="ghost"
@@ -179,7 +179,7 @@ export function ChatErrorCard({
       {presentation.details && (
         <details className="group mt-2 rounded-lg bg-bg-2/70 px-2.5 py-2">
           <summary className="cursor-pointer select-none text-[10px] font-medium text-fg-muted hover:text-fg-2">
-            Technical details
+            技术详情
           </summary>
           <pre className="mt-2 max-h-28 overflow-auto whitespace-pre-wrap break-words font-mono text-[10px] leading-relaxed text-fg-muted">
             {presentation.details}
@@ -189,7 +189,7 @@ export function ChatErrorCard({
 
       {presentation.action && (
         <Button
-          label={presentation.actionLabel ?? "Fix issue"}
+          label={presentation.actionLabel ?? "解决问题"}
           variant="secondary"
           size="sm"
           onClick={() => {

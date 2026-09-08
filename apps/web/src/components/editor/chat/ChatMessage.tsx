@@ -33,7 +33,7 @@ export function ChatMessage({
         {!isUser && pending && !message.text && message.toolCalls.length === 0 && (
           <div className="flex items-center gap-1.5 py-1 text-[12px] text-fg-muted" role="status">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
-            <span>Thinking…</span>
+            <span>思考中…</span>
           </div>
         )}
         {message.toolCalls.length > 0 && (

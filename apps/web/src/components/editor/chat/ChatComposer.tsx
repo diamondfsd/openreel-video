@@ -33,19 +33,19 @@ export function ChatComposer(): JSX.Element {
     <div className="border-t border-border p-2">
       <div className="relative rounded-lg border border-border bg-bg-2 transition-colors focus-within:border-accent">
         <ToolcraftTextAreaControl
-          label="AI edit request"
+          label="AI 编辑请求"
           isLabelHidden
           value={text}
           onChange={setText}
           onKeyDown={onKeyDown}
           rows={2}
-          placeholder="Ask the AI to edit your video…"
+          placeholder="告诉 AI 如何编辑视频…"
           inputClassName="block w-full resize-none bg-transparent px-3 py-2 pr-11 text-[13px] text-fg outline-none placeholder:text-fg-muted"
         />
         <div className="absolute bottom-1.5 right-1.5">
           {busy ? (
             <IconButton
-              label="Stop"
+              label="停止"
               icon={<Square size={12} className="fill-current" aria-hidden />}
               size="sm"
               variant="destructive"
@@ -54,7 +54,7 @@ export function ChatComposer(): JSX.Element {
             />
           ) : (
             <IconButton
-              label="Send"
+              label="发送"
               icon={<Send size={12} aria-hidden />}
               size="sm"
               variant="primary"
@@ -66,7 +66,7 @@ export function ChatComposer(): JSX.Element {
         </div>
       </div>
       <div className="mt-1 px-1 text-[10px] text-fg-muted">
-        Enter to send · Shift+Enter for a new line
+        按 Enter 发送，按 Shift+Enter 换行
       </div>
     </div>
   );

@@ -20,10 +20,10 @@ import {
 } from "../../../services/secure-storage";
 
 const SUGGESTIONS: ReadonlyArray<string> = [
-  "Add a title that says 'Welcome' for the first 3 seconds",
-  "Trim 2 seconds off the end of the first clip",
-  "Add a fade-in to the opening clip",
-  "List everything currently on my timeline",
+  "为前 3 秒添加标题‘欢迎’",
+  "裁剪第一个片段末尾的 2 秒",
+  "为开场片段添加淡入效果",
+  "列出当前时间线中的全部内容",
 ];
 
 function EmptyState({
@@ -74,37 +74,37 @@ function EmptyState({
 
   const setupMessage =
     setup === "endpoint"
-      ? "Choose an API format, then enter your endpoint URL and model ID."
+      ? "选择 API 格式，然后输入服务 URL 和模型 ID。"
       : setup === "setup"
-      ? "Set a master password, then add your provider API key."
+      ? "设置主密码，然后添加服务商 API 密钥。"
       : setup === "locked"
-        ? "Unlock your encrypted API keys to start the AI editor."
-        : "Add the optional endpoint API key to start editing.";
+        ? "解锁加密的 API 密钥后即可使用 AI 编辑器。"
+        : "添加可选的服务 API 密钥后即可开始编辑。";
 
   return (
     <div className="flex h-full flex-col items-center justify-center px-2 text-center">
       <div className="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-accent-soft text-accent">
         <Sparkles size={18} />
       </div>
-      <div className="text-[13px] font-medium text-fg">Edit by chatting</div>
+      <div className="text-[13px] font-medium text-fg">通过对话编辑</div>
       <Text type="supporting" color="secondary" className="mt-1 max-w-[14rem] text-[11px] leading-relaxed text-fg-muted">
         {hasOpenProject
-          ? "Describe an edit in plain language and the AI will perform it on your timeline."
-          : "Open or create a project, then describe edits in plain language."}
+          ? "用自然语言描述编辑内容，AI 会在时间线上执行。"
+          : "打开或创建项目，然后用自然语言描述编辑内容。"}
       </Text>
       {hasOpenProject && setup !== "loading" && setup !== "ready" && (
         <div className="mt-4 w-full rounded-lg border border-accent/30 bg-accent-soft/50 p-3 text-left">
-          <div className="text-[11px] font-medium text-fg">Connect your model</div>
+          <div className="text-[11px] font-medium text-fg">连接模型</div>
           <Text type="supporting" color="secondary" className="mt-1 block text-[10px] leading-relaxed">
             {setupMessage}
           </Text>
           <Button
             label={
               setup === "locked"
-                ? "Unlock API keys"
+                ? "解锁 API 密钥"
                 : setup === "endpoint"
-                  ? "Configure endpoint"
-                  : "Set up AI chat"
+                  ? "配置服务"
+                  : "设置 AI 对话"
             }
             variant="primary"
             size="sm"
@@ -178,19 +178,19 @@ export function ChatPanel({
       <header className="flex items-center gap-2 border-b border-border px-3 py-2">
         <Bot size={15} className="shrink-0 text-accent" />
         <span className="shrink-0 text-[13px] font-medium text-fg">
-          AI Editor
+          AI 编辑器
         </span>
         {totalTokens > 0 && (
           <span
-            title={`${usage.inputTokens} in · ${usage.outputTokens} out`}
+            title={`输入 ${usage.inputTokens} · 输出 ${usage.outputTokens}`}
             className="shrink-0 rounded bg-bg-2 px-1.5 py-0.5 text-[10px] tabular-nums text-fg-muted"
           >
-            {tokenLabel} tok
+            {tokenLabel} 令牌
           </span>
         )}
         <div className="ml-auto flex items-center gap-1">
           <IconButton
-            label={dryRun ? "Dry-run on: plans without applying edits" : "Dry-run off"}
+            label={dryRun ? "试运行已开启：仅生成计划，不应用编辑" : "试运行已关闭"}
             icon={<FlaskConical size={14} aria-hidden />}
             size="sm"
             variant={dryRun ? "secondary" : "ghost"}
@@ -203,8 +203,8 @@ export function ChatPanel({
           <IconButton
             label={
               autoConfirm
-                ? "Auto-approve on: destructive actions run without confirmation"
-                : "Auto-approve off: destructive actions ask first"
+                ? "自动批准已开启：破坏性操作无需确认"
+                : "自动批准已关闭：破坏性操作会先请求确认"
             }
             icon={<ShieldCheck size={14} aria-hidden />}
             size="sm"
@@ -218,7 +218,7 @@ export function ChatPanel({
           <ProviderModelPicker disabled={busy} />
           {lastTurnCommitted && (
             <IconButton
-              label="Undo last AI turn"
+              label="撤销上一次 AI 操作"
               icon={<Undo2 size={14} aria-hidden />}
               size="sm"
               variant="ghost"
@@ -227,7 +227,7 @@ export function ChatPanel({
             />
           )}
           <IconButton
-            label="Conversation history"
+            label="对话历史"
             icon={<History size={14} aria-hidden />}
             size="sm"
             variant={historyOpen ? "secondary" : "ghost"}
@@ -237,7 +237,7 @@ export function ChatPanel({
             className="grid h-7 w-7 place-items-center rounded-md text-fg-2 transition-colors hover:bg-hover hover:text-fg disabled:opacity-40"
           />
           <Button
-            label="New chat"
+            label="新建对话"
             size="sm"
             variant="secondary"
             onClick={() => {
@@ -251,7 +251,7 @@ export function ChatPanel({
           </Button>
           {onClose && (
             <IconButton
-              label="Close"
+              label="关闭"
               icon={<X size={14} aria-hidden />}
               size="sm"
               variant="ghost"
