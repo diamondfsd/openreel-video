@@ -78,7 +78,9 @@ export const ApiKeysPanel: React.FC = () => {
                 ),
               )
             ).filter((key): key is NonNullable<typeof key> => key !== null)
-          : await listSecrets();
+          : (await listSecrets()).filter((key) =>
+              SERVICE_REGISTRY.some((service) => service.id === key.id),
+            );
       setStoredKeys(keys);
     }
   }, []);

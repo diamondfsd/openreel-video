@@ -33,23 +33,10 @@ export const SERVICE_REGISTRY: readonly ServiceConfig[] = [
     description: "Any Anthropic Messages-compatible API host; API key optional",
     keyOptional: true,
   },
-  {
-    id: "kie-ai",
-    label: "Kie.ai",
-    description: "AI aggregator for video/image generation, upscaling, and editing",
-    docsUrl: "https://kie.ai",
-  },
-  {
-    id: "freepik",
-    label: "Freepik",
-    description: "AI aggregator for image generation, vectors, and creative assets",
-    docsUrl: "https://www.freepik.com/api",
-  },
 ] as const;
 
 export type TtsProvider = "elevenlabs";
 export type LlmProvider = "openai-compatible" | "anthropic-compatible";
-export type AggregatorProvider = "kie-ai" | "freepik";
 export type SettingsTab = "general" | "api-keys" | "mcp";
 
 function isLlmProvider(value: unknown): value is LlmProvider {
@@ -68,7 +55,6 @@ export interface SettingsState {
   /** User-defined compatible endpoint and model for the agent chat. */
   llmBaseUrl: string;
   llmModel: string;
-  defaultAggregator: AggregatorProvider;
   elevenLabsModel: string;
   favoriteVoices: Array<{ voiceId: string; name: string; previewUrl?: string }>;
   favoriteModels: Array<{ modelId: string; name: string }>;
@@ -101,7 +87,6 @@ export interface SettingsState {
   setMcpAutoAllowTrustedLocal: (enabled: boolean) => void;
   setAgentAutoConfirm: (enabled: boolean) => void;
   setAgentDryRun: (enabled: boolean) => void;
-  setDefaultAggregator: (provider: AggregatorProvider) => void;
   setElevenLabsModel: (model: string) => void;
   addFavoriteVoice: (voice: { voiceId: string; name: string; previewUrl?: string }) => void;
   removeFavoriteVoice: (voiceId: string) => void;
@@ -128,7 +113,6 @@ export const useSettingsStore = create<SettingsState>()(
         defaultLlmProvider: null,
         llmBaseUrl: "",
         llmModel: "",
-        defaultAggregator: "kie-ai" as AggregatorProvider,
         elevenLabsModel: "eleven_v3",
         favoriteVoices: [],
         favoriteModels: [],
@@ -167,9 +151,6 @@ export const useSettingsStore = create<SettingsState>()(
         setAgentAutoConfirm: (enabled: boolean) => set({ agentAutoConfirm: enabled }),
 
         setAgentDryRun: (enabled: boolean) => set({ agentDryRun: enabled }),
-
-        setDefaultAggregator: (provider: AggregatorProvider) =>
-          set({ defaultAggregator: provider }),
 
         setElevenLabsModel: (model: string) =>
           set({ elevenLabsModel: model }),
@@ -272,7 +253,6 @@ export const useSettingsStore = create<SettingsState>()(
           defaultLlmProvider: state.defaultLlmProvider,
           llmBaseUrl: state.llmBaseUrl,
           llmModel: state.llmModel,
-          defaultAggregator: state.defaultAggregator,
           elevenLabsModel: state.elevenLabsModel,
           favoriteVoices: state.favoriteVoices,
           favoriteModels: state.favoriteModels,

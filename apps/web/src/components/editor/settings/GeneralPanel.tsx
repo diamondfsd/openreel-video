@@ -6,7 +6,7 @@ import { ToolcraftNumberInputControl } from "@openreel/ui";
 import { ToolcraftSelectControl as Selector } from "@openreel/ui";
 import { ToolcraftText as Text } from "@openreel/ui";
 import { ToolcraftTextInputControl as TextInput } from "@openreel/ui";
-import { useSettingsStore, SERVICE_REGISTRY, type TtsProvider, type LlmProvider, type AggregatorProvider } from "../../../stores/settings-store";
+import { useSettingsStore, SERVICE_REGISTRY, type TtsProvider, type LlmProvider } from "../../../stores/settings-store";
 import { useProjectStore } from "../../../stores/project-store";
 import { EDITING_FRAME_RATE_OPTIONS } from "../editing-frame-rate";
 import { getServiceDisplayLabel } from "./localization";
@@ -42,15 +42,12 @@ export const GeneralPanel: React.FC = () => {
     defaultLlmProvider,
     llmBaseUrl,
     llmModel,
-    defaultAggregator,
-    configuredServices,
     setAutoSave,
     setAutoSaveInterval,
     setDefaultTtsProvider,
     setDefaultLlmProvider,
     setLlmBaseUrl,
     setLlmModel,
-    setDefaultAggregator,
   } = useSettingsStore();
 
   const projectWidth = useProjectStore((s) => s.project.settings.width);
@@ -98,12 +95,6 @@ export const GeneralPanel: React.FC = () => {
     (s) => s.id === "openai-compatible" || s.id === "anthropic-compatible",
   );
 
-  const aggregatorProviders = SERVICE_REGISTRY.filter(
-    (s) =>
-      s.id === "kie-ai" ||
-      s.id === "freepik" ||
-      configuredServices.includes(s.id),
-  );
   return (
     <div className="space-y-6 pb-4">
       {/* Project Composition */}
@@ -399,25 +390,6 @@ export const GeneralPanel: React.FC = () => {
             </div>
           )}
 
-          <div className="flex items-center justify-between">
-            <div>
-              <Text type="supporting" color="secondary" className="text-sm">
-              AI 聚合服务
-              </Text>
-              <Text type="supporting" color="secondary" className="mt-0.5 text-xs">
-                视频/图片生成、放大和创作类 AI 工具
-              </Text>
-            </div>
-            <Selector
-              label="AI 聚合服务"
-              isLabelHidden
-              size="md"
-              width={180}
-              value={defaultAggregator}
-              onChange={(value) => setDefaultAggregator(value as AggregatorProvider)}
-              options={aggregatorProviders.map((s) => ({ label: getServiceDisplayLabel(s), value: s.id }))}
-            />
-          </div>
         </div>
       </div>
     </div>

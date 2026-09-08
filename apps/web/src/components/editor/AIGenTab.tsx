@@ -165,7 +165,7 @@ export const AIGenTab: React.FC = () => {
             <Wand2 size={24} className="text-primary" aria-hidden />
           </div>
           <Text as="h2" type="label" weight="bold" display="block">
-            AI 生成工具
+            AI 工具
           </Text>
           <Text type="supporting" color="secondary" display="block" className="mt-1 text-[11px]">
             使用智能功能提升编辑效率
@@ -256,11 +256,6 @@ export const AIGenTab: React.FC = () => {
           />
         </FeatureSection>
 
-        <div className="pt-2 border-t border-border">
-          <Text type="supporting" color="secondary" display="block" justify="center" className="text-[9px]">
-            更多 AI 功能即将推出（图片生成、自动剪辑等）
-          </Text>
-        </div>
       </div>
     </div>
   );
