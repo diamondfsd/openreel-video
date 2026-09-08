@@ -34,6 +34,10 @@ import {
 } from "../../../services/secure-storage";
 import { MasterPasswordDialog } from "./MasterPasswordDialog";
 import { toast } from "../../../stores/notification-store";
+import {
+  getServiceDisplayDescription,
+  getServiceDisplayLabel,
+} from "./localization";
 
 export const ApiKeysPanel: React.FC = () => {
   const { addConfiguredService, removeConfiguredService } =
@@ -89,7 +93,7 @@ export const ApiKeysPanel: React.FC = () => {
         await setupMasterPassword(password);
         setPasswordDialogMode(null);
         await refreshState();
-        toast.success("Master password set", "Your API keys will be encrypted with AES-256-GCM.");
+        toast.success("主密码已设置", "你的 API 密钥将使用 AES-256-GCM 加密。");
         return true;
       }
 
@@ -98,7 +102,7 @@ export const ApiKeysPanel: React.FC = () => {
         if (success) {
           setPasswordDialogMode(null);
           await refreshState();
-          toast.success("Session unlocked", "You can now manage API keys.");
+          toast.success("会话已解锁", "现在可以管理 API 密钥。");
         }
         return success;
       }
@@ -108,7 +112,7 @@ export const ApiKeysPanel: React.FC = () => {
         if (success) {
           setPasswordDialogMode(null);
           await refreshState();
-          toast.success("Password changed", "All keys have been re-encrypted.");
+          toast.success("密码已更改", "所有密钥已重新加密。");
         }
         return success;
       }
@@ -131,9 +135,9 @@ export const ApiKeysPanel: React.FC = () => {
         setNewKeyValue("");
         setAddingService(null);
         await refreshState();
-        toast.success(`${service.label} key saved`, "API key encrypted and stored.");
+        toast.success(`${getServiceDisplayLabel(service)} 密钥已保存`, "API 密钥已加密并存储。");
       } catch (err) {
-        toast.error("Failed to save", err instanceof Error ? err.message : "Unknown error");
+        toast.error("保存失败", err instanceof Error ? err.message : "未知错误");
       }
     },
     [newKeyValue, addConfiguredService, refreshState],
@@ -151,9 +155,9 @@ export const ApiKeysPanel: React.FC = () => {
           return next;
         });
         await refreshState();
-        toast.success(`${service?.label ?? serviceId} key removed`);
+        toast.success(`${service ? getServiceDisplayLabel(service) : serviceId} 密钥已移除`);
       } catch (err) {
-        toast.error("Failed to delete", err instanceof Error ? err.message : "Unknown error");
+        toast.error("删除失败", err instanceof Error ? err.message : "未知错误");
       }
     },
     [removeConfiguredService, refreshState],
@@ -172,7 +176,7 @@ export const ApiKeysPanel: React.FC = () => {
         setShowKey((prev) => ({ ...prev, [serviceId]: true }));
       }
     } catch (err) {
-      toast.error("Failed to decrypt", err instanceof Error ? err.message : "Unknown error");
+      toast.error("解密失败", err instanceof Error ? err.message : "未知错误");
     }
   }, [revealedKeys]);
 
@@ -196,14 +200,14 @@ export const ApiKeysPanel: React.FC = () => {
           <Shield size={32} className="text-primary" aria-hidden />
         </div>
         <Text as="h3" type="large" weight="bold" display="block" className="mb-2">
-          Secure API Key Storage
+          安全存储 API 密钥
         </Text>
         <Text as="p" type="supporting" color="secondary" display="block" className="mb-6 max-w-sm">
-          Set up a master password to encrypt and store your API keys locally.
-          Keys are encrypted with AES-256-GCM and are only sent when making a request to the selected service.
+          设置主密码，以便在本地加密并存储 API 密钥。密钥将使用 AES-256-GCM
+          加密，仅在向所选服务发起请求时发送。
         </Text>
         <Button
-          label="Set Up Master Password"
+          label="设置主密码"
           onClick={() => setPasswordDialogMode("setup")}
           variant="primary"
           icon={<KeyRound size={16} aria-hidden />}
@@ -229,13 +233,13 @@ export const ApiKeysPanel: React.FC = () => {
           <Lock size={32} className="text-amber-500" aria-hidden />
         </div>
         <Text as="h3" type="large" weight="bold" display="block" className="mb-2">
-          Session Locked
+          会话已锁定
         </Text>
         <Text as="p" type="supporting" color="secondary" display="block" className="mb-6 max-w-sm">
-          Enter your master password to view and manage API keys.
+          输入主密码以查看和管理 API 密钥。
         </Text>
         <Button
-          label="Unlock"
+          label="解锁"
           onClick={() => setPasswordDialogMode("unlock")}
           variant="primary"
           icon={<Unlock size={16} aria-hidden />}
@@ -261,19 +265,19 @@ export const ApiKeysPanel: React.FC = () => {
         <div className="flex items-center gap-2">
           <Shield size={14} className="text-primary" aria-hidden />
           <Text type="supporting" color="secondary">
-            {storedKeys.length} key{storedKeys.length !== 1 ? "s" : ""} stored
+            {storedKeys.length} 个密钥已存储
           </Text>
         </div>
         <div className="flex items-center gap-2">
           <Button
-            label="Change Password"
+            label="更改密码"
             variant="secondary"
             size="sm"
             onClick={() => setPasswordDialogMode("change")}
             icon={<Key size={14} aria-hidden />}
           />
           <Button
-            label="Lock"
+            label="锁定"
             variant="secondary"
             size="sm"
             onClick={handleLock}
@@ -287,6 +291,9 @@ export const ApiKeysPanel: React.FC = () => {
         {storedKeys.map((stored) => {
           const service = SERVICE_REGISTRY.find((s) => s.id === stored.id);
           const isRevealed = showKey[stored.id] && revealedKeys[stored.id];
+          const serviceLabel = service
+            ? getServiceDisplayLabel(service)
+            : stored.label;
 
           return (
             <Card
@@ -299,11 +306,11 @@ export const ApiKeysPanel: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Key size={14} className="text-primary" aria-hidden />
                   <Text type="label" weight="bold">
-                    {service?.label ?? stored.label}
+                    {serviceLabel}
                   </Text>
                   {service?.docsUrl && (
                     <Link
-                      label={`${service.label} documentation`}
+                      label={`${serviceLabel} 文档`}
                       href={service.docsUrl}
                       isExternalLink
                       color="secondary"
@@ -315,14 +322,14 @@ export const ApiKeysPanel: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-1">
                   <IconButton
-                    label={isRevealed ? "Hide key" : "Show key"}
+                    label={isRevealed ? "隐藏密钥" : "显示密钥"}
                     onClick={() => handleRevealKey(stored.id)}
                     variant="ghost"
                     size="sm"
                     icon={isRevealed ? <EyeOff size={14} aria-hidden /> : <Eye size={14} aria-hidden />}
                   />
                   <IconButton
-                    label="Delete key"
+                    label="删除密钥"
                     onClick={() => handleDeleteKey(stored.id)}
                     variant="destructive"
                     size="sm"
@@ -333,7 +340,7 @@ export const ApiKeysPanel: React.FC = () => {
 
               {service && (
                 <Text as="p" type="supporting" color="secondary" display="block" className="mb-2">
-                  {service.description}
+                  {getServiceDisplayDescription(service)}
                 </Text>
               )}
 
@@ -345,8 +352,8 @@ export const ApiKeysPanel: React.FC = () => {
 
               <Text type="supporting" color="secondary" display="block" className="mt-2 text-[10px]">
                 {stored.createdAt > 0
-                  ? `Added ${new Date(stored.createdAt).toLocaleDateString()} · Updated ${new Date(stored.updatedAt).toLocaleDateString()}`
-                  : "Stored securely in the system keychain"}
+                  ? `添加于 ${new Date(stored.createdAt).toLocaleDateString("zh-CN")} · 更新于 ${new Date(stored.updatedAt).toLocaleDateString("zh-CN")}`
+                  : "已安全存储在系统钥匙串中"}
               </Text>
             </Card>
           );
@@ -359,22 +366,24 @@ export const ApiKeysPanel: React.FC = () => {
           <div className="flex items-center gap-2 mb-3">
             <Plus size={14} className="text-primary" aria-hidden />
             <Text type="label" weight="bold">
-              Add{" "}
-              {SERVICE_REGISTRY.find((s) => s.id === addingService)?.keyOptional
-                ? `Optional ${SERVICE_REGISTRY.find((s) => s.id === addingService)?.label} Key`
-                : `${SERVICE_REGISTRY.find((s) => s.id === addingService)?.label} Key`}
+              添加{" "}
+              {(() => {
+                const service = SERVICE_REGISTRY.find((s) => s.id === addingService);
+                const label = service ? getServiceDisplayLabel(service) : "";
+                return service?.keyOptional ? `可选的 ${label} 密钥` : `${label} 密钥`;
+              })()}
             </Text>
           </div>
           <ToolcraftTextInputControl
-            label="API key"
+            label="API 密钥"
             isLabelHidden
             type="password"
             value={newKeyValue}
             onChange={setNewKeyValue}
             placeholder={
               SERVICE_REGISTRY.find((s) => s.id === addingService)?.keyOptional
-                ? "Paste an API key if your endpoint requires one"
-                : "Paste your API key here"
+                ? "若接口需要，请粘贴 API 密钥"
+                : "在此粘贴 API 密钥"
             }
             hasAutoFocus
             width="100%"
@@ -382,7 +391,7 @@ export const ApiKeysPanel: React.FC = () => {
           />
           <div className="flex justify-end gap-2">
             <Button
-              label="Cancel"
+              label="取消"
               variant="secondary"
               size="sm"
               onClick={() => {
@@ -391,7 +400,7 @@ export const ApiKeysPanel: React.FC = () => {
               }}
             />
             <Button
-              label="Save Key"
+              label="保存密钥"
               variant="primary"
               size="sm"
               onClick={() => handleSaveKey(addingService)}
@@ -402,13 +411,13 @@ export const ApiKeysPanel: React.FC = () => {
       ) : availableServices.length > 0 ? (
         <div>
           <Text as="h3" type="label" weight="bold" color="secondary" display="block" className="mb-3">
-            Add API Key
+            添加 API 密钥
           </Text>
           <div className="grid gap-2">
             {availableServices.map((service) => (
               <ClickableCard
                 key={service.id}
-                label={`Add ${service.keyOptional ? "optional " : ""}${service.label} API key`}
+                label={`添加${service.keyOptional ? "可选的 " : ""}${getServiceDisplayLabel(service)} API 密钥`}
                 onClick={() => setAddingService(service.id)}
                 padding={3}
                 variant="default"
@@ -420,10 +429,10 @@ export const ApiKeysPanel: React.FC = () => {
                   </div>
                   <div>
                     <Text type="label" weight="bold" display="block">
-                      {service.label}{service.keyOptional ? " (optional key)" : ""}
+                      {getServiceDisplayLabel(service)}{service.keyOptional ? "（可选密钥）" : ""}
                     </Text>
                     <Text type="supporting" color="secondary" display="block">
-                      {service.description}
+                      {getServiceDisplayDescription(service)}
                     </Text>
                   </div>
                 </div>

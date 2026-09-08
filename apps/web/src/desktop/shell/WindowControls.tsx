@@ -10,7 +10,7 @@ export function WindowControls({ platform }: { platform: string }): JSX.Element 
   return (
     <div className="flex items-center" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
       <IconButton
-        label="Minimize"
+        label="最小化"
         icon={<Icon name="minus" size={14} />}
         variant="ghost"
         size="lg"
@@ -18,7 +18,7 @@ export function WindowControls({ platform }: { platform: string }): JSX.Element 
         onClick={() => void api.minimize()}
       />
       <IconButton
-        label="Maximize"
+        label="最大化"
         icon={<Icon name="square.on.square" size={13} />}
         variant="ghost"
         size="lg"
@@ -26,7 +26,7 @@ export function WindowControls({ platform }: { platform: string }): JSX.Element 
         onClick={() => void api.toggleMaximize()}
       />
       <IconButton
-        label="Close"
+        label="关闭"
         icon={<Icon name="xmark" size={14} />}
         variant="ghost"
         size="lg"

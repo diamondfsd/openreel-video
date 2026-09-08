@@ -19,6 +19,7 @@ import {
   createProjectSettingsFromPreset,
   type SocialMediaCategory,
 } from "@openreel/core";
+import { getSocialCategoryLabel, getPlatformLabel } from "./localization";
 
 interface StartFromScratchProps {
   onProjectCreated?: () => void;
@@ -78,7 +79,9 @@ export const StartFromScratch: React.FC<StartFromScratchProps> = ({
     setIsCreating(true);
 
     const settings = createProjectSettingsFromPreset(preset);
-    createNewProject(projectName.trim() || `${info?.name || "New"} Project`);
+    createNewProject(
+      projectName.trim() || `${getSocialCategoryLabel(selectedPreset, info?.name)} 项目`,
+    );
     await updateSettings(settings);
 
     track(AnalyticsEvents.PROJECT_CREATED, {
@@ -108,21 +111,21 @@ export const StartFromScratch: React.FC<StartFromScratchProps> = ({
     <div className="space-y-6">
       <div>
         <Text type="label" color="primary" weight="medium" className="text-sm text-text-primary mb-2 block">
-          Project Name
+          项目名称
         </Text>
         <ToolcraftTextInputControl
-          label="Project Name"
+          label="项目名称"
           isLabelHidden
           value={projectName}
           onChange={setProjectName}
-          placeholder="My Awesome Video"
+          placeholder="我的精彩视频"
           className="max-w-md bg-background-tertiary border-border text-text-primary"
         />
       </div>
 
       <div>
         <Text type="label" color="primary" weight="medium" className="text-sm text-text-primary mb-4">
-          Select Format
+          选择格式
         </Text>
 
         <div className="grid md:grid-cols-2 gap-6">
@@ -133,7 +136,7 @@ export const StartFromScratch: React.FC<StartFromScratchProps> = ({
               <div key={group.platform} className="space-y-3">
                 <div className="flex items-center gap-2 text-xs text-text-muted font-medium">
                   <GroupIcon size={14} />
-                  <span>{group.platform}</span>
+                  <span>{getPlatformLabel(group.platform)}</span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2">
@@ -147,7 +150,7 @@ export const StartFromScratch: React.FC<StartFromScratchProps> = ({
                     return (
                       <SelectableCard
                         key={presetId}
-                        label={presetInfo?.name || presetId}
+                        label={getSocialCategoryLabel(presetId, presetInfo?.name)}
                         isSelected={isSelected}
                         onChange={() => setSelectedPreset(presetId)}
                         onClick={() => setSelectedPreset(presetId)}
@@ -172,7 +175,7 @@ export const StartFromScratch: React.FC<StartFromScratchProps> = ({
                         </div>
                         <div className="flex-1 min-w-0">
                           <Text type="supporting" color="primary" weight="medium" className="text-xs text-text-primary truncate">
-                            {presetInfo?.name || presetId}
+                            {getSocialCategoryLabel(presetId, presetInfo?.name)}
                           </Text>
                           <Text type="supporting" color="secondary" className="text-[10px] text-text-muted">
                             {presetData.width}×{presetData.height}
@@ -192,18 +195,17 @@ export const StartFromScratch: React.FC<StartFromScratchProps> = ({
         <Info size={16} className="text-primary flex-shrink-0 mt-0.5" />
         <div>
           <Text type="supporting" color="primary" weight="medium" className="text-sm text-text-primary">
-            {info?.name || selectedPreset} Format
+            {getSocialCategoryLabel(selectedPreset, info?.name)} 格式
           </Text>
           <Text type="supporting" color="secondary" className="text-xs text-text-muted mt-1">
-            {preset.width}×{preset.height}px • {preset.frameRate || 30}fps
-            {preset.maxDuration && ` • Max ${preset.maxDuration}s`}
+            {preset.width}×{preset.height}px · {preset.frameRate || 30}fps
+            {preset.maxDuration && ` · 最长 ${preset.maxDuration}秒`}
             {preset.recommendedDuration &&
-              ` • Recommended ${preset.recommendedDuration}s`}
+              ` · 推荐 ${preset.recommendedDuration}秒`}
           </Text>
           {preset.safeZone && (
             <Text type="supporting" color="secondary" className="text-xs text-text-muted mt-0.5">
-              Safe zone: {preset.safeZone.top}px top, {preset.safeZone.bottom}px
-              bottom
+              安全区域：顶部 {preset.safeZone.top}px，底部 {preset.safeZone.bottom}px
             </Text>
           )}
         </div>
@@ -211,7 +213,7 @@ export const StartFromScratch: React.FC<StartFromScratchProps> = ({
 
       <div className="flex items-center justify-end gap-3">
         <Button
-          label={isCreating ? "Creating..." : "Create Project"}
+          label={isCreating ? "创建中…" : "创建项目"}
           icon={isCreating ? (
             <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
           ) : (

@@ -19,6 +19,7 @@ import {
   type SocialMediaCategory,
 } from "@openreel/core";
 import { ToolcraftButton as Button } from "@openreel/ui";
+import { getPlatformLabel, getSocialCategoryLabel } from "./localization";
 
 interface CategoryTabsProps {
   selectedCategory: SocialMediaCategory | "all";
@@ -80,7 +81,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
     <div className="space-y-3">
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
         <Button
-          label="All"
+          label="全部"
           onClick={() => {
             onSelectCategory("all");
             setExpandedPlatform(null);
@@ -117,7 +118,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
           return (
             <Button
               key={platform}
-              label={platform}
+              label={getPlatformLabel(platform)}
               onClick={() => handlePlatformClick(platform)}
               variant={isActive || isExpanded ? "primary" : "secondary"}
               size="sm"
@@ -151,7 +152,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
             return (
               <Button
                 key={category}
-                label={info?.name || category}
+                label={getSocialCategoryLabel(category, info?.name)}
                 onClick={() => onSelectCategory(category)}
                 variant={selectedCategory === category ? "primary" : "secondary"}
                 size="sm"

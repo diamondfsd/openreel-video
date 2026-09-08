@@ -29,9 +29,9 @@ function clientConfigSnippet(shimPath: string): string {
 async function copy(value: string, label: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(value);
-    toast.success(`${label} copied`);
+    toast.success(`${label} 已复制`);
   } catch {
-    toast.error("Copy failed", "Clipboard is unavailable.");
+    toast.error("复制失败", "剪贴板不可用。");
   }
 }
 
@@ -71,9 +71,9 @@ export const McpPanel: React.FC = () => {
     if (!bridge) return;
     try {
       setStatus(await bridge.rotateToken());
-      toast.success("Token rotated", "Update your MCP clients with the new token.");
+      toast.success("令牌已轮换", "请在 MCP 客户端中更新令牌。");
     } catch (err) {
-      toast.error("Rotate failed", err instanceof Error ? err.message : "Unknown error");
+      toast.error("轮换失败", err instanceof Error ? err.message : "未知错误");
     }
   }, []);
 
@@ -86,15 +86,15 @@ export const McpPanel: React.FC = () => {
       if (result.ok) {
         setToolCount(result.toolCount ?? 0);
         toast.success(
-          "Connection OK",
-          `Server responded with ${result.toolCount ?? 0} tools.`,
+          "连接正常",
+          `服务器返回了 ${result.toolCount ?? 0} 个工具。`,
         );
       } else {
         setToolCount(null);
-        toast.error("Connection failed", result.message ?? "No response");
+        toast.error("连接失败", result.message ?? "无响应");
       }
     } catch (err) {
-      toast.error("Connection failed", err instanceof Error ? err.message : "Unknown error");
+      toast.error("连接失败", err instanceof Error ? err.message : "未知错误");
     } finally {
       setTesting(false);
     }
@@ -105,12 +105,11 @@ export const McpPanel: React.FC = () => {
       <div className="flex flex-col items-center justify-center py-16 text-center">
         <Plug size={28} className="mb-3 text-text-muted" />
         <Text type="body" color="primary" className="text-sm font-medium">
-          Desktop only
+          仅限桌面端
         </Text>
         <Text type="supporting" color="secondary" className="mt-1 max-w-sm text-xs">
-          The MCP server runs inside the OpenReel desktop app, letting external AI
-          clients (Claude Desktop, Cursor, Cline) edit your project. Open OpenReel
-          on desktop to configure it.
+          MCP 服务运行在 OpenReel 桌面应用中，外部 AI 客户端（Claude Desktop、Cursor、Cline）
+          可以借此编辑项目。请在桌面端 OpenReel 中进行配置。
         </Text>
       </div>
     );
@@ -127,18 +126,17 @@ export const McpPanel: React.FC = () => {
       <div className="space-y-4">
         <div>
           <Text type="body" color="primary" className="text-sm font-medium">
-            MCP Server
+            MCP 服务
           </Text>
           <Text type="supporting" color="secondary" className="mt-0.5 text-xs">
-            A local Model Context Protocol server lets AI clients drive this
-            editor through the same tools as the built-in chat. It listens on
-            loopback only and requires the bearer token below.
+            本地 MCP 服务允许 AI 客户端使用与内置聊天相同的工具操作编辑器。
+            服务仅监听本机地址，并需要使用下方的令牌。
           </Text>
         </div>
 
         <div className="flex items-center gap-2">
           <Text type="supporting" color="secondary" className="w-20 shrink-0 text-xs">
-            Status
+            状态
           </Text>
           <Text
             type="supporting"
@@ -152,20 +150,20 @@ export const McpPanel: React.FC = () => {
                 status?.running ? "bg-status-success" : "bg-text-muted"
               }`}
             />
-            {status?.running ? "Running" : "Stopped"}
+            {status?.running ? "运行中" : "已停止"}
           </Text>
         </div>
 
         <div className="flex items-center gap-2">
           <Text type="supporting" color="secondary" className="w-20 shrink-0 text-xs">
-            Tools
+            工具
           </Text>
           <Text type="supporting" color="secondary" className="text-xs">
             {toolCount === null
               ? status?.running
-                ? "Checking catalog…"
+                ? "正在检查工具目录…"
                 : "—"
-              : `${toolCount} available`}
+              : `${toolCount} 个可用`}
           </Text>
         </div>
 
@@ -177,7 +175,7 @@ export const McpPanel: React.FC = () => {
             {status?.url || "—"}
           </code>
           <IconButton
-            label="Copy URL"
+            label="复制 URL"
             onClick={() => status?.url && copy(status.url, "URL")}
             variant="ghost"
             size="sm"
@@ -188,13 +186,13 @@ export const McpPanel: React.FC = () => {
 
         <div className="flex items-center gap-2">
           <Text type="supporting" color="secondary" className="w-20 shrink-0 text-xs">
-            Token
+            令牌
           </Text>
           <code className="flex-1 font-mono text-xs bg-background rounded px-3 py-2 text-text-secondary truncate">
             {tokenDisplay}
           </code>
           <IconButton
-            label={revealToken ? "Hide token" : "Show token"}
+            label={revealToken ? "隐藏令牌" : "显示令牌"}
             onClick={() => setRevealToken((v) => !v)}
             variant="ghost"
             size="sm"
@@ -202,15 +200,15 @@ export const McpPanel: React.FC = () => {
             className="text-text-muted hover:bg-background-tertiary hover:text-text-primary"
           />
           <IconButton
-            label="Copy token"
-            onClick={() => status?.token && copy(status.token, "Token")}
+            label="复制令牌"
+            onClick={() => status?.token && copy(status.token, "令牌")}
             variant="ghost"
             size="sm"
             icon={<Copy size={14} aria-hidden />}
             className="text-text-muted hover:bg-background-tertiary hover:text-text-primary"
           />
           <IconButton
-            label="Rotate token"
+            label="轮换令牌"
             onClick={handleRotate}
             variant="ghost"
             size="sm"
@@ -220,7 +218,7 @@ export const McpPanel: React.FC = () => {
         </div>
 
         <Button
-          label={testing ? "Testing..." : "Test connection"}
+          label={testing ? "测试中…" : "测试连接"}
           size="sm"
           variant="secondary"
           onClick={handleTest}
@@ -234,18 +232,18 @@ export const McpPanel: React.FC = () => {
       <div className="space-y-3">
         <div>
           <Text type="body" color="primary" className="text-sm font-medium">
-            Available Workflows
+            可用工作流
           </Text>
           <Text type="supporting" color="secondary" className="mt-0.5 text-xs">
-            The live catalog includes focused tools for each desktop workspace.
+            当前工具目录为每个桌面工作区提供专用工具。
           </Text>
         </div>
         <div className="grid grid-cols-2 gap-2">
           {[
-            ["Video Editor", "Tracks, clips, effects, transitions, audio and subtitles"],
-            ["Motion Creator", "Layers, animation, shaders, masks, effects and render queue"],
-            ["Creation & 3D", "Scenes, products, materials, cameras, rigging and previews"],
-            ["Project Operations", "Inspect, import, save, undo, export and diagnostics"],
+            ["视频编辑", "轨道、片段、效果、转场、音频和字幕"],
+            ["动效设计", "图层、动画、着色器、遮罩、效果和渲染队列"],
+            ["创作与 3D", "场景、产品、材质、摄像机、绑定和预览"],
+            ["项目操作", "检查、导入、保存、撤销、导出和诊断"],
           ].map(([label, description]) => (
             <div key={label} className="rounded-md border border-border bg-background px-3 py-2.5">
               <Text type="supporting" color="primary" className="text-xs font-medium">
@@ -264,11 +262,11 @@ export const McpPanel: React.FC = () => {
       <div className="space-y-4">
         <div>
           <Text type="body" color="primary" className="text-sm font-medium">
-            Client Setup
+            客户端配置
           </Text>
           <Text type="supporting" color="secondary" className="mt-0.5 text-xs">
-            Add this to your MCP client config (Claude Desktop, Cursor, Cline).
-            The shim connects to the running app automatically.
+            将其添加到 MCP 客户端配置中（Claude Desktop、Cursor、Cline）。
+            连接程序会自动连接正在运行的应用。
           </Text>
         </div>
         <div className="relative">
@@ -276,9 +274,9 @@ export const McpPanel: React.FC = () => {
             {clientConfigSnippet(status?.shimPath ?? "")}
           </pre>
           <IconButton
-            label="Copy config"
+            label="复制配置"
             onClick={() =>
-              copy(clientConfigSnippet(status?.shimPath ?? ""), "Config")
+              copy(clientConfigSnippet(status?.shimPath ?? ""), "配置")
             }
             variant="ghost"
             size="sm"
@@ -292,21 +290,20 @@ export const McpPanel: React.FC = () => {
 
       <div className="space-y-4">
         <Text type="body" color="primary" className="text-sm font-medium">
-          Trusted Local
+          本地信任
         </Text>
         <div className="flex items-center justify-between">
           <div>
             <Text type="supporting" color="secondary" className="text-sm">
-              Auto-allow destructive actions
+              自动允许高风险操作
             </Text>
             <Text type="supporting" color="secondary" className="mt-0.5 max-w-md text-xs">
-              When off, destructive or expensive tool calls over MCP
-              are refused with a confirmation-required notice. Turn on only if you
-              trust every connected local client.
+              关闭后，通过 MCP 发起的高风险或高消耗操作会被拒绝，并提示需要确认。
+              仅在信任所有已连接的本地客户端时开启。
             </Text>
           </div>
           <ToolcraftSwitchControl
-            ariaLabel="Auto-allow destructive actions"
+            ariaLabel="自动允许高风险操作"
             checked={mcpAutoAllow}
             onCheckedChange={setMcpAutoAllow}
             showLabel={false}

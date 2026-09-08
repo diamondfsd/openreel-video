@@ -26,7 +26,7 @@ function PanelLoading(): JSX.Element {
   return (
     <div className="grid h-full place-items-center">
       <Text type="supporting" color="secondary" className="text-xs">
-        Loading…
+        加载中…
       </Text>
     </div>
   );
@@ -156,18 +156,18 @@ export function EditPage(): JSX.Element {
       style={gridStyle}
       data-testid="desktop-edit-page"
     >
-      <DockRegion label="Media" name="Media" area="media" icon="photo.on.rectangle">
+      <DockRegion label="素材" name="素材" area="media" icon="photo.on.rectangle">
         <AssetsPanel />
         <ColumnHandle edge="right" onPointerDown={mediaW.onHandlePointerDown} />
       </DockRegion>
 
-      <DockRegion label="Viewer" name="Viewer" area="stage" icon="play.fill" className="bg-stage-bg">
+      <DockRegion label="播放器" name="播放器" area="stage" icon="play.fill" className="bg-stage-bg">
         <Suspense fallback={<PanelLoading />}>
           <Preview />
         </Suspense>
       </DockRegion>
 
-      <DockRegion label="Inspector" name="Inspector" area="inspector" icon="slider.horizontal.3">
+      <DockRegion label="检查器" name="检查器" area="inspector" icon="slider.horizontal.3">
         <InspectorPanel />
         <ColumnHandle edge="left" onPointerDown={inspectorW.onHandlePointerDown} />
       </DockRegion>
@@ -177,7 +177,7 @@ export function EditPage(): JSX.Element {
           className="relative flex min-h-0 min-w-0 flex-col overflow-hidden bg-bg-1"
           style={{ gridArea: "chat" }}
         >
-          <PanelErrorBoundary name="AI Editor">
+          <PanelErrorBoundary name="AI 编辑器">
             <Suspense fallback={<PanelLoading />}>
               <ChatPanel
                 onClose={() => setPanelVisible("agentChat", false)}
@@ -188,7 +188,7 @@ export function EditPage(): JSX.Element {
         </div>
       ) : null}
 
-      <DockRegion label="Timeline" name="Timeline" area="timeline" icon="rectangle.split.3x1" className="bg-tl-bg">
+      <DockRegion label="时间线" name="时间线" area="timeline" icon="rectangle.split.3x1" className="bg-tl-bg">
         <Suspense fallback={<PanelLoading />}>
           <Timeline />
         </Suspense>

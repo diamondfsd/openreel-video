@@ -112,7 +112,7 @@ export const AIGenTab: React.FC = () => {
 
   const navigateAway = useCallback((next: FeatureId) => {
     if (activeFeature === "tts" && next !== "tts" && ttsHasUnsaved) {
-      toast.warning("Unsaved audio discarded", "Save to media or download next time to keep it.");
+      toast.warning("未保存的音频已丢弃", "请先保存到媒体库或下载后再离开。");
     }
     setActiveFeature(next);
   }, [activeFeature, ttsHasUnsaved]);
@@ -144,7 +144,7 @@ export const AIGenTab: React.FC = () => {
     return (
       <div className="flex-1 flex flex-col overflow-y-auto w-full min-w-0">
         <Button
-          label="Back to AI Tools"
+          label="返回 AI 工具"
           onClick={() => navigateAway(null)}
           variant="ghost"
           icon={<ChevronRight size={14} className="rotate-180" aria-hidden />}
@@ -165,18 +165,18 @@ export const AIGenTab: React.FC = () => {
             <Wand2 size={24} className="text-primary" aria-hidden />
           </div>
           <Text as="h2" type="label" weight="bold" display="block">
-            AI-Powered Tools
+            AI 生成工具
           </Text>
           <Text type="supporting" color="secondary" display="block" className="mt-1 text-[11px]">
-            Automate your editing with intelligent features
+            使用智能功能提升编辑效率
           </Text>
         </div>
 
-        <FeatureSection title="Content Generation" icon={Wand2}>
+        <FeatureSection title="内容生成" icon={Wand2}>
           <FeatureCard
             icon={Mic}
-            title="Text to Speech"
-            description="Generate natural voiceovers from text"
+            title="文本转语音"
+            description="根据文本生成自然语音"
             iconColor="text-blue-400"
             iconBg="bg-blue-500/20"
             activeBorder="border-blue-500/50"
@@ -187,8 +187,8 @@ export const AIGenTab: React.FC = () => {
           />
           <FeatureCard
             icon={Subtitles}
-            title="Auto Captions"
-            description="Automatically generate subtitles from audio"
+            title="自动字幕"
+            description="从音频自动生成字幕"
             iconColor="text-primary"
             iconBg="bg-primary/20"
             activeBorder="border-primary/50"
@@ -199,11 +199,11 @@ export const AIGenTab: React.FC = () => {
           />
         </FeatureSection>
 
-        <FeatureSection title="Templates & Presets" icon={FileStack}>
+        <FeatureSection title="模板与预设" icon={FileStack}>
           <FeatureCard
             icon={Layers}
-            title="Project Templates"
-            description="Start with pre-built project structures"
+            title="项目模板"
+            description="从预设项目结构开始"
             iconColor="text-green-400"
             iconBg="bg-green-500/20"
             activeBorder="border-green-500/50"
@@ -214,8 +214,8 @@ export const AIGenTab: React.FC = () => {
           />
           <FeatureCard
             icon={Palette}
-            title="Filter Presets"
-            description="Apply cinematic color grades instantly"
+            title="滤镜预设"
+            description="一键应用电影感调色"
             iconColor="text-orange-400"
             iconBg="bg-orange-500/20"
             activeBorder="border-orange-500/50"
@@ -226,11 +226,11 @@ export const AIGenTab: React.FC = () => {
           />
         </FeatureSection>
 
-        <FeatureSection title="Media Library" icon={Volume2}>
+        <FeatureSection title="媒体库" icon={Volume2}>
           <FeatureCard
             icon={Music}
-            title="Music & Sound Effects"
-            description="Browse royalty-free audio for your projects"
+            title="音乐与音效"
+            description="浏览可用于项目的免版税音频"
             iconColor="text-teal-400"
             iconBg="bg-teal-500/20"
             activeBorder="border-teal-500/50"
@@ -241,11 +241,11 @@ export const AIGenTab: React.FC = () => {
           />
         </FeatureSection>
 
-        <FeatureSection title="Tools" icon={Video}>
+        <FeatureSection title="工具" icon={Video}>
           <FeatureCard
             icon={Video}
-            title="Multi-Camera Editing"
-            description="Sync and switch between multiple angles"
+            title="多机位编辑"
+            description="同步并切换多个机位"
             iconColor="text-cyan-400"
             iconBg="bg-cyan-500/20"
             activeBorder="border-cyan-500/50"
@@ -258,7 +258,7 @@ export const AIGenTab: React.FC = () => {
 
         <div className="pt-2 border-t border-border">
           <Text type="supporting" color="secondary" display="block" justify="center" className="text-[9px]">
-            More AI features coming soon — image generation, auto-edit, and more
+            更多 AI 功能即将推出（图片生成、自动剪辑等）
           </Text>
         </div>
       </div>

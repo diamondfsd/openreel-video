@@ -10,9 +10,9 @@ export interface NewProjectFormat {
 }
 
 export const DESKTOP_FORMATS: NewProjectFormat[] = [
-  { id: "vertical", label: "Vertical", width: 1080, height: 1920, frameRate: 30 },
-  { id: "horizontal", label: "Horizontal", width: 1920, height: 1080, frameRate: 30 },
-  { id: "square", label: "Square", width: 1080, height: 1080, frameRate: 30 },
+  { id: "vertical", label: "竖屏", width: 1080, height: 1920, frameRate: 30 },
+  { id: "horizontal", label: "横屏", width: 1920, height: 1080, frameRate: 30 },
+  { id: "square", label: "方形", width: 1080, height: 1080, frameRate: 30 },
 ];
 
 export function startNewProject(format: NewProjectFormat): void {
@@ -24,7 +24,7 @@ export function startNewProject(format: NewProjectFormat): void {
 }
 
 export function startNewMotionProject(format: NewProjectFormat): void {
-  useProjectStore.getState().createNewProject(`${format.label} Motion Creator`, {
+  useProjectStore.getState().createNewProject(`${format.label} 动效设计`, {
     width: format.width,
     height: format.height,
     frameRate: format.frameRate,

@@ -35,7 +35,7 @@ const FORMAT_OPTIONS: FormatOption[] = [
   {
     id: "vertical",
     preset: "tiktok",
-    label: "Vertical",
+    label: "竖屏",
     description: "TikTok, Reels, Shorts",
     dimensions: "1080 × 1920",
     icon: Smartphone,
@@ -44,7 +44,7 @@ const FORMAT_OPTIONS: FormatOption[] = [
   {
     id: "horizontal",
     preset: "youtube-video",
-    label: "Horizontal",
+    label: "横屏",
     description: "YouTube, Vimeo, Web",
     dimensions: "1920 × 1080",
     icon: Monitor,
@@ -53,7 +53,7 @@ const FORMAT_OPTIONS: FormatOption[] = [
   {
     id: "square",
     preset: "instagram-post",
-    label: "Square",
+    label: "方形",
     description: "Instagram, Facebook",
     dimensions: "1080 × 1080",
     icon: Square,
@@ -153,7 +153,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
   const handleCreateProject = useCallback(
     (option: FormatOption) => {
       const preset = SOCIAL_MEDIA_PRESETS[option.preset];
-      createNewProject(`New ${option.label} Video`, {
+      createNewProject(`新建${option.label}视频`, {
         width: preset.width,
         height: preset.height,
         frameRate: preset.frameRate,
@@ -203,13 +203,13 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
       <div className="fixed inset-0 z-50 bg-background flex flex-col">
         <header className="flex items-center justify-between px-6 py-4 border-b border-border">
           <Button
-            label="Back"
+            label="返回"
             variant="ghost"
             size="sm"
             icon={<ArrowRight className="rotate-180" size={16} aria-hidden />}
             onClick={() => setViewMode("home")}
           />
-          <Text type="label" color="primary" weight="medium" className="text-sm text-text-primary">Templates</Text>
+          <Text type="label" color="primary" weight="medium" className="text-sm text-text-primary">模板</Text>
           <div className="w-16" />
         </header>
         <div className="flex-1 overflow-y-auto p-6">
@@ -224,14 +224,14 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
       <div className="fixed inset-0 z-50 bg-background flex flex-col">
         <header className="flex items-center justify-between px-6 py-4 border-b border-border">
           <Button
-            label="Back"
+            label="返回"
             variant="ghost"
             size="sm"
             icon={<ArrowRight className="rotate-180" size={16} aria-hidden />}
             onClick={() => setViewMode("home")}
           />
           <Text type="label" color="primary" weight="medium" className="text-sm text-text-primary">
-            Recent Projects
+            最近项目
           </Text>
           <div className="w-16" />
         </header>
@@ -260,13 +260,13 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
             </div>
 
             <Text type="body" color="primary" weight="bold" className="text-4xl sm:text-5xl text-text-primary tracking-tight mb-3">
-              From idea to export.
+              从想法到导出
             </Text>
             <Text type="supporting" color="secondary" className="text-xl text-text-secondary mb-8">
-              In your browser.
+              在浏览器中
             </Text>
             <Text type="supporting" color="secondary" className="text-base text-text-muted max-w-md">
-              Pick a format and start creating. You can change this anytime.
+              选择格式并开始创作，之后仍可随时更改。
             </Text>
           </div>
 
@@ -278,7 +278,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
               return (
                 <ClickableCard
                   key={option.id}
-                  label={`Create ${option.label} project`}
+                  label={`创建${option.label}项目`}
                   onClick={() => handleCreateProject(option)}
                   onMouseEnter={() => setHoveredFormat(option.id)}
                   onMouseLeave={() => setHoveredFormat(null)}
@@ -332,7 +332,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
                     transition-all duration-200
                   `}
                   >
-                    Start creating
+                    开始创作
                     <ArrowRight size={14} />
                   </div>
                 </ClickableCard>
@@ -342,21 +342,21 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
 
           <div className="flex items-center justify-center gap-3">
             <Button
-              label="Browse templates"
+              label="浏览模板"
               variant="secondary"
               icon={<Layers size={16} aria-hidden />}
               onClick={() => setViewMode("templates")}
               className="rounded-xl"
             />
             <Button
-              label="Recent projects"
+              label="最近项目"
               variant="secondary"
               icon={<Clock size={16} aria-hidden />}
               onClick={() => setViewMode("recent")}
               className="rounded-xl"
             />
             <Button
-              label="Open editor"
+              label="打开编辑器"
               variant="secondary"
               icon={<FolderOpen size={16} aria-hidden />}
               onClick={() => navigate("editor")}
@@ -368,7 +368,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4">
           <div className="flex items-center gap-2">
             <ToolcraftSwitchControl
-              label="Skip on startup"
+              label="启动时跳过"
               checked={skipWelcomeScreen}
               onCheckedChange={setSkipWelcomeScreen}
             />
@@ -377,11 +377,11 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ initialTab }) => {
           <span className="text-text-muted/30">·</span>
 
           <Text type="supporting" color="secondary" className="text-xs text-text-muted/60">
-            Press{" "}
+            按{" "}
             <kbd className="px-1.5 py-0.5 bg-background-tertiary border border-border rounded text-text-muted font-mono text-[10px]">
               Esc
             </kbd>{" "}
-            to skip
+            跳过
           </Text>
         </div>
       </div>

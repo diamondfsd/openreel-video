@@ -13,7 +13,7 @@ export function EditorBootstrapGate({
   if (error) {
     return (
       <div className="grid h-full place-items-center bg-bg p-4 text-sm text-red-300">
-        Editor failed to start: {error.message}
+        编辑器启动失败：{error.message}
       </div>
     );
   }
@@ -25,7 +25,7 @@ export function EditorBootstrapGate({
             size={48}
             className="animate-spin text-accent"
           />
-          <span className="text-sm text-fg-muted">Loading editor…</span>
+          <span className="text-sm text-fg-muted">正在加载编辑器…</span>
         </div>
       </div>
     );

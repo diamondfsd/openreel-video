@@ -29,10 +29,10 @@ export function Workspace(): JSX.Element {
       <div className="flex h-10 shrink-0 items-center justify-center border-b border-border bg-bg-1 px-3">
         <WorkspaceModeTabs
           activeMode={activeMode}
-          ariaLabel="Desktop workspaces"
+          ariaLabel="桌面工作区"
           accessibleLabels={{
-            video: "Video Editing",
-            motion: "Motion Creation",
+            video: "视频编辑",
+            motion: "动效设计",
           }}
           onSelectMode={(mode) =>
             setDesktopPage(mode === "motion" ? "motion" : "edit")
@@ -40,7 +40,7 @@ export function Workspace(): JSX.Element {
         />
       </div>
       <EditorBootstrapGate>
-        <Suspense fallback={<div className="grid h-full place-items-center text-sm text-fg-muted">Loading…</div>}>
+        <Suspense fallback={<div className="grid h-full place-items-center text-sm text-fg-muted">加载中…</div>}>
           <div className="min-h-0 flex-1">
             {activePage === "motion" ? <MotionPage /> : <EditPage />}
           </div>

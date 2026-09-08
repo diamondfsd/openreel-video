@@ -40,6 +40,25 @@ const PRESET_DIMENSIONS: Record<string, SocialMediaCategory> = {
   "1280x720": "youtube-video",
 };
 
+const PRESET_PROJECT_NAMES: Record<SocialMediaCategory, string> = {
+  tiktok: "TikTok",
+  "instagram-reels": "Instagram Reels",
+  "instagram-stories": "Instagram 快拍",
+  "instagram-post": "Instagram 帖子",
+  "youtube-shorts": "YouTube Shorts",
+  "youtube-video": "YouTube 视频",
+  facebook: "Facebook",
+  twitter: "Twitter",
+  linkedin: "LinkedIn",
+  pinterest: "Pinterest",
+  intro: "片头",
+  outro: "片尾",
+  promo: "宣传片",
+  "lower-third": "下三分之一字幕",
+  slideshow: "幻灯片",
+  custom: "自定义",
+};
+
 function App() {
   const { activeModal, closeModal, skipWelcomeScreen } = useUIStore();
   const { openModal: openSearchModal } = useUIStore();
@@ -63,7 +82,7 @@ function App() {
     } else if (route === "new") {
       hasHandledInitialRoute.current = true;
 
-      let projectName = "New Project";
+      let projectName = "新建项目";
       let width = 1920;
       let height = 1080;
       let frameRate = fps;
@@ -75,7 +94,7 @@ function App() {
           width = preset.width;
           height = preset.height;
           frameRate = preset.frameRate || fps;
-          projectName = `New ${presetKey.charAt(0).toUpperCase() + presetKey.slice(1).replace(/-/g, " ")} Project`;
+          projectName = `新建${PRESET_PROJECT_NAMES[presetKey]}项目`;
         }
       } else if (parsedDimensions) {
         width = parsedDimensions.width;
@@ -90,11 +109,11 @@ function App() {
 
         const aspectRatio = width / height;
         if (aspectRatio < 1) {
-          projectName = "New Vertical Video";
+          projectName = "新建竖屏视频";
         } else if (aspectRatio > 1) {
-          projectName = "New Horizontal Video";
+          projectName = "新建横屏视频";
         } else {
-          projectName = "New Square Video";
+          projectName = "新建方形视频";
         }
       }
 
@@ -148,7 +167,7 @@ function App() {
     <div className="h-screen w-screen bg-background text-text-primary overflow-hidden">
       <MobileBlocker />
       {isMotionSurface ? (
-        <Suspense fallback={<LoadingSpinner message="Loading Motion Creator..." />}>
+        <Suspense fallback={<LoadingSpinner message="正在加载动效编辑器..." />}>
           <MotionCreatorApp />
         </Suspense>
       ) : isSharePage ? (
@@ -156,7 +175,7 @@ function App() {
       ) : showWelcome ? (
         <WelcomeScreen initialTab={initialTab} />
       ) : (
-        <Suspense fallback={<LoadingSpinner message="Loading editor..." />}>
+        <Suspense fallback={<LoadingSpinner message="正在加载编辑器..." />}>
           <EditorInterface />
         </Suspense>
       )}

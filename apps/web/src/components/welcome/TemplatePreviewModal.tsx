@@ -174,7 +174,7 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
 
       onApply();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to apply template");
+      setError(err instanceof Error ? err.message : "应用模板失败");
     } finally {
       setIsApplying(false);
     }
@@ -189,10 +189,10 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
   ]);
 
   const formatDuration = (seconds: number): string => {
-    if (seconds < 60) return `${seconds}s`;
+    if (seconds < 60) return `${seconds}秒`;
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return secs > 0 ? `${mins}m ${secs}s` : `${mins}m`;
+    return secs > 0 ? `${mins}分 ${secs}秒` : `${mins}分`;
   };
 
   return (
@@ -207,7 +207,7 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
           <DialogHeader
             title={template.name}
             onOpenChange={(open) => !open && onClose()}
-            subtitle={`${formatDuration(template.timeline.duration)} · ${template.placeholders.length} editable fields`}
+            subtitle={`${formatDuration(template.timeline.duration)} · ${template.placeholders.length} 个可编辑字段`}
           />
         }
         content={
@@ -237,7 +237,7 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
               {template.scenes && template.scenes.length > 0 && (
                 <div className="space-y-2">
                   <Text type="label" color="secondary" weight="medium" className="text-xs text-text-muted uppercase tracking-wide">
-                    Scenes
+                    场景
                   </Text>
                   <div className="flex flex-wrap gap-2">
                     {template.scenes.map((scene) => (
@@ -264,7 +264,7 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
 
             <div className="space-y-4">
               <Text type="label" color="primary" weight="medium" className="text-sm text-text-primary">
-                Customize Template
+                自定义模板
               </Text>
 
               {groupedPlaceholders.main.length > 0 && (
@@ -289,7 +289,7 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
               {groupedPlaceholders.advanced.length > 0 && (
                 <div>
                   <Button
-                    label={`Advanced Options (${groupedPlaceholders.advanced.length})`}
+                    label={`高级选项（${groupedPlaceholders.advanced.length}）`}
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowAdvanced((value) => !value)}
@@ -334,9 +334,9 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
         }
         footer={
         <LayoutFooter>
-          <Button label="Cancel" variant="ghost" onClick={onClose} />
+          <Button label="取消" variant="ghost" onClick={onClose} />
           <Button
-            label={isApplying ? "Applying..." : "Use Template"}
+            label={isApplying ? "应用中…" : "使用模板"}
             icon={isApplying ? (
               <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
             ) : (
@@ -439,7 +439,7 @@ const PlaceholderInput: React.FC<PlaceholderInputProps> = ({
         return (
           <div className="flex items-center gap-3">
             <ToolcraftSwitchControl
-              label={placeholder.description || "Enabled"}
+              label={placeholder.description || "已启用"}
               checked={Boolean(displayValue)}
               onCheckedChange={(checked) => onChange(checked)}
             />

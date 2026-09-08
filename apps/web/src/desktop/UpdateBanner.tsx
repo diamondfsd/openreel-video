@@ -38,20 +38,20 @@ export function UpdateBanner(): JSX.Element | null {
       {status.state === "available" && (
         <>
           <Text type="body" weight="bold" display="block" className="text-sm">
-            Update {status.version} available
+            有可用更新：{status.version}
           </Text>
           <Text type="supporting" color="secondary" display="block" className="mt-1 text-xs">
-            A new version of OpenReel is ready to download.
+            OpenReel 新版本已可下载。
           </Text>
           <div className="mt-3 flex gap-2">
             <Button
-              label="Download"
+              label="下载"
               variant="primary"
               size="sm"
               onClick={() => void window.openreel?.updater.download()}
             />
             <Button
-              label="Later"
+              label="稍后"
               variant="ghost"
               size="sm"
               onClick={() => setDismissed(true)}
@@ -63,7 +63,7 @@ export function UpdateBanner(): JSX.Element | null {
       {status.state === "downloading" && (
         <>
           <Text type="body" weight="bold" display="block" className="text-sm">
-            Downloading update…
+            正在下载更新…
           </Text>
           <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-border">
             <div
@@ -80,21 +80,20 @@ export function UpdateBanner(): JSX.Element | null {
       {status.state === "downloaded" && (
         <>
           <Text type="body" weight="bold" display="block" className="text-sm">
-            Update {status.version} ready
+            更新 {status.version} 已就绪
           </Text>
           <Text type="supporting" color="secondary" display="block" className="mt-1 text-xs">
-            Restart to install — you’ll be asked to save any unsaved changes
-            first.
+            重启后安装。未保存的更改会先提示你保存。
           </Text>
           <div className="mt-3 flex gap-2">
             <Button
-              label="Restart & Install"
+              label="重启并安装"
               variant="primary"
               size="sm"
               onClick={() => void window.openreel?.updater.install()}
             />
             <Button
-              label="Later"
+              label="稍后"
               variant="ghost"
               size="sm"
               onClick={() => setDismissed(true)}

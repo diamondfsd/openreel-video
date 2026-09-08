@@ -100,12 +100,12 @@ export const RecentProjects: React.FC<RecentProjectsProps> = ({
       (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
     );
 
-    if (diffDays === 0) return "Today";
-    if (diffDays === 1) return "Yesterday";
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    if (diffDays === 0) return "今天";
+    if (diffDays === 1) return "昨天";
+    if (diffDays < 7) return `${diffDays} 天前`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} 周前`;
 
-    return date.toLocaleDateString();
+    return date.toLocaleDateString("zh-CN");
   };
 
   if (isLoading) {
@@ -113,7 +113,7 @@ export const RecentProjects: React.FC<RecentProjectsProps> = ({
       <div className="flex flex-col items-center justify-center py-20">
         <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin mb-4" />
         <Text type="supporting" color="secondary" className="text-sm text-text-secondary">
-          Loading recent projects...
+          正在加载最近项目…
         </Text>
       </div>
     );
@@ -126,11 +126,10 @@ export const RecentProjects: React.FC<RecentProjectsProps> = ({
           <Clock size={24} className="text-text-muted" />
         </div>
         <Text type="body" color="primary" weight="medium" className="text-base text-text-primary mb-2">
-          No Recent Projects
+         暂无最近项目
         </Text>
         <Text type="supporting" color="secondary" className="text-sm text-text-muted text-center max-w-md">
-          Your recently opened projects will appear here. Start a new project or
-          use a template to get started.
+          最近打开的项目会显示在这里。创建新项目或使用模板开始创作。
         </Text>
       </div>
     );
@@ -140,7 +139,7 @@ export const RecentProjects: React.FC<RecentProjectsProps> = ({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <Text type="label" color="primary" weight="medium" className="text-sm text-text-primary">
-          Recent Projects ({recentProjects.length})
+          最近项目（{recentProjects.length}）
         </Text>
       </div>
 
@@ -153,7 +152,7 @@ export const RecentProjects: React.FC<RecentProjectsProps> = ({
               className="group relative flex flex-col bg-background-tertiary rounded-xl border border-border hover:border-primary/40 hover:bg-background-elevated transition-all overflow-hidden"
             >
               <ClickableCard
-                label={`Open ${project.name}`}
+                label={`打开 ${project.name}`}
                 onClick={() => handleSelectProject(project)}
                 isDisabled={isLoadingThis}
                 padding={0}
@@ -180,7 +179,7 @@ export const RecentProjects: React.FC<RecentProjectsProps> = ({
               </ClickableCard>
 
               <IconButton
-                label="Remove from recent"
+                label="从最近项目中移除"
                 onClick={(e) => handleRemoveProject(project.id, e)}
                 icon={<Trash2 size={14} aria-hidden />}
                 size="sm"
@@ -193,7 +192,7 @@ export const RecentProjects: React.FC<RecentProjectsProps> = ({
       </div>
 
       <Text type="supporting" color="secondary" className="text-xs text-text-muted text-center">
-        Recent projects are stored locally in your browser
+        最近项目保存在本地浏览器中
       </Text>
     </div>
   );

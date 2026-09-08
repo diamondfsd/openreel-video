@@ -9,15 +9,16 @@ import { ToolcraftTextInputControl as TextInput } from "@openreel/ui";
 import { useSettingsStore, SERVICE_REGISTRY, type TtsProvider, type LlmProvider, type AggregatorProvider } from "../../../stores/settings-store";
 import { useProjectStore } from "../../../stores/project-store";
 import { EDITING_FRAME_RATE_OPTIONS } from "../editing-frame-rate";
+import { getServiceDisplayLabel } from "./localization";
 
 const ASPECT_PRESETS: Array<{ label: string; width: number; height: number }> = [
-  { label: "16:9 Landscape (1080p)", width: 1920, height: 1080 },
-  { label: "9:16 Vertical (TikTok/Reels)", width: 1080, height: 1920 },
-  { label: "1:1 Square", width: 1080, height: 1080 },
-  { label: "4:5 Portrait", width: 1080, height: 1350 },
-  { label: "4:3 Standard", width: 1440, height: 1080 },
-  { label: "21:9 Cinematic", width: 2560, height: 1080 },
-  { label: "4K Landscape", width: 3840, height: 2160 },
+  { label: "横屏 16:9（1080p）", width: 1920, height: 1080 },
+  { label: "竖屏 9:16（TikTok/Reels）", width: 1080, height: 1920 },
+  { label: "方形 1:1", width: 1080, height: 1080 },
+  { label: "竖幅 4:5", width: 1080, height: 1350 },
+  { label: "标准 4:3", width: 1440, height: 1080 },
+  { label: "电影 21:9", width: 2560, height: 1080 },
+  { label: "4K 横屏", width: 3840, height: 2160 },
 ];
 
 const BACKGROUND_SWATCHES = [
@@ -109,11 +110,10 @@ export const GeneralPanel: React.FC = () => {
       <div className="space-y-4">
         <div>
           <Text type="body" color="primary" className="text-sm font-medium">
-            Project Composition
+            项目画布
           </Text>
           <Text type="supporting" color="secondary" className="mt-0.5 text-xs">
-            Set the canvas dimensions for your project. Pick a preset for TikTok,
-            Reels, YouTube, or enter custom values.
+            设置项目画布尺寸。选择 TikTok、Reels、YouTube 预设，或输入自定义数值。
           </Text>
         </div>
 
@@ -147,7 +147,7 @@ export const GeneralPanel: React.FC = () => {
 
         <div className="flex items-end gap-2">
           <ToolcraftNumberInputControl
-            label="Width"
+            label="宽度"
             size="md"
             width="100%"
             min={16}
@@ -156,7 +156,7 @@ export const GeneralPanel: React.FC = () => {
             onChange={(value) => setDraftWidth(String(value))}
           />
           <ToolcraftNumberInputControl
-            label="Height"
+            label="高度"
             size="md"
             width="100%"
             min={16}
@@ -165,7 +165,7 @@ export const GeneralPanel: React.FC = () => {
             onChange={(value) => setDraftHeight(String(value))}
           />
           <Button
-            label="Apply"
+            label="应用"
             onClick={handleApplyCustom}
             variant="primary"
             size="md"
@@ -175,15 +175,14 @@ export const GeneralPanel: React.FC = () => {
         <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-background-tertiary p-3">
           <div>
             <Text type="supporting" color="primary" className="text-sm font-medium">
-              Editing frame rate
+              编辑帧率
             </Text>
             <Text type="supporting" color="secondary" className="mt-0.5 block text-[11px]">
-              Controls preview playback, frame stepping, and the default export rate.
-              Existing clip timing stays unchanged.
+              控制预览播放、逐帧操作和默认导出帧率。现有片段的时间保持不变。
             </Text>
           </div>
           <Selector
-            label="Editing frame rate"
+            label="编辑帧率"
             isLabelHidden
             size="md"
             width={160}
@@ -203,14 +202,14 @@ export const GeneralPanel: React.FC = () => {
 
         <div className="space-y-2">
           <Text type="supporting" color="secondary" className="text-xs font-medium">
-            Background fill
+            背景填充
           </Text>
           <Text type="supporting" color="secondary" className="text-[11px]">
-            Fills the canvas around clips that don&apos;t match the aspect ratio.
+            为与画面比例不一致的片段填充画布背景。
           </Text>
           <div className="flex flex-wrap items-center gap-2">
             <ClickableCard
-              label="No background fill"
+              label="不填充背景"
               onClick={() => setCanvasBackground(undefined, undefined)}
               padding={2}
               variant={!backgroundFillMode ? "green" : "muted"}
@@ -220,10 +219,10 @@ export const GeneralPanel: React.FC = () => {
                   : "border-border bg-background-tertiary text-text-secondary hover:text-text-primary"
               }`}
             >
-              None
+              无
             </ClickableCard>
             <ClickableCard
-              label="Blur background fill"
+              label="模糊背景填充"
               onClick={() =>
                 setCanvasBackground("blur", layoutBackgroundColor)
               }
@@ -235,7 +234,7 @@ export const GeneralPanel: React.FC = () => {
                   : "border-border bg-background-tertiary text-text-secondary hover:text-text-primary"
               }`}
             >
-              Blur
+              模糊
             </ClickableCard>
             {BACKGROUND_SWATCHES.map((hex) => {
               const isActive =
@@ -244,7 +243,7 @@ export const GeneralPanel: React.FC = () => {
               return (
                 <ClickableCard
                   key={hex}
-                  label={`Background color ${hex}`}
+                  label={`背景颜色 ${hex}`}
                   onClick={() => setCanvasBackground("color", hex)}
                   padding={0}
                   variant="transparent"
@@ -266,20 +265,20 @@ export const GeneralPanel: React.FC = () => {
       {/* Auto-save */}
       <div className="space-y-4">
         <Text type="body" color="primary" className="text-sm font-medium">
-          Auto-Save
+          自动保存
         </Text>
 
         <div className="flex items-center justify-between">
           <div>
             <Text type="supporting" color="secondary" className="text-sm">
-              Enable auto-save
+              启用自动保存
             </Text>
             <Text type="supporting" color="secondary" className="mt-0.5 text-xs">
-              Automatically save your project at regular intervals
+              按固定间隔自动保存项目
             </Text>
           </div>
           <ToolcraftSwitchControl
-            ariaLabel="Enable auto-save"
+            ariaLabel="启用自动保存"
             checked={autoSave}
             onCheckedChange={setAutoSave}
             showLabel={false}
@@ -289,22 +288,22 @@ export const GeneralPanel: React.FC = () => {
         {autoSave && (
           <div className="flex items-center gap-3">
             <Text type="supporting" color="secondary" className="whitespace-nowrap text-sm">
-              Save every
+              每隔
             </Text>
             <Selector
-              label="Auto-save interval"
+              label="自动保存间隔"
               isLabelHidden
               size="md"
               width={150}
               value={String(autoSaveInterval)}
               onChange={(value) => setAutoSaveInterval(Number(value))}
               options={[
-                { label: "1 minute", value: "1" },
-                { label: "2 minutes", value: "2" },
-                { label: "5 minutes", value: "5" },
-                { label: "10 minutes", value: "10" },
-                { label: "15 minutes", value: "15" },
-                { label: "30 minutes", value: "30" },
+                { label: "1 分钟", value: "1" },
+                { label: "2 分钟", value: "2" },
+                { label: "5 分钟", value: "5" },
+                { label: "10 分钟", value: "10" },
+                { label: "15 分钟", value: "15" },
+                { label: "30 分钟", value: "30" },
               ]}
             />
           </div>
@@ -316,34 +315,34 @@ export const GeneralPanel: React.FC = () => {
       {/* AI connections */}
       <div className="space-y-4">
         <Text type="body" color="primary" className="text-sm font-medium">
-          AI Connections
+          AI 连接
         </Text>
         <Text type="supporting" color="secondary" className="text-xs">
-          Connect a compatible endpoint you control. OpenReel does not choose a vendor or model for you.
+          连接你管理的兼容接口。OpenReel 不会替你选择服务商或模型。
         </Text>
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <Text type="supporting" color="secondary" className="text-sm">
-              Text to Speech/Voice To Speech/Sound Effects
+              文本转语音/语音转语音/音效
             </Text>
             <Selector
-              label="Text to Speech provider"
+              label="文本转语音服务"
               isLabelHidden
               size="md"
               width={180}
               value={defaultTtsProvider}
               onChange={(value) => setDefaultTtsProvider(value as TtsProvider)}
-              options={ttsProviders.map((s) => ({ label: s.label, value: s.id }))}
+              options={ttsProviders.map((s) => ({ label: getServiceDisplayLabel(s), value: s.id }))}
             />
           </div>
 
           <div className="flex items-center justify-between">
             <Text type="supporting" color="secondary" className="text-sm">
-              AI Assistant API format
+              AI 助手 API 格式
             </Text>
             <Selector
-              label="AI Assistant API format"
+              label="AI 助手 API 格式"
               isLabelHidden
               size="md"
               width={180}
@@ -352,8 +351,8 @@ export const GeneralPanel: React.FC = () => {
                 setDefaultLlmProvider((value || null) as LlmProvider | null)
               }
               options={[
-                { label: "Choose API format…", value: "" },
-                ...llmProviders.map((s) => ({ label: s.label, value: s.id })),
+                { label: "选择 API 格式…", value: "" },
+                ...llmProviders.map((s) => ({ label: getServiceDisplayLabel(s), value: s.id })),
               ]}
             />
           </div>
@@ -363,15 +362,15 @@ export const GeneralPanel: React.FC = () => {
               <div>
                 <Text type="supporting" color="secondary" className="text-sm font-medium">
                   {defaultLlmProvider === "anthropic-compatible"
-                    ? "Anthropic-compatible endpoint"
-                    : "OpenAI-compatible endpoint"}
+                    ? "Anthropic 兼容接口"
+                    : "OpenAI 兼容接口"}
                 </Text>
                 <Text type="supporting" color="secondary" className="mt-0.5 block text-xs">
-                  Enter your API host and the exact tool-capable model ID exposed by that host.
+                  输入 API 主机地址，以及该地址提供的可调用工具模型 ID。
                 </Text>
               </div>
               <TextInput
-                label="Base URL"
+                label="基础 URL"
                 value={llmBaseUrl}
                 onChange={setLlmBaseUrl}
                 placeholder={
@@ -382,20 +381,20 @@ export const GeneralPanel: React.FC = () => {
                 width="100%"
               />
               <TextInput
-                label="Model ID"
+                label="模型 ID"
                 value={llmModel}
                 onChange={setLlmModel}
-                placeholder="Enter any model ID from your endpoint"
+                placeholder="输入接口提供的任意模型 ID"
                 width="100%"
               />
               <Text type="supporting" color="secondary" className="block text-[11px] leading-relaxed">
-                Load available models from the AI chat settings, or enter an ID manually when discovery is unavailable. API keys are optional.
+                可从 AI 聊天设置加载可用模型；无法发现时也可手动输入 ID。API 密钥可选。
               </Text>
             </div>
           ) : (
             <div className="rounded-lg border border-dashed border-border bg-background-tertiary p-3">
               <Text type="supporting" color="secondary" className="block text-xs">
-                Choose an API format to configure your host and model.
+                选择 API 格式以配置主机地址和模型。
               </Text>
             </div>
           )}
@@ -403,20 +402,20 @@ export const GeneralPanel: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <Text type="supporting" color="secondary" className="text-sm">
-                AI Aggregator
+              AI 聚合服务
               </Text>
               <Text type="supporting" color="secondary" className="mt-0.5 text-xs">
-                Video/image generation, upscaling, and creative AI tools
+                视频/图片生成、放大和创作类 AI 工具
               </Text>
             </div>
             <Selector
-              label="AI Aggregator provider"
+              label="AI 聚合服务"
               isLabelHidden
               size="md"
               width={180}
               value={defaultAggregator}
               onChange={(value) => setDefaultAggregator(value as AggregatorProvider)}
-              options={aggregatorProviders.map((s) => ({ label: s.label, value: s.id }))}
+              options={aggregatorProviders.map((s) => ({ label: getServiceDisplayLabel(s), value: s.id }))}
             />
           </div>
         </div>

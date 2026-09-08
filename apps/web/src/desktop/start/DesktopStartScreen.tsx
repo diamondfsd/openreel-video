@@ -34,10 +34,20 @@ function formatDimensions(format: NewProjectFormat): string {
 function formatSavedAt(savedAt: number): string {
   const date = new Date(savedAt);
   const diffDays = Math.floor((Date.now() - savedAt) / (1000 * 60 * 60 * 24));
-  if (diffDays <= 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return `${diffDays} days ago`;
-  return date.toLocaleDateString();
+  if (diffDays <= 0) return "今天";
+  if (diffDays === 1) return "昨天";
+  if (diffDays < 7) return `${diffDays} 天前`;
+  return date.toLocaleDateString("zh-CN");
+}
+
+const FORMAT_LABELS: Record<string, string> = {
+  vertical: "竖屏",
+  horizontal: "横屏",
+  square: "方形",
+};
+
+function formatDisplayLabel(format: NewProjectFormat): string {
+  return FORMAT_LABELS[format.id] ?? format.label;
 }
 
 type ProjectMode = "edit" | "motion";
@@ -87,7 +97,7 @@ export function DesktopStartScreen(): JSX.Element {
     startNewProject(format);
   }, [projectMode, setDesktopPage]);
 
-  const formatModeLabel = projectMode === "motion" ? "Motion Creator" : "Video Editor";
+  const formatModeLabel = projectMode === "motion" ? "动效设计" : "视频编辑";
 
   return (
     <div className="h-full overflow-y-auto bg-bg text-fg">
@@ -95,14 +105,14 @@ export function DesktopStartScreen(): JSX.Element {
         <section>
           <div className="flex items-center gap-3">
             <OpenReelMark size={28} className="text-accent" />
-            <Heading level={1}>New Project</Heading>
+            <Heading level={1}>新建项目</Heading>
           </div>
           <Text type="supporting" display="block" className="mt-1">
-            Choose a workspace and format. You can change this later.
+            选择工作区和格式，之后仍可更改。
           </Text>
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <SelectableCard
-              label="Video Editor"
+              label="视频编辑"
               isSelected={projectMode === "edit"}
               onChange={() => setProjectMode("edit")}
               padding={5}
@@ -113,16 +123,16 @@ export function DesktopStartScreen(): JSX.Element {
                 </span>
                 <span>
                   <Text type="large" weight="bold" display="block">
-                    Video Editor
+                    视频编辑
                   </Text>
                   <Text type="supporting" display="block" className="mt-1">
-                    Cut, trim, caption, color, and export quickly.
+                    快速剪辑、裁切、添加字幕、调色和导出。
                   </Text>
                 </span>
               </div>
             </SelectableCard>
             <SelectableCard
-              label="Motion Creator"
+              label="动效设计"
               isSelected={projectMode === "motion"}
               onChange={() => setProjectMode("motion")}
               padding={5}
@@ -133,10 +143,10 @@ export function DesktopStartScreen(): JSX.Element {
                 </span>
                 <span>
                   <Text type="large" weight="bold" display="block">
-                    Motion Creator
+                    动效设计
                   </Text>
                   <Text type="supporting" display="block" className="mt-1">
-                    Design animated ads, lower thirds, app demos, and scene graphics.
+                    设计动画广告、下三分之一字幕、应用演示和场景图形。
                   </Text>
                 </span>
               </div>
@@ -145,10 +155,11 @@ export function DesktopStartScreen(): JSX.Element {
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
             {DESKTOP_FORMATS.map((format) => {
               const FormatIcon = FORMAT_ICONS[format.id] ?? Film;
+              const displayLabel = formatDisplayLabel(format);
               return (
                 <ClickableCard
                   key={format.id}
-                  label={`${format.label} ${formatModeLabel}`}
+                  label={`${displayLabel} ${formatModeLabel}`}
                   onClick={() => handleStartProject(format)}
                   padding={5}
                 >
@@ -163,7 +174,7 @@ export function DesktopStartScreen(): JSX.Element {
                       <FormatIcon size={22} aria-hidden />
                     </span>
                     <Text type="large" weight="bold" display="block">
-                      {format.label}
+                      {displayLabel}
                     </Text>
                     <Text type="code" color="secondary" display="block">
                       {formatDimensions(format)}
@@ -177,22 +188,22 @@ export function DesktopStartScreen(): JSX.Element {
         </section>
 
         <section>
-          <Heading level={2} color="secondary">Recent</Heading>
+          <Heading level={2} color="secondary">最近项目</Heading>
           <Card className="mt-3" padding={0}>
             {loadingRecents ? (
               <Text type="supporting" display="block" className="px-4 py-6">
-                Loading recent projects...
+                正在加载最近项目…
               </Text>
             ) : recents.length === 0 ? (
               <Text type="supporting" display="block" className="px-4 py-6">
-                No recent projects yet. Start a new project above.
+                暂无最近项目，请先在上方创建新项目。
               </Text>
             ) : (
               <ul className="divide-y divide-border">
                 {recents.map((entry) => (
                   <li key={entry.id} className="p-1.5">
                     <ClickableCard
-                      label={`Open ${entry.name}`}
+                      label={`打开 ${entry.name}`}
                       isDisabled={openingId === entry.id}
                       onClick={() => handleOpenRecent(entry.id)}
                       padding={2}

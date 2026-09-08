@@ -46,7 +46,7 @@ const runBootstrap = async (): Promise<void> => {
 
   const settledEngine = useEngineStore.getState();
   if (!settledEngine.initialized) {
-    throw new Error(settledEngine.initError || "Engine initialization failed");
+    throw new Error(settledEngine.initError || "编辑器引擎初始化失败");
   }
 
   await initializeMediaBridge();

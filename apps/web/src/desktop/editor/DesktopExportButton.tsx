@@ -138,7 +138,7 @@ export function DesktopExportButton(): JSX.Element {
         style={NO_DRAG}
         onClick={cancel}
         className="mr-2"
-        aria-label="Cancel export"
+        aria-label="取消导出"
       />
     );
   }
@@ -152,7 +152,7 @@ export function DesktopExportButton(): JSX.Element {
         style={NO_DRAG}
         onClick={resetError}
         className="mr-2 max-w-[200px] truncate"
-        aria-label="Dismiss export error"
+        aria-label="关闭导出错误"
       />
     );
   }
@@ -160,7 +160,7 @@ export function DesktopExportButton(): JSX.Element {
   if (state.complete) {
     return (
       <Button
-        label="Saved!"
+        label="已保存"
         variant="secondary"
         size="sm"
         style={NO_DRAG}
@@ -173,7 +173,7 @@ export function DesktopExportButton(): JSX.Element {
   return (
     <>
       <Button
-        label="Export"
+        label="导出"
         variant="primary"
         size="sm"
         icon={<Icon name="square.and.arrow.up" size={15} ariaHidden />}

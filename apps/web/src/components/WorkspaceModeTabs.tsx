@@ -6,14 +6,14 @@ const MODES: Array<{
   id: WorkspaceMode;
   label: string;
 }> = [
-  { id: "video", label: "Video Editor" },
-  { id: "motion", label: "Motion Design" },
+  { id: "video", label: "视频编辑" },
+  { id: "motion", label: "动效设计" },
 ];
 
 export function WorkspaceModeTabs({
   activeMode,
   onSelectMode,
-  ariaLabel = "Editor workspaces",
+  ariaLabel = "编辑工作区",
   className = "",
   accessibleLabels,
 }: {
