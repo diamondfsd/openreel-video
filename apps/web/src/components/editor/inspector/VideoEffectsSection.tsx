@@ -52,6 +52,77 @@ function effectNumberValue(value: unknown, fallback: number): number {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
+const VIDEO_EFFECT_CATEGORY_LABELS: Record<string, string> = {
+  Basic: "基础",
+  Color: "色彩",
+  Blur: "模糊",
+  Creative: "创意",
+  Stylize: "风格化",
+};
+
+const VIDEO_SHADER_LABELS: Record<string, string> = {
+  dither: "抖动",
+  "gradient-map": "渐变映射",
+  pixelate: "像素化",
+  halftone: "半色调",
+  vhs: "VHS",
+  posterize: "色调分离",
+  duotone: "双调",
+  prism: "棱镜分离",
+  fisheye: "鱼眼",
+  "wave-warp": "波浪扭曲",
+  scanlines: "扫描线",
+  "edge-glow": "边缘发光",
+};
+
+const VIDEO_EFFECT_PARAM_LABELS: Record<string, string> = {
+  Amount: "强度",
+  Angle: "角度",
+  Amplitude: "振幅",
+  Background: "背景",
+  Blur: "模糊",
+  Brightness: "亮度",
+  Contrast: "对比度",
+  "Center X": "中心 X",
+  "Center Y": "中心 Y",
+  Density: "密度",
+  Distance: "距离",
+  "Dot Size": "点大小",
+  Feather: "羽化",
+  Frequency: "频率",
+  "Glow Color": "光晕颜色",
+  Highlight: "高光",
+  Intensity: "强度",
+  Jitter: "抖动",
+  Levels: "色阶",
+  Mix: "混合",
+  Midpoint: "中点",
+  Offset: "偏移",
+  "Offset X": "偏移 X",
+  "Offset Y": "偏移 Y",
+  Opacity: "不透明度",
+  Radius: "半径",
+  Scale: "缩放",
+  Scanlines: "扫描线",
+  Separation: "分离",
+  Shadow: "阴影",
+  Size: "大小",
+  Softness: "柔和度",
+  Speed: "速度",
+  Strength: "强度",
+  Threshold: "阈值",
+  Tint: "色调",
+  Value: "值",
+};
+
+function localizeVideoEffectParamLabel(label: string): string {
+  return VIDEO_EFFECT_PARAM_LABELS[label] ?? label;
+}
+
+function localizeVideoShaderName(shaderId: string, name: string): string {
+  return VIDEO_SHADER_LABELS[shaderId] ?? name;
+}
+
 function shaderEffectColorValue(
   value: unknown,
   fallback: number | string,
@@ -74,7 +145,7 @@ const EffectColorField: React.FC<{
       <ColorSelector
         value={value}
         onChange={onChange}
-        label={`Select ${label.toLowerCase()}`}
+        label={`选择${label}`}
       />
     </div>
   </div>
@@ -90,7 +161,7 @@ const EffectSlider: React.FC<{
   unit?: string;
 }> = ({ label, value, onChange, min, max, step = 1, unit = "" }) => (
   <PropertySlider
-    label={label}
+    label={localizeVideoEffectParamLabel(label)}
     value={value}
     onChange={onChange}
     min={min}
@@ -129,27 +200,27 @@ const EffectItem: React.FC<{
   const [isExpanded, setIsExpanded] = React.useState(true);
 
   const effectLabels: Record<VideoEffectType, string> = {
-    brightness: "Brightness",
-    contrast: "Contrast",
-    saturation: "Saturation",
-    grayscale: "Grayscale",
-    sepia: "Sepia",
-    invert: "Invert",
-    hue: "Hue",
-    blur: "Blur",
-    sharpen: "Sharpen",
-    vignette: "Vignette",
-    grain: "Grain",
-    temperature: "Temperature",
-    tint: "Tint",
-    tonal: "Tonal",
-    chromaKey: "Chroma Key",
-    shadow: "Drop Shadow",
-    glow: "Glow",
-    "motion-blur": "Motion Blur",
-    "radial-blur": "Radial Blur",
-    "chromatic-aberration": "Chromatic Aberration",
-    shader: "Shader",
+    brightness: "亮度",
+    contrast: "对比度",
+    saturation: "饱和度",
+    grayscale: "灰度",
+    sepia: "棕褐色",
+    invert: "反相",
+    hue: "色相",
+    blur: "模糊",
+    sharpen: "锐化",
+    vignette: "暗角",
+    grain: "胶片颗粒",
+    temperature: "色温",
+    tint: "色调偏移",
+    tonal: "色调平衡",
+    chromaKey: "色键",
+    shadow: "投影",
+    glow: "光晕",
+    "motion-blur": "动态模糊",
+    "radial-blur": "径向模糊",
+    "chromatic-aberration": "色差",
+    shader: "材质效果",
   };
 
   const shaderDef =
@@ -159,7 +230,9 @@ const EffectItem: React.FC<{
 
   const headerLabel =
     effect.type === "shader"
-      ? shaderDef?.name ?? "Shader"
+      ? shaderDef
+        ? localizeVideoShaderName(String(effect.params.shaderId ?? ""), shaderDef.name)
+        : "未知效果"
       : effectLabels[effect.type] || effect.type;
 
   const renderParams = () => {
@@ -167,7 +240,7 @@ const EffectItem: React.FC<{
       if (!shaderDef) {
         return (
           <Text type="supporting" color="secondary" className="text-[10px]">
-            Unknown shader
+            未知效果
           </Text>
         );
       }
@@ -178,7 +251,7 @@ const EffectItem: React.FC<{
               return (
                 <EffectColorField
                   key={param.name}
-                  label={param.label}
+                  label={localizeVideoEffectParamLabel(param.label)}
                   value={shaderEffectColorValue(
                     effect.params[param.name],
                     param.default,
@@ -190,7 +263,7 @@ const EffectItem: React.FC<{
             return (
               <EffectSlider
                 key={param.name}
-                label={param.label}
+                label={localizeVideoEffectParamLabel(param.label)}
                 value={shaderEffectNumberValue(
                   effect.params[param.name],
                   param.default,
@@ -512,8 +585,8 @@ const EffectItem: React.FC<{
           <button
             type="button"
             draggable
-            aria-label={`Reorder ${headerLabel}`}
-            title="Drag to reorder effect"
+            aria-label={`重新排列${headerLabel}`}
+            title="拖动以重新排列效果"
             onDragStart={(event) => {
               event.dataTransfer.effectAllowed = "move";
               event.dataTransfer.setData(
@@ -551,7 +624,7 @@ const EffectItem: React.FC<{
             className="min-w-0 flex-1 justify-start"
           />
           <IconButton
-            label={`Move ${headerLabel} up`}
+            label={`将${headerLabel}上移`}
             onClick={() => onMove(effect.id, -1)}
             isDisabled={!canMoveUp}
             variant="ghost"
@@ -559,7 +632,7 @@ const EffectItem: React.FC<{
             icon={<ArrowUp size={11} aria-hidden />}
           />
           <IconButton
-            label={`Move ${headerLabel} down`}
+            label={`将${headerLabel}下移`}
             onClick={() => onMove(effect.id, 1)}
             isDisabled={!canMoveDown}
             variant="ghost"
@@ -567,7 +640,7 @@ const EffectItem: React.FC<{
             icon={<ArrowDown size={11} aria-hidden />}
           />
           <IconButton
-            label={effect.enabled ? "Disable effect" : "Enable effect"}
+            label={effect.enabled ? "停用效果" : "启用效果"}
             onClick={() => onToggle(effect.id, !effect.enabled)}
             variant="ghost"
             size="sm"
@@ -580,14 +653,14 @@ const EffectItem: React.FC<{
             }
           />
           <IconButton
-            label="Duplicate effect"
+            label="复制效果"
             onClick={() => onDuplicate(effect.id)}
             variant="ghost"
             size="sm"
             icon={<Copy size={12} aria-hidden />}
           />
           <IconButton
-            label="Remove effect"
+            label="移除效果"
             onClick={() => onRemove(effect.id)}
             variant="ghost"
             size="sm"
@@ -612,7 +685,7 @@ function VisualEffectPreview({
   return (
     <button
       type="button"
-      aria-label={`Preview and add ${def.label}`}
+      aria-label={`预览并添加${def.label}`}
       onClick={() => onSelect(def)}
       className="group min-w-0 rounded-[9px] border border-border bg-bg-2 p-1.5 text-left transition-colors hover:border-accent/60 hover:bg-bg-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
     >
@@ -630,17 +703,17 @@ function VisualEffectPreview({
           Aa
         </span>
         <span className="absolute bottom-1 left-1 rounded bg-black/45 px-1 py-0.5 text-[8px] font-semibold uppercase text-white/75">
-          Before
+          原始
         </span>
         <span className="absolute bottom-1 right-1 rounded bg-black/55 px-1 py-0.5 text-[8px] font-semibold uppercase text-white/90">
-          Effect
+          效果
         </span>
       </span>
       <span className="mt-1.5 block truncate text-[11px] font-semibold text-fg-2">
         {def.label}
       </span>
       <span className="block truncate text-[9px] text-fg-4">
-        {def.category} · {def.description}
+        {VIDEO_EFFECT_CATEGORY_LABELS[def.category] ?? def.category} · {def.description}
       </span>
     </button>
   );
@@ -654,7 +727,18 @@ const EffectTypeSelector: React.FC<{
     "effects",
   );
   const [query, setQuery] = React.useState("");
-  const shaderDefs = useMemo(() => getMotionShaderEffectDefs(), []);
+  const shaderDefs = useMemo(
+    () =>
+      getMotionShaderEffectDefs().map((def) => ({
+        ...def,
+        name: localizeVideoShaderName(def.id, def.name),
+        params: def.params.map((param) => ({
+          ...param,
+          label: localizeVideoEffectParamLabel(param.label),
+        })),
+      })),
+    [],
+  );
   const visibleEffects = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return EDITOR_EFFECT_PREVIEWS;
@@ -669,13 +753,13 @@ const EffectTypeSelector: React.FC<{
       placement="below"
       alignment="end"
       width={430}
-      label="Add video effect"
+      label="添加视频效果"
       content={
         <div className="w-[430px] max-w-[calc(100vw-32px)] space-y-2.5 p-2.5">
           <div className="flex items-center gap-1 rounded-[8px] bg-bg-2 p-1">
             {([
-              ["effects", `Effects · ${EDITOR_EFFECT_PREVIEWS.length}`],
-              ["shaders", `Shaders · ${shaderDefs.length}`],
+              ["effects", `效果 · ${EDITOR_EFFECT_PREVIEWS.length}`],
+              ["shaders", `材质效果 · ${shaderDefs.length}`],
             ] as const).map(([id, label]) => (
               <button
                 key={id}
@@ -704,8 +788,8 @@ const EffectTypeSelector: React.FC<{
                   type="search"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search visual effects"
-                  aria-label="Search visual effects"
+                  placeholder="搜索视频效果"
+                  aria-label="搜索视频效果"
                   className="h-8 w-full rounded-[7px] border border-border bg-bg-2 pl-8 pr-2.5 text-xs text-fg outline-none placeholder:text-fg-4 focus:border-accent"
                 />
               </label>
@@ -716,10 +800,13 @@ const EffectTypeSelector: React.FC<{
                   );
                   if (effects.length === 0) return null;
                   return (
-                    <section key={category} aria-label={`${category} effects`}>
+                    <section
+                      key={category}
+                      aria-label={`${VIDEO_EFFECT_CATEGORY_LABELS[category] ?? category}效果`}
+                    >
                       <div className="mb-1.5 flex items-center justify-between px-0.5">
                         <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-fg-4">
-                          {category}
+                          {VIDEO_EFFECT_CATEGORY_LABELS[category] ?? category}
                         </span>
                         <span className="text-[9px] tabular-nums text-fg-4">
                           {effects.length}
@@ -739,7 +826,7 @@ const EffectTypeSelector: React.FC<{
                 })}
                 {visibleEffects.length === 0 ? (
                   <div className="rounded-[8px] border border-dashed border-border px-3 py-8 text-center text-[11px] text-fg-4">
-                    No effects match “{query}”.
+                    没有匹配“{query}”的效果。
                   </div>
                 ) : null}
               </div>
@@ -749,14 +836,14 @@ const EffectTypeSelector: React.FC<{
               defs={shaderDefs}
               onSelect={onSelectShader}
               sample="effect"
-              label="Shader effect previews"
+              label="材质效果预览"
             />
           )}
         </div>
       }
     >
       <Button
-        label="Add Effect"
+        label="添加效果"
         variant="secondary"
         size="sm"
         endContent={<ChevronDown size={12} className="text-fg-3" aria-hidden />}
@@ -921,28 +1008,28 @@ export const VideoEffectsSection: React.FC<VideoEffectsSectionProps> = ({
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-1.5">
         <Button
-          label="Copy effect stack"
+          label="复制效果堆栈"
           variant="secondary"
           size="sm"
           isDisabled={effects.length === 0}
           onClick={handleCopyStack}
         />
         <Button
-          label="Paste effect stack"
+          label="粘贴效果堆栈"
           variant="secondary"
           size="sm"
           isDisabled={!hasStackClipboard}
           onClick={() => handlePasteStack("append")}
         />
         <Button
-          label="Paste and replace effects"
+          label="粘贴并替换效果"
           variant="secondary"
           size="sm"
           isDisabled={!hasStackClipboard}
           onClick={() => handlePasteStack("replace")}
         />
         <Button
-          label="Clear effect stack"
+          label="清除效果堆栈"
           variant="secondary"
           size="sm"
           isDisabled={effects.length === 0}
@@ -956,7 +1043,7 @@ export const VideoEffectsSection: React.FC<VideoEffectsSectionProps> = ({
           display="block"
           className="py-2 text-center text-[10px]"
         >
-          No effects applied
+          尚未应用效果
         </Text>
       ) : (
         <div className="space-y-2">
