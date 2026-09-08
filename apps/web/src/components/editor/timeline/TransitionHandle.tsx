@@ -2,6 +2,7 @@ import React, { useCallback, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { TransitionType } from "@openreel/core";
 import type { ResolvedTransitionHandle } from "./transition-handles";
+import { getTransitionDisplay } from "./transition-labels";
 import { useProjectStore } from "../../../stores/project-store";
 import { getTransitionBridge } from "../../../bridges/transition-bridge";
 import { toast } from "../../../stores/notification-store";
@@ -58,11 +59,11 @@ export const TransitionHandle: React.FC<TransitionHandleProps> = ({
       setOpen(false);
       if (transition) {
         await updateClipTransition(transition.id, { type });
-        toast.success("Transition updated", type);
+        toast.success("转场已更新", getTransitionDisplay(type).name);
         return;
       }
       if (!bridge.isInitialized()) {
-        toast.error("Transition engine not ready", "Try again in a moment.");
+        toast.error("转场功能尚未就绪", "请稍后重试。");
         return;
       }
       const params = bridge.getDefaultParams(type);
@@ -73,13 +74,13 @@ export const TransitionHandle: React.FC<TransitionHandleProps> = ({
         const created = bridge.getTransition(result.transitionId);
         if (created) {
           await addClipTransition(created);
-          toast.success("Transition added", `${type} · 1.0s`);
+          toast.success("已添加转场", `${getTransitionDisplay(type).name} · 1.0 秒`);
           return;
         }
       }
       toast.error(
-        "Transition failed",
-        result.error || "Could not create transition",
+        "转场失败",
+        result.error || "无法创建转场。",
       );
     },
     [
@@ -97,19 +98,19 @@ export const TransitionHandle: React.FC<TransitionHandleProps> = ({
     setOpen(false);
     if (!transition) return;
     await removeClipTransition(transition.id);
-    toast.success("Transition removed", "Hard cut restored");
+    toast.success("转场已删除", "已恢复硬切");
   }, [transition, removeClipTransition]);
 
   const label = transition
-    ? `${transition.type} · ${transition.duration.toFixed(1)}s`
+    ? `${getTransitionDisplay(transition.type).name} · ${transition.duration.toFixed(1)} 秒`
     : edge === "in"
-      ? "Add intro transition"
+      ? "添加片头转场"
       : edge === "out"
-        ? "Add outro transition"
-        : "Add transition";
+        ? "添加片尾转场"
+        : "添加转场";
   const ariaLabel = edge
-    ? `Edit ${edge === "in" ? "intro" : "outro"} transition: ${label}`
-    : `Edit transition between clips: ${label}`;
+    ? `编辑${edge === "in" ? "片头" : "片尾"}转场：${label}`
+    : `编辑片段之间的转场：${label}`;
   const isActive = Boolean(transition) || isSelected || open;
 
   const menu =
@@ -137,7 +138,7 @@ export const TransitionHandle: React.FC<TransitionHandleProps> = ({
             >
               <div className="py-1 max-h-72 overflow-y-auto">
                 <div className="px-3 py-1.5 text-[11px] font-semibold text-fg-muted uppercase tracking-wide">
-                  Transition
+                  转场
                 </div>
                 {transition && (
                   <button
@@ -145,30 +146,33 @@ export const TransitionHandle: React.FC<TransitionHandleProps> = ({
                     onClick={handleRemove}
                     className="w-full flex items-center px-3 py-2 text-[12px] font-medium text-destructive hover:bg-hover transition-colors text-left"
                   >
-                    Remove transition
+                    删除转场
                   </button>
                 )}
-                {types.map((t) => (
-                  <button
-                    key={t.type}
-                    type="button"
-                    onClick={() => applyType(t.type)}
-                    className={`w-full flex flex-col px-3 py-1.5 hover:bg-hover transition-colors text-left ${
-                      transition?.type === t.type ? "bg-selected" : ""
-                    }`}
-                  >
-                    <span
-                      className={`text-[12px] font-medium ${
-                        transition?.type === t.type ? "text-accent" : "text-fg"
+                {types.map((t) => {
+                  const display = getTransitionDisplay(t.type);
+                  return (
+                    <button
+                      key={t.type}
+                      type="button"
+                      onClick={() => applyType(t.type)}
+                      className={`w-full flex flex-col px-3 py-1.5 hover:bg-hover transition-colors text-left ${
+                        transition?.type === t.type ? "bg-selected" : ""
                       }`}
                     >
-                      {t.name}
-                    </span>
-                    <span className="text-[11px] text-fg-muted leading-tight">
-                      {t.description}
-                    </span>
-                  </button>
-                ))}
+                      <span
+                        className={`text-[12px] font-medium ${
+                          transition?.type === t.type ? "text-accent" : "text-fg"
+                        }`}
+                      >
+                        {display.name}
+                      </span>
+                      <span className="text-[11px] text-fg-muted leading-tight">
+                        {display.description || t.description}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </>,

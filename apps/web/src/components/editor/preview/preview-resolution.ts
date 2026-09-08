@@ -29,8 +29,8 @@ export const PREVIEW_QUALITY_OPTIONS: {
   value: PreviewQuality;
   label: string;
 }[] = [
-  { value: "auto", label: "Auto" },
-  { value: "full", label: "Full" },
+  { value: "auto", label: "自动" },
+  { value: "full", label: "完整" },
   { value: "half", label: "½" },
   { value: "quarter", label: "¼" },
 ];

@@ -28,7 +28,7 @@ export const CaptionBatchSelectButton: React.FC = () => {
 
   return (
     <Button
-      label={`Select all captions (${captionSelection.length})`}
+      label={`选择所有字幕 (${captionSelection.length})`}
       icon={<ListChecks size={14} aria-hidden />}
       size="sm"
       variant="secondary"

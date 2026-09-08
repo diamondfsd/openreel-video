@@ -127,10 +127,10 @@ export function useClipContextMenuItems({
   };
 
   const getClipTypeLabel = () => {
-    if (isVideo) return "Video Clip";
-    if (isAudio) return "Audio Clip";
-    if (isImage) return "Image Clip";
-    return "Clip";
+    if (isVideo) return "视频片段";
+    if (isAudio) return "音频片段";
+    if (isImage) return "图片片段";
+    return "片段";
   };
 
   const getClipTypeIcon = () => {
@@ -154,29 +154,29 @@ export function useClipContextMenuItems({
     },
     { type: "divider" },
     {
-      label: "Copy Clip",
+      label: "复制片段",
       icon: <Copy size={14} aria-hidden />,
       onClick: handleCopy,
     },
     {
-      label: "Duplicate",
+      label: "创建副本",
       icon: <Layers size={14} aria-hidden />,
       onClick: handleDuplicate,
     },
     {
-      label: "Select All Clips on Track",
+      label: "选择轨道上的所有片段",
       icon: <ListChecks size={14} aria-hidden />,
       onClick: handleSelectTrackClips,
     },
     { type: "divider" },
     {
-      label: "Split at Playhead",
+      label: "在播放头处分割",
       icon: <Scissors size={14} aria-hidden />,
       isDisabled: !isPlayheadOnClip,
       onClick: handleSplit,
     },
     {
-      label: "Close Gap to Previous",
+      label: "闭合与前一片段的间隙",
       icon: <ArrowLeftToLine size={14} aria-hidden />,
       isDisabled: !hasGapBeforeClip,
       onClick: handleCloseGap,
@@ -186,16 +186,16 @@ export function useClipContextMenuItems({
   if (isVideo || isImage) {
     items.push({
       type: "section",
-      title: "Effects",
+      title: "效果",
       items: [
         {
-          label: "Copy Effects",
+          label: "复制效果",
           icon: <Sparkles size={14} aria-hidden />,
           isDisabled: !hasEffects,
           onClick: handleCopyEffects,
         },
         {
-          label: "Paste Effects",
+          label: "粘贴效果",
           icon: <Sparkles size={14} aria-hidden />,
           isDisabled: !hasCopiedEffects,
           onClick: handlePasteEffects,
@@ -206,7 +206,7 @@ export function useClipContextMenuItems({
 
   if (isVideoWithAudio) {
     items.push({
-      label: "Separate Audio",
+      label: "分离音频",
       icon: <Music size={14} aria-hidden />,
       onClick: handleSeparateAudio,
     });
@@ -215,16 +215,16 @@ export function useClipContextMenuItems({
   if (isAudio) {
     items.push({
       type: "section",
-      title: "Audio",
+      title: "音频",
       items: [
         {
-          label: "Copy Audio Effects",
+          label: "复制音频效果",
           icon: <Volume2 size={14} aria-hidden />,
           isDisabled: !hasEffects,
           onClick: handleCopyEffects,
         },
         {
-          label: "Paste Audio Effects",
+          label: "粘贴音频效果",
           icon: <Volume2 size={14} aria-hidden />,
           isDisabled: !hasCopiedEffects,
           onClick: handlePasteEffects,
@@ -236,12 +236,12 @@ export function useClipContextMenuItems({
   items.push(
     { type: "divider" },
     {
-      label: "Ripple Delete",
+      label: "波纹删除",
       icon: <Trash2 size={14} aria-hidden />,
       onClick: handleRippleDelete,
     },
     {
-      label: "Delete",
+      label: "删除",
       icon: <Trash2 size={14} aria-hidden />,
       onClick: handleDelete,
     },

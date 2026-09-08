@@ -39,10 +39,10 @@ const RESOLUTION_OPTIONS: {
   label: string;
   desc: string;
 }[] = [
-  { value: "720p", label: "720p HD", desc: "1280×720 - Smaller files" },
-  { value: "1080p", label: "1080p Full HD", desc: "1920×1080 - Recommended" },
-  { value: "1440p", label: "1440p QHD", desc: "2560×1440 - High quality" },
-  { value: "4k", label: "4K Ultra HD", desc: "3840×2160 - Maximum quality" },
+  { value: "720p", label: "720p 高清", desc: "1280×720 - 文件体积较小" },
+  { value: "1080p", label: "1080p 全高清", desc: "1920×1080 - 推荐" },
+  { value: "1440p", label: "1440p QHD", desc: "2560×1440 - 高质量" },
+  { value: "4k", label: "4K 超高清", desc: "3840×2160 - 最高质量" },
 ];
 
 const FRAMERATE_OPTIONS: { value: FrameRate; label: string }[] = [
@@ -139,7 +139,7 @@ export const ScreenRecorder: React.FC<ScreenRecorderProps> = ({
       <Layout
         header={
           <DialogHeader
-            title="Screen Recording"
+            title="屏幕录制"
             onOpenChange={(open) => !open && handleCancel()}
             startContent={<Circle size={20} className="text-error fill-error animate-pulse" aria-hidden />}
           />
@@ -155,11 +155,10 @@ export const ScreenRecorder: React.FC<ScreenRecorderProps> = ({
               />
               <div>
                 <Text type="body" weight="bold" display="block" className="text-error">
-                  Screen recording not supported
+                  当前环境不支持屏幕录制
                 </Text>
                 <Text type="supporting" color="secondary" display="block" className="mt-1">
-                  Your browser doesn't support screen recording. Please use
-                  Chrome, Edge, or Firefox.
+                  当前浏览器不支持屏幕录制，请使用 Chrome、Edge 或 Firefox。
                 </Text>
               </div>
             </Card>
@@ -174,7 +173,7 @@ export const ScreenRecorder: React.FC<ScreenRecorderProps> = ({
               />
               <div>
                 <Text type="body" weight="bold" display="block" className="text-error">
-                  Recording Error
+                  录制错误
                 </Text>
                 <Text type="supporting" color="secondary" display="block" className="mt-1">
                   {error}
@@ -187,14 +186,14 @@ export const ScreenRecorder: React.FC<ScreenRecorderProps> = ({
             <div className="flex items-center gap-2">
               <Monitor size={16} aria-hidden />
               <Text type="body" weight="bold">
-                Video Settings
+                视频设置
               </Text>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Selector
-                  label="Resolution"
+                  label="分辨率"
                   value={options.video.resolution}
                   onChange={(value) => setVideoOption("resolution", value as VideoResolution)}
                   isDisabled={!isSupported}
@@ -216,7 +215,7 @@ export const ScreenRecorder: React.FC<ScreenRecorderProps> = ({
 
               <div>
                 <Selector
-                  label="Frame Rate"
+                  label="帧率"
                   value={String(options.video.frameRate)}
                   onChange={(value) => setVideoOption("frameRate", parseInt(value, 10) as FrameRate)}
                   isDisabled={!isSupported}
@@ -235,13 +234,13 @@ export const ScreenRecorder: React.FC<ScreenRecorderProps> = ({
             <div className="flex items-center gap-2">
               <Settings size={16} aria-hidden />
               <Text type="body" weight="bold">
-                Audio Settings
+                音频设置
               </Text>
             </div>
 
             <div className="flex gap-4">
               <SelectableCard
-                label="System Audio"
+                label="系统音频"
                 isSelected={options.audio.systemAudio}
                 onChange={() => setAudioOption("systemAudio", !options.audio.systemAudio)}
                 isDisabled={!isSupported || !features.systemAudio}
@@ -255,12 +254,12 @@ export const ScreenRecorder: React.FC<ScreenRecorderProps> = ({
                   <VolumeX size={18} aria-hidden />
                 )}
                 <Text type="body" className="ml-2 text-sm">
-                  System Audio
+                  系统音频
                 </Text>
               </SelectableCard>
 
               <SelectableCard
-                label="Microphone"
+                label="麦克风"
                 isSelected={options.audio.microphone}
                 onChange={() => setAudioOption("microphone", !options.audio.microphone)}
                 isDisabled={!isSupported}
@@ -274,15 +273,14 @@ export const ScreenRecorder: React.FC<ScreenRecorderProps> = ({
                   <MicOff size={18} aria-hidden />
                 )}
                 <Text type="body" className="ml-2 text-sm">
-                  Microphone
+                  麦克风
                 </Text>
               </SelectableCard>
             </div>
 
             {!features.systemAudio && (
               <Text type="supporting" color="secondary" display="block" className="text-[10px]">
-                System audio capture is only available in Chrome and Edge
-                browsers.
+                仅 Chrome 和 Edge 浏览器支持系统音频采集。
               </Text>
             )}
           </div>
@@ -292,11 +290,11 @@ export const ScreenRecorder: React.FC<ScreenRecorderProps> = ({
               <div className="flex items-center gap-2">
                 <Camera size={16} aria-hidden />
                 <Text type="body" weight="bold">
-                  Webcam Recording
+                  摄像头录制
                 </Text>
               </div>
               <ToolcraftSwitchControl
-                ariaLabel="Webcam recording"
+                ariaLabel="摄像头录制"
                 checked={options.webcam.enabled}
                 onCheckedChange={(enabled) => setWebcamOption("enabled", enabled)}
                 disabled={!isSupported || !features.webcam}
@@ -308,7 +306,7 @@ export const ScreenRecorder: React.FC<ScreenRecorderProps> = ({
               <div className="flex gap-4">
                 <div className="flex-1">
                   <Selector
-                    label="Webcam Resolution"
+                    label="摄像头分辨率"
                     value={options.webcam.resolution}
                     onChange={(value) => setWebcamOption("resolution", value as WebcamResolution)}
                     options={WEBCAM_RESOLUTION_OPTIONS.map((opt) => ({
@@ -335,8 +333,7 @@ export const ScreenRecorder: React.FC<ScreenRecorderProps> = ({
             )}
 
             <Text type="supporting" color="secondary" display="block" className="text-[10px]">
-              Webcam will be recorded as a separate file, giving you full
-              control in the editor.
+              摄像头内容会作为单独文件录制，方便在编辑器中自由调整。
             </Text>
           </div>
           </LayoutContent>
@@ -345,17 +342,17 @@ export const ScreenRecorder: React.FC<ScreenRecorderProps> = ({
           <LayoutFooter hasDivider>
             <div className="flex items-center justify-between gap-4">
               <Text type="supporting" color="secondary" className="text-xs">
-                Recording will start after a 3-second countdown
+                录制将在 3 秒倒计时后开始
               </Text>
 
               <div className="flex gap-3">
                 <Button
-                  label="Cancel"
+                  label="取消"
                   variant="ghost"
                   onClick={handleCancel}
                 />
                 <Button
-                  label={status === "requesting" ? "Requesting Access..." : "Start Recording"}
+                  label={status === "requesting" ? "正在请求权限..." : "开始录制"}
                   variant="primary"
                   icon={
                     status === "requesting" ? (

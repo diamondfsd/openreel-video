@@ -69,9 +69,9 @@ const ColorField: React.FC<{
       <ColorSelector
         value={value}
         onChange={onChange}
-        label={`Select ${label.toLowerCase()}`}
+        label={`选择${label}`}
         allowTransparent={allowTransparent}
-        fallback={label === "Text Color" ? "#ffffff" : "#000000"}
+        fallback={label === "文字颜色" ? "#ffffff" : "#000000"}
         showAlpha={showAlpha}
       />
     </div>
@@ -123,11 +123,21 @@ const FontSelector: React.FC<{
   value: string;
   onChange: (font: string) => void;
 }> = ({ value, onChange }) => {
+  const categoryLabels: Record<string, string> = {
+    Popular: "常用",
+    "Display & Headlines": "展示与标题",
+    "Elegant & Serif": "优雅与衬线",
+    "Modern & Clean": "现代与简洁",
+    "Handwritten & Script": "手写与脚本",
+    "Fun & Creative": "趣味与创意",
+    Monospace: "等宽",
+    System: "系统字体",
+  };
   const customFonts = useCustomFonts();
   const options = [
     ...Object.entries(FONT_CATEGORIES).map(([category, fonts]) => ({
       type: "section" as const,
-      title: category,
+      title: categoryLabels[category] ?? category,
       options: fonts.map((font) => ({
         label: font,
         value: font,
@@ -137,7 +147,7 @@ const FontSelector: React.FC<{
       ? [
           {
             type: "section" as const,
-            title: "Custom Uploads",
+            title: "自定义上传",
             options: customFonts.map((font) => ({
               label: font,
               value: font,
@@ -150,10 +160,10 @@ const FontSelector: React.FC<{
   return (
     <div className="flex items-center justify-between">
       <Text type="supporting" color="secondary">
-        Font
+        字体
       </Text>
       <Selector
-        label="Font"
+        label="字体"
         isLabelHidden
         size="sm"
         width={160}
@@ -161,7 +171,7 @@ const FontSelector: React.FC<{
         options={options as any}
         onChange={onChange}
         hasSearch
-        searchPlaceholder="Search fonts"
+        searchPlaceholder="搜索字体"
       />
     </div>
   );
@@ -294,10 +304,10 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId, clipIds }) => 
 
       const result = await registerCustomFont(file);
       if (!result.success) {
-        toast.error("Font upload failed", result.error ?? "Unknown error.");
+        toast.error("字体上传失败", result.error ?? "未知错误。");
       } else {
         await handleStyleChange({ fontFamily: result.fontFamily });
-        toast.success("Custom font uploaded", `${result.fontFamily} is ready to use.`);
+        toast.success("自定义字体已上传", `${result.fontFamily} 已可使用。`);
       }
 
       setFontFile(null);
@@ -310,7 +320,7 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId, clipIds }) => 
       <div className="p-4 text-center">
         <Type size={24} className="mx-auto mb-2 text-fg-3" />
         <Text type="supporting" color="secondary">
-          No text clip selected
+          未选择文字片段
         </Text>
       </div>
     );
@@ -332,18 +342,18 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId, clipIds }) => 
       {isBatch ? (
         <Card variant="green" padding={3}>
           <Text type="supporting" display="block" className="text-[10px] text-fg-2">
-            Applying the full Text inspector to {textClips.length} selected clips. Caption content and timing stay unchanged.
+            正在将完整文字设置应用到已选的 {textClips.length} 个片段。字幕内容和时间保持不变。
           </Text>
         </Card>
       ) : (
         <ToolcraftTextAreaControl
-          label="Text Content"
+          label="文字内容"
           size="sm"
           width="100%"
           rows={4}
           value={text}
           onChange={handleTextChange}
-          placeholder="Enter text..."
+          placeholder="输入文字..."
           style={{ fontFamily: style.fontFamily }}
         />
       )}
@@ -355,17 +365,17 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId, clipIds }) => 
             onChange={(fontFamily) => handleStyleChange({ fontFamily })}
           />
           <FileInput
-            label="Custom Font"
+            label="自定义字体"
             isLabelHidden
             width="100%"
             mode="input"
             value={fontFile}
             accept={FONT_FILE_ACCEPT}
-            placeholder="Upload custom font"
+            placeholder="上传自定义字体"
             onChange={handleCustomFontSelect}
           />
           <NumberInput
-            label="Size"
+            label="字号"
             value={style.fontSize}
             onChange={(fontSize) => handleStyleChange({ fontSize })}
             min={8}
@@ -378,7 +388,7 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId, clipIds }) => 
             </Text>
             <div className="flex gap-1">
               <IconButton
-                label="Bold"
+                label="粗体"
                 icon={<Bold size={12} />}
                 size="sm"
                 variant={allBold ? "primary" : "secondary"}
@@ -389,7 +399,7 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId, clipIds }) => 
                 }
               />
               <IconButton
-                label="Italic"
+                label="斜体"
                 icon={<Italic size={12} />}
                 size="sm"
                 variant={allItalic ? "primary" : "secondary"}
@@ -400,7 +410,7 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId, clipIds }) => 
                 }
               />
               <IconButton
-                label="Underline"
+                label="下划线"
                 icon={<Underline size={12} />}
                 size="sm"
                 variant={
@@ -420,17 +430,17 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId, clipIds }) => 
 
       <div className="flex items-center justify-between">
         <Text type="supporting" color="secondary">
-          Text Align
+          文字对齐
         </Text>
         <ToggleButtonGroup
           options={[
-            { value: "left", icon: <AlignLeft size={12} />, label: "Left" },
+            { value: "left", icon: <AlignLeft size={12} />, label: "左对齐" },
             {
               value: "center",
               icon: <AlignCenter size={12} />,
-              label: "Center",
+              label: "居中对齐",
             },
-            { value: "right", icon: <AlignRight size={12} />, label: "Right" },
+            { value: "right", icon: <AlignRight size={12} />, label: "右对齐" },
           ]}
           value={style.textAlign}
           onChange={(textAlign) =>
@@ -444,29 +454,29 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId, clipIds }) => 
       <Card variant="muted" padding={3}>
         <div className="space-y-2">
           <Text type="supporting" color="primary" weight="medium">
-            Position on Canvas
+            画布位置
           </Text>
           <div className="flex items-center justify-between">
             <Text type="supporting" color="secondary">
-              Align to Canvas
+              与画布对齐
             </Text>
             <div className="flex gap-1">
               <IconButton
-                label="Center Horizontally"
+                label="水平居中"
                 icon={<AlignHorizontalJustifyCenter size={12} />}
                 size="sm"
                 variant="secondary"
                 onClick={handleCenterHorizontal}
               />
               <IconButton
-                label="Center Vertically"
+                label="垂直居中"
                 icon={<AlignVerticalJustifyCenter size={12} />}
                 size="sm"
                 variant="secondary"
                 onClick={handleCenterVertical}
               />
               <IconButton
-                label="Center Both"
+                label="水平垂直居中"
                 icon={<Crosshair size={12} />}
                 size="sm"
                 variant="primary"
@@ -480,12 +490,12 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId, clipIds }) => 
       <Card variant="muted" padding={3}>
         <div className="space-y-2">
           <ColorField
-            label="Text Color"
+            label="文字颜色"
             value={style.color}
             onChange={(color) => handleStyleChange({ color })}
           />
           <ColorField
-            label="Background"
+            label="背景"
             value={style.backgroundColor || "transparent"}
             onChange={(backgroundColor) => handleStyleChange({ backgroundColor })}
             showAlpha
@@ -497,15 +507,15 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId, clipIds }) => 
       <Card variant="muted" padding={3}>
         <div className="space-y-2">
           <Text type="supporting" color="primary" weight="medium">
-            Stroke
+            描边
           </Text>
           <ColorField
-            label="Color"
+            label="颜色"
             value={style.strokeColor || "#000000"}
             onChange={(strokeColor) => handleStyleChange({ strokeColor })}
           />
           <NumberInput
-            label="Width"
+            label="宽度"
             value={style.strokeWidth || 0}
             onChange={(strokeWidth) => handleStyleChange({ strokeWidth })}
             min={0}
@@ -518,16 +528,16 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId, clipIds }) => 
       <Card variant="muted" padding={3}>
         <div className="space-y-2">
           <Text type="supporting" color="primary" weight="medium">
-            Shadow
+            阴影
           </Text>
           <ColorField
-            label="Color"
+            label="颜色"
             value={style.shadowColor || "#000000"}
             onChange={(shadowColor) => handleStyleChange({ shadowColor })}
             showAlpha
           />
           <NumberInput
-            label="Offset X"
+            label="X 偏移"
             value={style.shadowOffsetX || 0}
             onChange={(shadowOffsetX) => handleStyleChange({ shadowOffsetX })}
             min={-50}
@@ -535,7 +545,7 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId, clipIds }) => 
             unit="px"
           />
           <NumberInput
-            label="Offset Y"
+            label="Y 偏移"
             value={style.shadowOffsetY || 0}
             onChange={(shadowOffsetY) => handleStyleChange({ shadowOffsetY })}
             min={-50}
@@ -543,7 +553,7 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId, clipIds }) => 
             unit="px"
           />
           <NumberInput
-            label="Blur"
+            label="模糊"
             value={style.shadowBlur || 0}
             onChange={(shadowBlur) => handleStyleChange({ shadowBlur })}
             min={0}
@@ -556,7 +566,7 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId, clipIds }) => 
       <Card variant="muted" padding={3}>
         <div className="space-y-2">
           <NumberInput
-            label="Line Height"
+            label="行高"
             value={style.lineHeight || 1.2}
             onChange={(lineHeight) => handleStyleChange({ lineHeight })}
             min={0.5}
@@ -564,7 +574,7 @@ export const TextSection: React.FC<TextSectionProps> = ({ clipId, clipIds }) => 
             step={0.1}
           />
           <NumberInput
-            label="Letter Spacing"
+            label="字间距"
             value={style.letterSpacing || 0}
             onChange={(letterSpacing) => handleStyleChange({ letterSpacing })}
             min={-10}
@@ -604,7 +614,7 @@ const TextShaderControls: React.FC<{
     () =>
       groupShaderDefsByCollection(
         materialDefs,
-        [{ value: "", label: "None" }],
+        [{ value: "", label: "无" }],
       ),
     [materialDefs],
   );
@@ -647,10 +657,10 @@ const TextShaderControls: React.FC<{
     <Card variant="muted" padding={3}>
       <div className="space-y-2">
         <Text type="supporting" color="primary" weight="medium">
-          Text Material
+          文字材质
         </Text>
         <Selector
-          label="Text Material"
+          label="文字材质"
           isLabelHidden
           size="sm"
           width="100%"
@@ -663,12 +673,12 @@ const TextShaderControls: React.FC<{
           selectedId={shader?.shaderId}
           onSelect={handleShaderSelect}
           sample="text"
-          label="Text material previews"
+          label="文字材质预览"
         />
         {shader && def ? (
           <>
             <NumberInput
-              label="Progress"
+              label="进度"
               value={shader.progress ?? DEFAULT_TEXT_SHADER_PROGRESS}
               onChange={(progress) =>
                 onChange({
@@ -779,10 +789,10 @@ const Text3DControls: React.FC<Text3DControlsProps> = ({ clipId, clipIds }) => {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Text type="supporting" color="primary" weight="medium">
-            3D Text
+            3D 文字
           </Text>
           <MockToggle
-            ariaLabel="3D Text"
+            ariaLabel="3D 文字"
             checked={enabled}
             onChange={handleEnabledChange}
           />
@@ -790,7 +800,7 @@ const Text3DControls: React.FC<Text3DControlsProps> = ({ clipId, clipIds }) => {
         {enabled && (
           <>
             <NumberInput
-              label="Depth"
+              label="深度"
               value={text3d?.depth ?? DEFAULT_TEXT_3D.depth}
               onChange={(depth) => apply({ depth })}
               min={1}
@@ -799,7 +809,7 @@ const Text3DControls: React.FC<Text3DControlsProps> = ({ clipId, clipIds }) => {
               unit="px"
             />
             <NumberInput
-              label="Bevel Thickness"
+              label="斜角厚度"
               value={text3d?.bevelThickness ?? DEFAULT_TEXT_3D.bevelThickness}
               onChange={(bevelThickness) => apply({ bevelThickness })}
               min={0}
@@ -807,7 +817,7 @@ const Text3DControls: React.FC<Text3DControlsProps> = ({ clipId, clipIds }) => {
               step={0.1}
             />
             <NumberInput
-              label="Bevel Size"
+              label="斜角大小"
               value={text3d?.bevelSize ?? DEFAULT_TEXT_3D.bevelSize}
               onChange={(bevelSize) => apply({ bevelSize })}
               min={0}
@@ -815,7 +825,7 @@ const Text3DControls: React.FC<Text3DControlsProps> = ({ clipId, clipIds }) => {
               step={0.1}
             />
             <NumberInput
-              label="Bevel Segments"
+              label="斜角分段"
               value={text3d?.bevelSegments ?? DEFAULT_TEXT_3D.bevelSegments}
               onChange={(bevelSegments) =>
                 apply({ bevelSegments: Math.max(1, Math.round(bevelSegments)) })
@@ -825,18 +835,18 @@ const Text3DControls: React.FC<Text3DControlsProps> = ({ clipId, clipIds }) => {
               step={1}
             />
             <ToolcraftSegmentedControl<"basic" | "physical">
-              ariaLabel="Material"
+              ariaLabel="材质"
               value={text3d?.material ?? "physical"}
               onChange={(material) => apply({ material })}
               options={[
-                { value: "basic", label: "Basic" },
-                { value: "physical", label: "Physical" },
+                { value: "basic", label: "基础" },
+                { value: "physical", label: "物理材质" },
               ]}
             />
             {(text3d?.material ?? "physical") === "physical" && (
               <>
                 <NumberInput
-                  label="Metalness"
+                  label="金属度"
                   value={text3d?.metalness ?? DEFAULT_TEXT_3D.metalness}
                   onChange={(metalness) =>
                     apply({ metalness: Math.max(0, Math.min(1, metalness)) })
@@ -846,7 +856,7 @@ const Text3DControls: React.FC<Text3DControlsProps> = ({ clipId, clipIds }) => {
                   step={0.05}
                 />
                 <NumberInput
-                  label="Roughness"
+                  label="粗糙度"
                   value={text3d?.roughness ?? DEFAULT_TEXT_3D.roughness}
                   onChange={(roughness) =>
                     apply({ roughness: Math.max(0, Math.min(1, roughness)) })

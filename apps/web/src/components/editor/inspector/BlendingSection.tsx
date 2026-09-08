@@ -12,6 +12,27 @@ interface BlendingSectionProps {
   clipId: string;
 }
 
+const BLEND_MODE_LABELS: Partial<Record<BlendMode, string>> = {
+  normal: "正常",
+  multiply: "正片叠底",
+  screen: "滤色",
+  overlay: "叠加",
+  darken: "变暗",
+  lighten: "变亮",
+  "color-dodge": "颜色减淡",
+  "color-burn": "颜色加深",
+  "hard-light": "强光",
+  "soft-light": "柔光",
+  difference: "差值",
+  exclusion: "排除",
+  hue: "色相",
+  saturation: "饱和度",
+  color: "颜色",
+  luminosity: "明度",
+  add: "相加",
+  "linear-dodge": "线性减淡",
+};
+
 export const BlendingSection: React.FC<BlendingSectionProps> = ({ clipId }) => {
   const {
     getClip,
@@ -72,7 +93,7 @@ export const BlendingSection: React.FC<BlendingSectionProps> = ({ clipId }) => {
         color="secondary"
         className="py-8 text-center text-xs"
       >
-        No clip selected
+        未选择片段
       </Text>
     );
   }
@@ -81,11 +102,11 @@ export const BlendingSection: React.FC<BlendingSectionProps> = ({ clipId }) => {
     <div className="space-y-3">
       <div className="flex items-center">
         <span className="w-[90px] flex-none text-[14px] font-semibold text-fg">
-          Blending
+          混合
         </span>
         <div className="relative flex-1">
           <select
-            aria-label="Blend mode"
+            aria-label="混合模式"
             value={blendMode}
             onChange={(event) =>
               handleBlendModeChange(event.target.value as BlendMode)
@@ -94,7 +115,7 @@ export const BlendingSection: React.FC<BlendingSectionProps> = ({ clipId }) => {
           >
             {availableBlendModes.map((mode) => (
               <option key={mode} value={mode}>
-                {getBlendModeName(mode)}
+                {BLEND_MODE_LABELS[mode] ?? getBlendModeName(mode)}
               </option>
             ))}
           </select>
@@ -116,7 +137,7 @@ export const BlendingSection: React.FC<BlendingSectionProps> = ({ clipId }) => {
       {blendMode !== "normal" && (
         <div className="flex items-center">
           <span className="w-[90px] flex-none text-[13px] font-medium text-fg-3">
-            Blend Opacity
+            混合不透明度
           </span>
           <MockSlider
             className="flex-1"

@@ -62,25 +62,25 @@ export const AlignmentSection: React.FC<AlignmentSectionProps> = ({
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Text type="supporting" color="secondary" className="w-16">
-          Horizontal
+          水平
         </Text>
         <div className="flex gap-1">
           <IconButton
-            label="Align Left"
+            label="左对齐"
             icon={<AlignHorizontalJustifyStart size={14} aria-hidden />}
             size="sm"
             variant="ghost"
             onClick={() => handleAlign("x", 0)}
           />
           <IconButton
-            label="Center Horizontally"
+            label="水平居中"
             icon={<AlignHorizontalJustifyCenter size={14} aria-hidden />}
             size="sm"
             variant="ghost"
             onClick={() => handleAlign("x", 0.5)}
           />
           <IconButton
-            label="Align Right"
+            label="右对齐"
             icon={<AlignHorizontalJustifyEnd size={14} aria-hidden />}
             size="sm"
             variant="ghost"
@@ -90,25 +90,25 @@ export const AlignmentSection: React.FC<AlignmentSectionProps> = ({
       </div>
       <div className="flex items-center gap-2">
         <Text type="supporting" color="secondary" className="w-16">
-          Vertical
+          垂直
         </Text>
         <div className="flex gap-1">
           <IconButton
-            label="Align Top"
+            label="顶部对齐"
             icon={<AlignVerticalJustifyStart size={14} aria-hidden />}
             size="sm"
             variant="ghost"
             onClick={() => handleAlign("y", 0)}
           />
           <IconButton
-            label="Center Vertically"
+            label="垂直居中"
             icon={<AlignVerticalJustifyCenter size={14} aria-hidden />}
             size="sm"
             variant="ghost"
             onClick={() => handleAlign("y", 0.5)}
           />
           <IconButton
-            label="Align Bottom"
+            label="底部对齐"
             icon={<AlignVerticalJustifyEnd size={14} aria-hidden />}
             size="sm"
             variant="ghost"
@@ -117,7 +117,7 @@ export const AlignmentSection: React.FC<AlignmentSectionProps> = ({
         </div>
       </div>
       <Button
-        label="Center on Canvas"
+        label="在画布中居中"
         variant="secondary"
         size="sm"
         onClick={handleCenterBoth}
@@ -125,8 +125,8 @@ export const AlignmentSection: React.FC<AlignmentSectionProps> = ({
       />
       <Text type="supporting" color="secondary" className="block text-center text-[9px] text-fg-muted">
         {usesNormalizedPosition
-          ? "Aligns the overlay anchor in canvas space"
-          : "Aligns the media anchor using pixel offsets from center"}
+          ? "按画布坐标对齐叠加内容锚点"
+          : "按相对中心的像素偏移对齐素材锚点"}
       </Text>
     </div>
   );

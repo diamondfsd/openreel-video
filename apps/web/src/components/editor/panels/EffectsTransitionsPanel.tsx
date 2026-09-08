@@ -43,50 +43,50 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   {
     type: "brightness",
-    label: "Brightness",
-    description: "Lift midtones and highlights",
+    label: "亮度",
+    description: "提升中间调和高光",
     category: "Basic",
     previewStyle: (p) => ({ filter: `brightness(${lerp(0.9, 1.6, p)})` }),
   },
   {
     type: "contrast",
-    label: "Contrast",
-    description: "Punchier shadows and highlights",
+    label: "对比度",
+    description: "增强阴影和高光",
     category: "Basic",
     previewStyle: (p) => ({ filter: `contrast(${lerp(0.8, 1.8, p)})` }),
   },
   {
     type: "saturation",
-    label: "Saturation",
-    description: "Boost or mute color intensity",
+    label: "饱和度",
+    description: "增强或降低色彩强度",
     category: "Basic",
     previewStyle: (p) => ({ filter: `saturate(${lerp(0.5, 2.0, p)})` }),
   },
   {
     type: "grayscale",
-    label: "Grayscale",
-    description: "Convert color to monochrome",
+    label: "灰度",
+    description: "转为单色",
     category: "Color",
     previewStyle: (p) => ({ filter: `grayscale(${p})` }),
   },
   {
     type: "sepia",
-    label: "Sepia",
-    description: "Warm vintage color treatment",
+    label: "棕褐色",
+    description: "温暖的复古色调",
     category: "Color",
     previewStyle: (p) => ({ filter: `sepia(${p})` }),
   },
   {
     type: "invert",
-    label: "Invert",
-    description: "Reverse image color values",
+    label: "反相",
+    description: "反转图像颜色",
     category: "Creative",
     previewStyle: (p) => ({ filter: `invert(${p})` }),
   },
   {
     type: "tonal",
-    label: "Tonal Balance",
-    description: "Shape shadows, mids, and highlights",
+    label: "色调平衡",
+    description: "调整阴影、中间调和高光",
     category: "Basic",
     previewStyle: (p) => ({
       filter: `brightness(${lerp(0.92, 1.14, p)}) contrast(${lerp(0.9, 1.35, p)})`,
@@ -94,8 +94,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   },
   {
     type: "temperature",
-    label: "Temperature",
-    description: "Warm / cool color shift",
+    label: "色温",
+    description: "冷暖色偏移",
     category: "Color",
     previewStyle: (p) => ({
       filter: `sepia(${lerp(0, 0.6, p)}) hue-rotate(${lerp(-12, 12, p)}deg)`,
@@ -103,8 +103,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   },
   {
     type: "tint",
-    label: "Tint",
-    description: "Magenta / green color shift",
+    label: "色调偏移",
+    description: "洋红与绿色偏移",
     category: "Color",
     previewStyle: (p) => ({
       filter: `hue-rotate(${lerp(0, 60, p)}deg)`,
@@ -112,8 +112,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   },
   {
     type: "hue",
-    label: "Hue",
-    description: "Rotate the color wheel",
+    label: "色相",
+    description: "旋转色轮",
     category: "Color",
     previewStyle: (p) => ({
       filter: `hue-rotate(${lerp(0, 360, p)}deg)`,
@@ -121,15 +121,15 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   },
   {
     type: "blur",
-    label: "Blur",
-    description: "Soft gaussian defocus",
+    label: "模糊",
+    description: "柔和的高斯虚化",
     category: "Blur",
     previewStyle: (p) => ({ filter: `blur(${lerp(0, 6, p)}px)` }),
   },
   {
     type: "motion-blur",
-    label: "Motion Blur",
-    description: "Directional smear",
+    label: "动态模糊",
+    description: "方向性拖影",
     category: "Blur",
     previewStyle: (p) => ({
       filter: `blur(${lerp(0, 3, p)}px)`,
@@ -138,8 +138,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   },
   {
     type: "radial-blur",
-    label: "Radial Blur",
-    description: "Zoom-style radial motion",
+    label: "径向模糊",
+    description: "缩放式径向运动",
     category: "Blur",
     previewStyle: (p) => ({
       filter: `blur(${lerp(0, 4, p)}px)`,
@@ -148,8 +148,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   },
   {
     type: "sharpen",
-    label: "Sharpen",
-    description: "Unsharp-mask edge enhance",
+    label: "锐化",
+    description: "增强边缘清晰度",
     category: "Creative",
     previewStyle: (p) => ({
       filter: `contrast(${lerp(1, 1.4, p)}) brightness(${lerp(1, 1.05, p)})`,
@@ -157,8 +157,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   },
   {
     type: "vignette",
-    label: "Vignette",
-    description: "Darkened edges for focus",
+    label: "暗角",
+    description: "加深边缘以突出主体",
     category: "Creative",
     previewStyle: (p) => ({
       boxShadow: `inset 0 0 ${lerp(0, 50, p)}px ${lerp(0, 25, p)}px rgba(0,0,0,0.65)`,
@@ -166,8 +166,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   },
   {
     type: "grain",
-    label: "Film Grain",
-    description: "Analog film texture",
+    label: "胶片颗粒",
+    description: "模拟胶片纹理",
     category: "Creative",
     previewStyle: (p) => ({
       filter: `contrast(${lerp(1, 1.1, p)})`,
@@ -176,8 +176,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   },
   {
     type: "shadow",
-    label: "Drop Shadow",
-    description: "Cast a soft shadow",
+    label: "投影",
+    description: "添加柔和投影",
     category: "Stylize",
     previewStyle: (p) => ({
       filter: `drop-shadow(${lerp(0, 4, p)}px ${lerp(0, 4, p)}px ${lerp(0, 8, p)}px rgba(0,0,0,0.6))`,
@@ -185,8 +185,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   },
   {
     type: "glow",
-    label: "Glow",
-    description: "Bright outer halo",
+    label: "光晕",
+    description: "添加明亮外发光",
     category: "Stylize",
     previewStyle: (p) => ({
       filter: `brightness(${lerp(1, 1.15, p)}) drop-shadow(0 0 ${lerp(0, 12, p)}px var(--accent))`,
@@ -194,8 +194,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   },
   {
     type: "chromatic-aberration",
-    label: "Chromatic Aberration",
-    description: "RGB-channel split offset",
+    label: "色差",
+    description: "RGB 通道错位",
     category: "Stylize",
     previewStyle: (p) => ({
       filter: `hue-rotate(${lerp(0, 6, p)}deg)`,
@@ -204,8 +204,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   },
   {
     type: "chromaKey",
-    label: "Chroma Key",
-    description: "Remove green or blue screen backgrounds",
+    label: "色键",
+    description: "移除绿幕或蓝幕背景",
     category: "Stylize",
     previewStyle: (p) => ({
       filter: `hue-rotate(${lerp(0, 18, p)}deg) saturate(${lerp(1, 1.35, p)})`,
@@ -215,8 +215,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   {
     id: "cinematic-punch",
     type: "contrast",
-    label: "Cinematic Punch",
-    description: "Bold contrast for high-impact edits",
+    label: "电影感",
+    description: "高对比度，适合强调画面的剪辑",
     category: "Basic",
     params: { value: 1.35 },
     previewStyle: (p) => ({ filter: `contrast(${lerp(1, 1.35, p)})` }),
@@ -224,8 +224,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   {
     id: "golden-hour",
     type: "temperature",
-    label: "Golden Hour",
-    description: "Warm sunlit color treatment",
+    label: "黄金时刻",
+    description: "温暖的阳光色调",
     category: "Color",
     params: { value: 35 },
     previewStyle: (p) => ({
@@ -235,8 +235,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   {
     id: "soft-focus",
     type: "blur",
-    label: "Soft Focus",
-    description: "Gentle diffusion for portraits and titles",
+    label: "柔焦",
+    description: "为人像和标题添加柔和扩散",
     category: "Blur",
     params: { radius: 12, type: "gaussian" },
     previewStyle: (p) => ({ filter: `blur(${lerp(0, 4, p)}px)` }),
@@ -244,8 +244,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   {
     id: "dream-bloom",
     type: "glow",
-    label: "Dream Bloom",
-    description: "Soft lavender halo and highlight bloom",
+    label: "梦幻光晕",
+    description: "柔和的薰衣草色光晕和高光",
     category: "Stylize",
     params: { radius: 28, intensity: 1.25, color: "#c4b5fd" },
     previewStyle: (p) => ({
@@ -255,8 +255,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   {
     id: "retro-grain",
     type: "grain",
-    label: "Retro Grain",
-    description: "Fine monochrome texture for vintage edits",
+    label: "复古颗粒",
+    description: "适合复古剪辑的细腻单色纹理",
     category: "Creative",
     params: { amount: 0.18, size: 0.7, roughness: 0.65, colored: false },
     previewStyle: (p) => ({
@@ -266,8 +266,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   {
     id: "rgb-split",
     type: "chromatic-aberration",
-    label: "RGB Split",
-    description: "Strong channel separation for digital cuts",
+    label: "RGB 分离",
+    description: "强烈的通道分离数字效果",
     category: "Stylize",
     params: { amount: 12, angle: 0 },
     previewStyle: (p) => ({
@@ -278,7 +278,7 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
     id: "shader-vhs",
     type: "shader",
     label: "VHS",
-    description: "Animated tape jitter, grain, and scanlines",
+    description: "动态磁带抖动、颗粒和扫描线",
     category: "Stylize",
     params: { shaderId: "vhs", intensity: 0.75, scanlines: 0.4, jitter: 0.45 },
     previewStyle: (p) => ({
@@ -290,8 +290,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   {
     id: "shader-posterize",
     type: "shader",
-    label: "Posterize",
-    description: "Reduce footage into bold graphic color bands",
+    label: "色调分离",
+    description: "将画面压缩为醒目的图形色带",
     category: "Creative",
     params: { shaderId: "posterize", levels: 5, mix: 1 },
     previewStyle: (p) => ({
@@ -301,8 +301,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   {
     id: "shader-duotone",
     type: "shader",
-    label: "Duotone",
-    description: "Map shadows and highlights to two custom colors",
+    label: "双调",
+    description: "将阴影和高光映射为两种自定义颜色",
     category: "Color",
     params: {
       shaderId: "duotone",
@@ -318,8 +318,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   {
     id: "shader-prism",
     type: "shader",
-    label: "Prism Split",
-    description: "Directional RGB refraction with adjustable offset",
+    label: "棱镜分离",
+    description: "带可调偏移的方向性 RGB 折射",
     category: "Stylize",
     params: { shaderId: "prism", amount: 8, angle: 0, mix: 1 },
     previewStyle: (p) => ({
@@ -330,8 +330,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   {
     id: "shader-fisheye",
     type: "shader",
-    label: "Fisheye",
-    description: "Curved lens distortion focused at frame center",
+    label: "鱼眼",
+    description: "聚焦画面中心的弯曲镜头畸变",
     category: "Creative",
     params: { shaderId: "fisheye", strength: 0.55, radius: 0.8 },
     previewStyle: (p) => ({
@@ -342,8 +342,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   {
     id: "shader-wave-warp",
     type: "shader",
-    label: "Wave Warp",
-    description: "Animated horizontal liquid distortion",
+    label: "波浪扭曲",
+    description: "动态水平液体畸变",
     category: "Creative",
     params: { shaderId: "wave-warp", amplitude: 0.025, frequency: 5, speed: 1.5 },
     previewStyle: (p) => ({
@@ -353,8 +353,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   {
     id: "shader-scanlines",
     type: "shader",
-    label: "Scanlines",
-    description: "Animated CRT line texture",
+    label: "扫描线",
+    description: "动态 CRT 扫描线纹理",
     category: "Stylize",
     params: { shaderId: "scanlines", density: 360, intensity: 0.3, speed: 0.2 },
     previewStyle: (p) => ({
@@ -366,8 +366,8 @@ export const EDITOR_EFFECT_PREVIEWS: EditorEffectPreviewDef[] = [
   {
     id: "shader-edge-glow",
     type: "shader",
-    label: "Edge Glow",
-    description: "Neon color traced along image detail",
+    label: "边缘发光",
+    description: "沿图像细节勾勒霓虹色",
     category: "Stylize",
     params: { shaderId: "edge-glow", strength: 4, radius: 1.5, color: "#4de8ff" },
     previewStyle: (p) => ({
@@ -407,6 +407,33 @@ const TRANSITION_CATEGORIES: TransitionCategory[] = [
   "Movement",
   "Stylized",
 ];
+
+const CATEGORY_LABELS: Record<string, string> = {
+  All: "全部",
+  Basic: "基础",
+  Color: "颜色",
+  Blur: "模糊",
+  Creative: "创意",
+  Stylize: "风格",
+  Dissolves: "溶解",
+  Wipes: "擦除",
+  Movement: "运动",
+  Stylized: "风格化",
+};
+
+const getCategoryLabel = (category: string): string =>
+  CATEGORY_LABELS[category] ?? category;
+
+const getDirectionLabel = (direction: string): string =>
+  ({
+    left: "左",
+    right: "右",
+    up: "上",
+    down: "下",
+    horizontal: "水平",
+    vertical: "垂直",
+    diagonal: "对角",
+  }[direction] ?? direction);
 
 const transitionCategory = (type: TransitionType): TransitionCategory => {
   if (type === "crossfade" || type === "dipToBlack" || type === "dipToWhite") {
@@ -458,8 +485,8 @@ const renderThumb = (
 const TRANSITIONS: TransitionDef[] = [
   {
     type: "crossfade",
-    label: "Crossfade",
-    description: "Smooth opacity blend",
+    label: "交叉淡化",
+    description: "平滑的不透明度混合",
     renderPreview: (p, thumb) => (
       <>
         {renderThumb(thumb, { opacity: 1 - p }, "oklch(0.55 0.14 295)")}
@@ -469,8 +496,8 @@ const TRANSITIONS: TransitionDef[] = [
   },
   {
     type: "dipToBlack",
-    label: "Dip to Black",
-    description: "Fade through black",
+    label: "淡入黑场",
+    description: "通过黑场淡化",
     renderPreview: (p, thumb) => (
       <>
         {renderThumb(thumb, { opacity: p < 0.5 ? 1 - p * 2 : 0 }, "oklch(0.55 0.14 295)")}
@@ -484,8 +511,8 @@ const TRANSITIONS: TransitionDef[] = [
   },
   {
     type: "dipToWhite",
-    label: "Dip to White",
-    description: "Fade through white",
+    label: "淡入白场",
+    description: "通过白场淡化",
     renderPreview: (p, thumb) => (
       <>
         {renderThumb(thumb, { opacity: p < 0.5 ? 1 - p * 2 : 0 }, "oklch(0.55 0.14 295)")}
@@ -499,8 +526,8 @@ const TRANSITIONS: TransitionDef[] = [
   },
   {
     type: "wipe",
-    label: "Wipe",
-    description: "Hard edge sweeps across",
+    label: "擦除",
+    description: "硬边横扫画面",
     renderPreview: (p, thumb) => (
       <>
         {renderThumb(thumb, { clipPath: `inset(0 ${p * 100}% 0 0)` }, "oklch(0.55 0.14 295)")}
@@ -509,15 +536,15 @@ const TRANSITIONS: TransitionDef[] = [
     ),
   },
   ...([
-    { id: "wipe-left", label: "Wipe Left", direction: "left" },
-    { id: "wipe-right", label: "Wipe Right", direction: "right" },
-    { id: "wipe-up", label: "Wipe Up", direction: "up" },
-    { id: "wipe-down", label: "Wipe Down", direction: "down" },
+    { id: "wipe-left", label: "向左擦除", direction: "left" },
+    { id: "wipe-right", label: "向右擦除", direction: "right" },
+    { id: "wipe-up", label: "向上擦除", direction: "up" },
+    { id: "wipe-down", label: "向下擦除", direction: "down" },
   ] as const).map<TransitionDef>(({ id, label, direction }) => ({
     id,
     type: "wipe",
     label,
-    description: `Directional ${direction} reveal`,
+    description: `从${getDirectionLabel(direction)}侧展开`,
     params: { direction, softness: 0 },
     renderPreview: (p, thumb) => {
       const incomingClip =
@@ -542,8 +569,8 @@ const TRANSITIONS: TransitionDef[] = [
   })),
   {
     type: "slide",
-    label: "Slide",
-    description: "New clip slides in",
+    label: "滑动",
+    description: "新片段滑入",
     renderPreview: (p, thumb) => (
       <>
         {renderThumb(thumb, { transform: `translateX(${-p * 100}%)` }, "oklch(0.55 0.14 295)")}
@@ -552,15 +579,15 @@ const TRANSITIONS: TransitionDef[] = [
     ),
   },
   ...([
-    { id: "slide-left", label: "Slide Left", direction: "left" },
-    { id: "slide-right", label: "Slide Right", direction: "right" },
-    { id: "slide-up", label: "Slide Up", direction: "up" },
-    { id: "slide-down", label: "Slide Down", direction: "down" },
+    { id: "slide-left", label: "向左滑动", direction: "left" },
+    { id: "slide-right", label: "向右滑动", direction: "right" },
+    { id: "slide-up", label: "向上滑动", direction: "up" },
+    { id: "slide-down", label: "向下滑动", direction: "down" },
   ] as const).map<TransitionDef>(({ id, label, direction }) => ({
     id,
     type: "slide",
     label,
-    description: `Slide the next clip ${direction}`,
+    description: `下一个片段向${getDirectionLabel(direction)}侧滑入`,
     params: { direction },
     renderPreview: (p, thumb) => {
       const transform =
@@ -585,8 +612,8 @@ const TRANSITIONS: TransitionDef[] = [
   })),
   {
     type: "push",
-    label: "Push",
-    description: "Outgoing clip is shoved off",
+    label: "推移",
+    description: "将当前片段推出画面",
     renderPreview: (p, thumb) => (
       <>
         {renderThumb(thumb, { transform: `translateX(${-p * 100}%)` }, "oklch(0.55 0.14 295)")}
@@ -596,8 +623,8 @@ const TRANSITIONS: TransitionDef[] = [
   },
   {
     type: "zoom",
-    label: "Zoom",
-    description: "Scale up and dissolve",
+    label: "缩放",
+    description: "放大并淡化",
     renderPreview: (p, thumb) => (
       <>
         {renderThumb(
@@ -615,8 +642,8 @@ const TRANSITIONS: TransitionDef[] = [
   },
   {
     type: "circleReveal",
-    label: "Circle Reveal",
-    description: "Iris reveal from the center",
+    label: "圆形展开",
+    description: "从中心向外展开",
     renderPreview: (p, thumb) => (
       <>
         {renderThumb(thumb, {}, "oklch(0.55 0.14 295)")}
@@ -626,8 +653,8 @@ const TRANSITIONS: TransitionDef[] = [
   },
   {
     type: "blur",
-    label: "Blur Dissolve",
-    description: "Blur out and into the next clip",
+    label: "模糊溶解",
+    description: "模糊当前片段并过渡到下一片段",
     renderPreview: (p, thumb) => {
       const b = Math.sin(p * Math.PI) * 6;
       return (
@@ -640,8 +667,8 @@ const TRANSITIONS: TransitionDef[] = [
   },
   {
     type: "whipPan",
-    label: "Whip Pan",
-    description: "Fast motion-blurred pan",
+    label: "快速摇移",
+    description: "快速带动态模糊的摇移",
     renderPreview: (p, thumb) => {
       const b = Math.sin(p * Math.PI) * 8;
       return (
@@ -662,8 +689,8 @@ const TRANSITIONS: TransitionDef[] = [
   },
   {
     type: "radialWipe",
-    label: "Radial Wipe",
-    description: "Clock-style angular sweep",
+    label: "径向擦除",
+    description: "像时钟一样进行角度擦除",
     renderPreview: (p, thumb) => (
       <>
         {renderThumb(thumb, {}, "oklch(0.55 0.14 295)")}
@@ -680,8 +707,8 @@ const TRANSITIONS: TransitionDef[] = [
   },
   {
     type: "pixelate",
-    label: "Pixelate",
-    description: "Break the cut into a chunky pixel mosaic",
+    label: "像素化",
+    description: "将切点变成块状像素马赛克",
     params: { maxPixelSize: 48 },
     renderPreview: (p, thumb) => {
       const block = 2 + Math.round(Math.sin(p * Math.PI) * 12);
@@ -703,8 +730,8 @@ const TRANSITIONS: TransitionDef[] = [
   },
   {
     type: "glitch",
-    label: "Glitch Cut",
-    description: "Digital slice displacement at the cut",
+    label: "故障切换",
+    description: "在切点产生数字切片位移",
     params: { intensity: 0.08, slices: 12 },
     renderPreview: (p, thumb) => {
       const amount = Math.sin(p * Math.PI) * 12;
@@ -735,8 +762,8 @@ const TRANSITIONS: TransitionDef[] = [
   },
   {
     type: "blinds",
-    label: "Venetian Blinds",
-    description: "Reveal the next shot through repeating slats",
+    label: "百叶窗",
+    description: "通过重复叶片展开下一镜头",
     params: { count: 8, direction: "vertical" },
     renderPreview: (p, thumb) => {
       const open = Math.max(0.5, p * 12);
@@ -755,8 +782,8 @@ const TRANSITIONS: TransitionDef[] = [
   },
   {
     type: "diamondReveal",
-    label: "Diamond Reveal",
-    description: "Geometric iris expanding from the center",
+    label: "菱形展开",
+    description: "从中心扩大的几何光圈",
     renderPreview: (p, thumb) => (
       <>
         {renderThumb(thumb, {}, "oklch(0.55 0.14 295)")}
@@ -771,13 +798,13 @@ const TRANSITIONS: TransitionDef[] = [
     ),
   },
   ...([
-    { id: "spin-clockwise", label: "Spin Clockwise", rotations: 1 },
-    { id: "spin-counter", label: "Spin Counterclockwise", rotations: -1 },
+    { id: "spin-clockwise", label: "顺时针旋转", rotations: 1 },
+    { id: "spin-counter", label: "逆时针旋转", rotations: -1 },
   ] as const).map<TransitionDef>(({ id, label, rotations }) => ({
     id,
     type: "spin",
     label,
-    description: "Rotating scale transition with a smooth handoff",
+    description: "旋转缩放转场，平滑衔接",
     params: { rotations },
     renderPreview: (p, thumb) => (
       <>
@@ -801,13 +828,13 @@ const TRANSITIONS: TransitionDef[] = [
     ),
   })),
   ...([
-    { id: "flip-horizontal", label: "Flip Horizontal", axis: "horizontal" },
-    { id: "flip-vertical", label: "Flip Vertical", axis: "vertical" },
+    { id: "flip-horizontal", label: "水平翻转", axis: "horizontal" },
+    { id: "flip-vertical", label: "垂直翻转", axis: "vertical" },
   ] as const).map<TransitionDef>(({ id, label, axis }) => ({
     id,
     type: "flip",
     label,
-    description: `Card-style ${axis} flip between shots`,
+    description: `镜头间的卡片式${getDirectionLabel(axis)}翻转`,
     params: { axis },
     renderPreview: (p, thumb) => {
       const firstHalf = p < 0.5;
@@ -822,13 +849,13 @@ const TRANSITIONS: TransitionDef[] = [
     },
   })),
   ...([
-    { id: "split-horizontal", label: "Split Horizontal", orientation: "horizontal" },
-    { id: "split-vertical", label: "Split Vertical", orientation: "vertical" },
+    { id: "split-horizontal", label: "水平分割", orientation: "horizontal" },
+    { id: "split-vertical", label: "垂直分割", orientation: "vertical" },
   ] as const).map<TransitionDef>(({ id, label, orientation }) => ({
     id,
     type: "splitReveal",
     label,
-    description: `Reveal the next shot outward from the ${orientation === "horizontal" ? "center line" : "middle"}`,
+    description: `从${orientation === "horizontal" ? "中线" : "中间"}向外展开下一镜头`,
     params: { orientation },
     renderPreview: (p, thumb) => (
       <>
@@ -849,8 +876,8 @@ const TRANSITIONS: TransitionDef[] = [
   {
     id: "flash-cut",
     type: "flash",
-    label: "Flash Cut",
-    description: "High-energy white flash through the edit",
+    label: "闪白切换",
+    description: "高能量白色闪光",
     params: { intensity: 1 },
     renderPreview: (p, thumb) => (
       <>
@@ -866,8 +893,8 @@ const TRANSITIONS: TransitionDef[] = [
   ...([
     {
       id: "film-burn",
-      label: "Film Burn",
-      description: "Warm analog light leak through the edit",
+      label: "胶片灼烧",
+      description: "温暖的模拟漏光",
       intensity: 1,
       warmth: 0.75,
       gradient:
@@ -875,8 +902,8 @@ const TRANSITIONS: TransitionDef[] = [
     },
     {
       id: "film-burn-red",
-      label: "Red Film Burn",
-      description: "Dense red-orange flare for dramatic cuts",
+      label: "红色胶片灼烧",
+      description: "戏剧化剪辑的浓郁红橙光晕",
       intensity: 1.3,
       warmth: 1,
       gradient:
@@ -884,8 +911,8 @@ const TRANSITIONS: TransitionDef[] = [
     },
     {
       id: "light-leak-cool",
-      label: "Cool Light Leak",
-      description: "Blue-white optical flare through the edit",
+      label: "冷色漏光",
+      description: "蓝白色光学漏光",
       intensity: 0.9,
       warmth: 0,
       gradient:
@@ -919,8 +946,8 @@ const TRANSITIONS: TransitionDef[] = [
   ),
   {
     type: "mosaic",
-    label: "Mosaic Reveal",
-    description: "Tiles assemble the next shot in a shuffled pattern",
+    label: "马赛克展开",
+    description: "以打乱的图案拼合下一镜头",
     params: { tiles: 8, randomness: 0.85 },
     renderPreview: (p, thumb) => {
       const tileSize = 12;
@@ -945,8 +972,8 @@ const TRANSITIONS: TransitionDef[] = [
   },
   {
     type: "ripple",
-    label: "Ripple",
-    description: "A fluid wave distorts both shots through the cut",
+    label: "波纹",
+    description: "流动波浪使切点两侧画面变形",
     params: { amplitude: 0.04, waves: 3 },
     renderPreview: (p, thumb) => {
       const wave = Math.sin(p * Math.PI) * 6;
@@ -967,13 +994,13 @@ const TRANSITIONS: TransitionDef[] = [
     },
   },
   ...([
-    { id: "page-turn-left", label: "Page Turn Left", direction: "left" },
-    { id: "page-turn-right", label: "Page Turn Right", direction: "right" },
+    { id: "page-turn-left", label: "向左翻页", direction: "left" },
+    { id: "page-turn-right", label: "向右翻页", direction: "right" },
   ] as const).map<TransitionDef>(({ id, label, direction }) => ({
     id,
     type: "pageTurn",
     label,
-    description: `Fold the outgoing shot toward the ${direction}`,
+    description: `将当前镜头向${getDirectionLabel(direction)}侧折叠`,
     params: { direction, shadow: 0.55 },
     renderPreview: (p, thumb) => (
       <>
@@ -992,8 +1019,8 @@ const TRANSITIONS: TransitionDef[] = [
   })),
   {
     type: "colorSplit",
-    label: "Color Split",
-    description: "Prismatic channel ghosts collide at the edit",
+    label: "色彩分离",
+    description: "剪辑点出现棱彩通道残影",
     params: { maxOffset: 18, angle: 0 },
     renderPreview: (p, thumb) => {
       const offset = Math.sin(p * Math.PI) * 7;
@@ -1016,20 +1043,20 @@ const TRANSITIONS: TransitionDef[] = [
   ...([
     {
       id: "crossfade-linear",
-      label: "Linear Dissolve",
-      description: "Constant-speed opacity blend",
+      label: "线性溶解",
+      description: "匀速不透明度混合",
       curve: "linear",
     },
     {
       id: "crossfade-ease-in",
-      label: "Slow In Dissolve",
-      description: "Blend accelerates into the cut",
+      label: "缓入溶解",
+      description: "溶解向切点逐渐加速",
       curve: "ease-in",
     },
     {
       id: "crossfade-ease-out",
-      label: "Slow Out Dissolve",
-      description: "Blend settles gently after the cut",
+      label: "缓出溶解",
+      description: "溶解在切点后逐渐平稳",
       curve: "ease-out",
     },
   ] as const).map<TransitionDef>(({ id, label, description, curve }) => ({
@@ -1056,19 +1083,19 @@ const TRANSITIONS: TransitionDef[] = [
   ...([
     {
       id: "wipe-soft-left",
-      label: "Soft Wipe Left",
+      label: "柔和向左擦除",
       direction: "left",
       softness: 0.45,
     },
     {
       id: "wipe-soft-right",
-      label: "Soft Wipe Right",
+      label: "柔和向右擦除",
       direction: "right",
       softness: 0.45,
     },
     {
       id: "wipe-diagonal",
-      label: "Diagonal Wipe",
+      label: "对角擦除",
       direction: "diagonal",
       softness: 0,
     },
@@ -1078,8 +1105,8 @@ const TRANSITIONS: TransitionDef[] = [
     label,
     description:
       direction === "diagonal"
-        ? "Angular reveal from the corner"
-        : "Feathered directional reveal",
+        ? "从角落进行角度展开"
+        : "带羽化的方向性展开",
     params: { direction, softness },
     renderPreview: (p, thumb) => {
       const clipPath =
@@ -1104,15 +1131,15 @@ const TRANSITIONS: TransitionDef[] = [
     },
   })),
   ...([
-    { id: "push-left", label: "Push Left", direction: "left" },
-    { id: "push-right", label: "Push Right", direction: "right" },
-    { id: "push-up", label: "Push Up", direction: "up" },
-    { id: "push-down", label: "Push Down", direction: "down" },
+    { id: "push-left", label: "向左推移", direction: "left" },
+    { id: "push-right", label: "向右推移", direction: "right" },
+    { id: "push-up", label: "向上推移", direction: "up" },
+    { id: "push-down", label: "向下推移", direction: "down" },
   ] as const).map<TransitionDef>(({ id, label, direction }) => ({
     id,
     type: "push",
     label,
-    description: `Both clips travel ${direction}`,
+    description: `两个片段同时向${getDirectionLabel(direction)}侧移动`,
     params: { direction },
     renderPreview: (p, thumb) => {
       const outgoingTransform =
@@ -1150,24 +1177,24 @@ const TRANSITIONS: TransitionDef[] = [
   ...([
     {
       id: "zoom-top-left",
-      label: "Zoom Top Left",
+      label: "缩放至左上",
       center: { x: 0.15, y: 0.15 },
     },
     {
       id: "zoom-bottom-right",
-      label: "Zoom Bottom Right",
+      label: "缩放至右下",
       center: { x: 0.85, y: 0.85 },
     },
     {
       id: "zoom-punch",
-      label: "Punch Zoom",
+      label: "冲击缩放",
       center: { x: 0.5, y: 0.5 },
     },
   ] as const).map<TransitionDef>(({ id, label, center }) => ({
     id,
     type: "zoom",
     label,
-    description: "Focused scale-and-dissolve transition",
+    description: "聚焦缩放并淡化",
     params: { scale: id === "zoom-punch" ? 3 : 2, center },
     renderPreview: (p, thumb) => (
       <>
@@ -1189,15 +1216,15 @@ const TRANSITIONS: TransitionDef[] = [
     ),
   })),
   ...([
-    { id: "whip-left", label: "Whip Left", direction: "left" },
-    { id: "whip-right", label: "Whip Right", direction: "right" },
-    { id: "whip-up", label: "Whip Up", direction: "up" },
-    { id: "whip-down", label: "Whip Down", direction: "down" },
+    { id: "whip-left", label: "快速向左摇移", direction: "left" },
+    { id: "whip-right", label: "快速向右摇移", direction: "right" },
+    { id: "whip-up", label: "快速向上摇移", direction: "up" },
+    { id: "whip-down", label: "快速向下摇移", direction: "down" },
   ] as const).map<TransitionDef>(({ id, label, direction }) => ({
     id,
     type: "whipPan",
     label,
-    description: `Motion-blurred whip ${direction}`,
+    description: `带动态模糊向${getDirectionLabel(direction)}侧摇移`,
     params: { direction },
     renderPreview: (p, thumb) => {
       const axis = direction === "left" || direction === "right" ? "X" : "Y";
@@ -1284,7 +1311,7 @@ const EffectCard: React.FC<{
 
   return (
     <ClickableCard
-      label={`${def.label}. Drag onto a clip to apply, or double-click to apply to selected clip.`}
+      label={`${def.label}。拖到时间线片段上应用，或双击应用到选中的片段。`}
       draggable
       onDragStart={handleDragStart}
       onDoubleClick={onApply}
@@ -1318,7 +1345,7 @@ const EffectCard: React.FC<{
           />
         )}
         <Text className="absolute bottom-1 right-1 text-[8.5px] uppercase px-1.5 py-0.5 rounded bg-black/55 text-white/85 backdrop-blur-sm">
-          {def.category}
+          {getCategoryLabel(def.category)}
         </Text>
       </div>
       <div className="px-2 py-1.5 border-t border-border">
@@ -1376,7 +1403,7 @@ const TransitionCard: React.FC<{
 
   return (
     <ClickableCard
-      label={`${def.label}. Drag onto a clip edge, or double-click to apply to the selected cut.`}
+      label={`${def.label}。拖到片段边缘应用，或双击应用到选中的切点。`}
       draggable
       onDragStart={handleDragStart}
       onDoubleClick={onApply}
@@ -1474,8 +1501,8 @@ export const EffectsPanel: React.FC = () => {
       const selectedIds = getSelectedClipIds();
       if (selectedIds.length === 0) {
         toast.warning(
-          "No clip selected",
-          "Drag the effect onto a clip in the timeline, or select a clip and double-click.",
+          "未选择片段",
+          "将效果拖到时间线片段上，或选择片段后双击。",
         );
         return;
       }
@@ -1485,19 +1512,19 @@ export const EffectsPanel: React.FC = () => {
       }
       if (appliedCount === 0) {
         toast.error(
-          "Effect could not be applied",
-          "The selected layers did not accept this effect.",
+          "无法应用效果",
+          "选中的图层不支持此效果。",
         );
         return;
       }
       toast.success(
-        "Effect applied",
-        `${def.label} added to ${appliedCount} clip${appliedCount > 1 ? "s" : ""}`,
+        "效果已应用",
+        `${def.label}已添加到 ${appliedCount} 个片段`,
       );
       if (appliedCount < selectedIds.length) {
         toast.warning(
-          "Some layers were skipped",
-          `${selectedIds.length - appliedCount} selected layer${selectedIds.length - appliedCount > 1 ? "s" : ""} could not accept the effect.`,
+          "部分图层已跳过",
+          `${selectedIds.length - appliedCount} 个选中图层不支持此效果。`,
         );
       }
     },
@@ -1508,12 +1535,12 @@ export const EffectsPanel: React.FC = () => {
     <div className="flex flex-col h-full min-h-0">
       <div className="px-3 pt-3 pb-2 shrink-0">
         <ToolcraftTextInputControl
-          label="Search effects"
+          label="搜索效果"
           isLabelHidden
           type="text"
           value={query}
           onChange={setQuery}
-          placeholder="Search effects"
+          placeholder="搜索效果"
           startIcon={<Search size={13} aria-hidden />}
           size="sm"
           width="100%"
@@ -1521,7 +1548,7 @@ export const EffectsPanel: React.FC = () => {
         <div
           className="mt-2 flex gap-1 overflow-x-auto pb-0.5"
           role="group"
-          aria-label="Effect categories"
+          aria-label="效果分类"
         >
           {(["All", ...EDITOR_EFFECT_CATEGORIES] as const).map((category) => {
             const count =
@@ -1542,7 +1569,7 @@ export const EffectsPanel: React.FC = () => {
                     : "border-border bg-bg-2 text-fg-3 hover:border-primary/50 hover:text-fg"
                 }`}
               >
-                {category} {count}
+                {getCategoryLabel(category)} {count}
               </button>
             );
           })}
@@ -1559,7 +1586,7 @@ export const EffectsPanel: React.FC = () => {
             return (
               <section key={cat}>
                 <Text type="supporting" color="secondary" weight="bold" display="block" className="text-[9.5px] uppercase mb-1.5">
-                  {cat}
+                  {getCategoryLabel(cat)}
                 </Text>
                 <div className="grid grid-cols-2 gap-2">
                   {items.map((def) => (
@@ -1576,7 +1603,7 @@ export const EffectsPanel: React.FC = () => {
           })}
           {filtered.length === 0 && (
             <Text type="supporting" color="secondary" display="block" justify="center" className="text-[10.5px] py-6">
-              No effects match "{query}".
+              没有匹配“{query}”的效果。
             </Text>
           )}
         </div>
@@ -1620,8 +1647,8 @@ export const TransitionsPanel: React.FC = () => {
       const selectedCount = selectedIds.size;
       if (selectedCount === 0) {
         toast.warning(
-          "No clip selected",
-          "Select a clip or two adjacent clips, then double-click the transition.",
+          "未选择片段",
+          "选择一个片段或两个相邻片段，然后双击转场。",
         );
         return;
       }
@@ -1668,8 +1695,8 @@ export const TransitionsPanel: React.FC = () => {
 
       if (!clipA) {
         toast.warning(
-          "No compatible cut",
-          "The selected clips must be adjacent on the same timeline track.",
+          "没有可用的剪辑切点",
+          "选中的片段必须位于同一条时间线轨道且彼此相邻。",
         );
         return;
       }
@@ -1687,19 +1714,19 @@ export const TransitionsPanel: React.FC = () => {
         : bridge.createClipEdgeTransition(clipA, "out", def.type, 1, params);
       if (!result.success || !result.transitionId) {
         toast.error(
-          "Transition failed",
-          result.error ?? "Could not create this transition at the selected cut.",
+          "转场失败",
+          result.error ?? "无法在选中的切点创建此转场。",
         );
         return;
       }
       const transition = bridge.getTransition(result.transitionId);
       if (!transition || !(await addClipTransition(transition))) {
-        toast.error("Transition failed", "Could not save the transition.");
+        toast.error("转场失败", "无法保存转场。" );
         return;
       }
       toast.success(
-        "Transition applied",
-        `${def.label} added to the selected cut.`,
+        "转场已应用",
+        `${def.label}已添加到选中的切点。`,
       );
     },
     [addClipTransition, getSelectedClipIds, project],
@@ -1709,12 +1736,12 @@ export const TransitionsPanel: React.FC = () => {
     <div className="flex flex-col h-full min-h-0">
       <div className="px-3 pt-3 pb-2 shrink-0">
         <ToolcraftTextInputControl
-          label="Search transitions"
+          label="搜索转场"
           isLabelHidden
           type="text"
           value={query}
           onChange={setQuery}
-          placeholder="Search transitions"
+          placeholder="搜索转场"
           startIcon={<Search size={13} aria-hidden />}
           size="sm"
           width="100%"
@@ -1722,7 +1749,7 @@ export const TransitionsPanel: React.FC = () => {
         <div
           className="mt-2 flex gap-1 overflow-x-auto pb-0.5"
           role="group"
-          aria-label="Transition categories"
+          aria-label="转场分类"
         >
           {(["All", ...TRANSITION_CATEGORIES] as const).map((category) => {
             const count =
@@ -1744,7 +1771,7 @@ export const TransitionsPanel: React.FC = () => {
                     : "border-border bg-bg-2 text-fg-3 hover:border-primary/50 hover:text-fg"
                 }`}
               >
-                {category} {count}
+                {getCategoryLabel(category)} {count}
               </button>
             );
           })}
@@ -1764,7 +1791,7 @@ export const TransitionsPanel: React.FC = () => {
               <section key={category}>
                 <div className="mb-1.5 flex items-center justify-between">
                   <Text type="supporting" color="secondary" weight="bold" className="text-[9.5px] uppercase">
-                    {category}
+                    {getCategoryLabel(category)}
                   </Text>
                   <Text type="supporting" color="secondary" className="font-mono text-[9px]">
                     {items.length}
@@ -1785,7 +1812,7 @@ export const TransitionsPanel: React.FC = () => {
           })}
           {filtered.length === 0 && (
             <Text type="supporting" color="secondary" display="block" justify="center" className="text-[10.5px] py-6">
-              No transitions match "{query}".
+              没有匹配“{query}”的转场。
             </Text>
           )}
         </div>

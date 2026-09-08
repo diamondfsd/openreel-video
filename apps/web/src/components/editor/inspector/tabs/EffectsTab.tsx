@@ -122,7 +122,7 @@ export const EffectsTab: React.FC<EffectsTabProps> = ({
     <>
       {showVideoControls && selectedTimelineClip && (appliedEditingTemplates.length > 0 || (selectedTimelineClip.effects && selectedTimelineClip.effects.length > 0)) && (
         <InspectorSection
-          title={`Applied (${appliedEditingTemplates.length + (selectedTimelineClip.effects?.filter((e: { metadata?: { templateSource?: unknown } }) => !e.metadata?.templateSource).length || 0)})`}
+          title={`已应用（${appliedEditingTemplates.length + (selectedTimelineClip.effects?.filter((e: { metadata?: { templateSource?: unknown } }) => !e.metadata?.templateSource).length || 0)}）`}
           sectionId="applied-effects"
           defaultOpen={true}
         >
@@ -162,13 +162,13 @@ export const EffectsTab: React.FC<EffectsTabProps> = ({
                         color="secondary"
                         className="shrink-0 text-[9px] capitalize"
                       >
-                        {application.category?.replace(/-/g, " ") || "recipe"}
+                        {application.category?.replace(/-/g, " ") || "预设"}
                       </Text>
                     </div>
                     <div className="flex shrink-0 gap-1">
                       {canEdit && (
                         <Button
-                          label="Edit"
+                          label="编辑"
                           onClick={() =>
                             handleToggleRecipeControls(
                               application.applicationId,
@@ -182,14 +182,14 @@ export const EffectsTab: React.FC<EffectsTabProps> = ({
                         />
                       )}
                       <IconButton
-                        label="Remove recipe"
+                        label="删除预设"
                         onClick={() => {
                           const removed = removeEditingTemplateApplication(
                             selectedTimelineClip.id,
                             application.applicationId,
                           );
                           if (!removed) {
-                            toast.error("Could not remove recipe", "The recipe could not be removed from this clip.");
+                            toast.error("无法删除预设", "无法从此片段删除预设。");
                             return;
                           }
                           setRecipeControlValues((current) => {
@@ -224,7 +224,7 @@ export const EffectsTab: React.FC<EffectsTabProps> = ({
                       />
                       <div className="flex justify-end gap-1.5">
                         <Button
-                          label="Reset"
+                          label="重置"
                           onClick={() =>
                             handleResetRecipeControls(
                               application.applicationId,
@@ -236,7 +236,7 @@ export const EffectsTab: React.FC<EffectsTabProps> = ({
                           size="sm"
                         />
                         <Button
-                          label="Update"
+                          label="更新"
                           onClick={() =>
                             handleUpdateRecipeControls(
                               application.applicationId,
@@ -280,7 +280,7 @@ export const EffectsTab: React.FC<EffectsTabProps> = ({
                       effect.enabled !== false ? "text-green-400" : ""
                     }`}
                   >
-                    {effect.enabled !== false ? "On" : "Off"}
+                    {effect.enabled !== false ? "开启" : "关闭"}
                   </Text>
                 </Card>
               ))}
@@ -289,7 +289,7 @@ export const EffectsTab: React.FC<EffectsTabProps> = ({
       )}
 
       {clipType === "video" && (
-        <InspectorSection title="Background Removal" sectionId="background-removal" defaultOpen={false}>
+        <InspectorSection title="移除背景" sectionId="background-removal" defaultOpen={false}>
           <BackgroundRemovalSection clipId={clipId} />
         </InspectorSection>
       )}
@@ -303,7 +303,7 @@ export const EffectsTab: React.FC<EffectsTabProps> = ({
         clipType === "sticker") &&
         selectedClip && (
           <InspectorSection
-            title="Particle Effects"
+            title="粒子效果"
             sectionId="particle-effects"
             defaultOpen={false}
           >
@@ -317,14 +317,14 @@ export const EffectsTab: React.FC<EffectsTabProps> = ({
 
       {/* Chroma Key - Using ChromaKeyEngine - Only for video/image */}
       {showVideoControls && (
-        <InspectorSection title="Chroma Key (Green Screen)">
+        <InspectorSection title="色度键（绿幕）">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Text type="supporting" color="secondary" className="text-[10px]">
-                Enable
+                启用
               </Text>
               <MockToggle
-                ariaLabel="Enable chroma key"
+                ariaLabel="启用色度键"
                 checked={chromaKeyEnabled}
                 onChange={handleChromaKeyToggle}
               />
@@ -333,10 +333,10 @@ export const EffectsTab: React.FC<EffectsTabProps> = ({
               <>
                 <div className="flex items-center justify-between">
                   <Text type="supporting" color="secondary" className="text-[10px]">
-                    Key Color
+                    键控颜色
                   </Text>
                   <ToolcraftTextInputControl
-                    label="Key Color"
+                    label="键控颜色"
                     isLabelHidden
                     size="sm"
                     width={96}
@@ -352,7 +352,7 @@ export const EffectsTab: React.FC<EffectsTabProps> = ({
                   />
                 </div>
                 <PropertySlider
-                  label="Tolerance"
+                  label="容差"
                   value={tolerance}
                   onChange={handleToleranceChange}
                   min={0}
@@ -367,20 +367,20 @@ export const EffectsTab: React.FC<EffectsTabProps> = ({
 
       {/* Motion Tracking - Using MotionTrackingEngine - Only for video/image */}
       {showVideoControls && (
-        <InspectorSection title="Motion Tracking" sectionId="motion-tracking">
+        <InspectorSection title="运动跟踪" sectionId="motion-tracking">
           <MotionTrackingSection clipId={clipId} />
         </InspectorSection>
       )}
 
       {showVideoEffects && (
-        <InspectorSection title="Video Effects" sectionId="video-effects">
+        <InspectorSection title="视频效果" sectionId="video-effects">
           <VideoEffectsSection clipId={clipId} />
         </InspectorSection>
       )}
 
       {showVideoControls && (
         <InspectorSection
-          title="Green Screen"
+          title="绿幕"
           sectionId="green-screen"
           defaultOpen={false}
         >
@@ -391,7 +391,7 @@ export const EffectsTab: React.FC<EffectsTabProps> = ({
       {/* Picture-in-Picture Section */}
       {showVideoControls && (
         <InspectorSection
-          title="Picture-in-Picture"
+          title="画中画"
           sectionId="pip"
           defaultOpen={false}
         >
@@ -400,26 +400,26 @@ export const EffectsTab: React.FC<EffectsTabProps> = ({
       )}
 
       {showVideoControls && (
-        <InspectorSection title="Masking" sectionId="masking" defaultOpen={false}>
+        <InspectorSection title="蒙版" sectionId="masking" defaultOpen={false}>
           <MaskSection clipId={clipId} />
         </InspectorSection>
       )}
 
       {showVideoControls && (
-        <InspectorSection title="Nested Sequences" defaultOpen={false}>
+        <InspectorSection title="嵌套序列" defaultOpen={false}>
           <NestedSequenceSection clipId={clipId} />
         </InspectorSection>
       )}
 
       {showVideoControls && (
-        <InspectorSection title="Adjustment Layers" defaultOpen={false}>
+        <InspectorSection title="调整图层" defaultOpen={false}>
           <AdjustmentLayerSection clipId={clipId} />
         </InspectorSection>
       )}
 
       {showTextSection && (
         <InspectorSection
-          title="Text Behind Subject"
+          title="主体后文字"
           sectionId="text-behind-subject"
           defaultOpen={false}
         >

@@ -11,11 +11,13 @@ import {
   getClipWaveformBarAmplitudes,
 } from "./utils";
 import { useClipContextMenuItems } from "./ClipContextMenu";
+import { getTransitionDisplay } from "./transition-labels";
 import { toast } from "../../../stores/notification-store";
 import { getTransitionBridge } from "../../../bridges/transition-bridge";
 import {
   EFFECT_DRAG_MIME,
   TRANSITION_DRAG_MIME,
+  EDITOR_EFFECT_PREVIEWS,
 } from "../panels/EffectsTransitionsPanel";
 import { parseEditorEffectDropPayload } from "./effect-drop";
 
@@ -275,7 +277,7 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
 
       const bridge = getTransitionBridge();
       if (!bridge.isInitialized()) {
-        toast.error("Transition engine not ready", "Try again in a moment.");
+        toast.error("转场功能尚未就绪", "请稍后重试。");
         return;
       }
       const defaultParams = {
@@ -304,18 +306,18 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
           projectState.addClipTransition(transition);
           toast.success(
             transition.edge === "in"
-              ? "Intro transition applied"
+              ? "片头转场已应用"
               : transition.edge === "out"
-                ? "Outro transition applied"
-                : "Transition applied",
-            `${transitionType} • ${transition.duration.toFixed(1)}s`,
+                ? "片尾转场已应用"
+                : "转场已应用",
+            `${getTransitionDisplay(transitionType).name} · ${transition.duration.toFixed(1)} 秒`,
           );
           return;
         }
       }
       toast.error(
-        "Transition failed",
-        result.error || "Could not create transition",
+        "转场失败",
+        result.error || "无法创建转场。",
       );
     },
     [clip.id],
@@ -365,12 +367,15 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
           .getState()
           .addVideoEffect(clip.id, effectType, effectPayload?.effectParams);
         if (result) {
-          toast.success("Effect applied", `${effectType} added`);
+          const effectLabel =
+            EDITOR_EFFECT_PREVIEWS.find((definition) => definition.type === effectType)
+              ?.label ?? effectType;
+          toast.success("效果已应用", `${effectLabel}已添加`);
           // Auto-select the clip so the user sees the new effect in
           // the inspector.
           useUIStore.getState().select({ id: clip.id, type: "clip" });
         } else {
-          toast.error("Effect failed", "Could not apply effect");
+          toast.error("效果应用失败", "无法应用效果。");
         }
         return;
       }
@@ -715,7 +720,7 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
           ref={clipRef}
           role="button"
           tabIndex={track.locked ? -1 : 0}
-          aria-label={`Select clip ${clipName}`}
+          aria-label={`选择片段：${clipName}`}
           aria-pressed={isSelected}
           onClick={handleClick}
           onMouseDown={handleMouseDown}
@@ -756,7 +761,7 @@ export const ClipComponent: React.FC<ClipComponentProps> = ({
           <div className="absolute -inset-px rounded-lg border border-amber-300/80 shadow-[0_0_18px_rgba(251,191,36,0.55)] pointer-events-none animate-pulse" />
           <div className="absolute inset-0 bg-[linear-gradient(110deg,transparent_0%,rgba(255,255,255,0.08)_28%,rgba(251,191,36,0.28)_50%,rgba(255,255,255,0.08)_72%,transparent_100%)] pointer-events-none animate-pulse" />
           <div className="absolute top-1 right-1 rounded-full bg-black/70 px-2 py-0.5 text-[9px] font-medium uppercase tracking-[0.12em] text-amber-200 pointer-events-none">
-            {effectApplicationLabel ?? "Applying effect"}
+            {effectApplicationLabel ?? "正在应用效果"}
           </div>
         </>
       )}

@@ -104,7 +104,7 @@ export const TrackLane: React.FC<TrackLaneProps> = ({
   const isExpanded = isTrackExpanded(track.id);
   const { snapSettings } = useUIStore();
   const [isDragOver, setIsDragOver] = useState(false);
-  const [dropHint, setDropHint] = useState("Drop to add clip");
+  const [dropHint, setDropHint] = useState("松开以添加片段");
   const [isResizing, setIsResizing] = useState(false);
   const laneRef = useRef<HTMLDivElement>(null);
   const resizeStartY = useRef<number>(0);
@@ -140,7 +140,7 @@ export const TrackLane: React.FC<TrackLaneProps> = ({
         const mediaItem = mediaItems.find((item) => item.id === mediaId);
         const rect = laneRef.current?.getBoundingClientRect();
         if (!mediaItem || !rect) {
-          setDropHint("Drop to add clip");
+          setDropHint("松开以添加片段");
           return;
         }
         const startTime = Math.max(
@@ -159,11 +159,11 @@ export const TrackLane: React.FC<TrackLaneProps> = ({
         });
         setDropHint(
           placement.ok && placement.trackId !== track.id
-            ? "Place above"
-            : "Drop to add clip",
+            ? "放置到上方"
+            : "松开以添加片段",
         );
       } catch {
-        setDropHint("Drop to add clip");
+        setDropHint("松开以添加片段");
       }
     },
     [mediaItems, pixelsPerSecond, scrollX, track.id],
@@ -171,7 +171,7 @@ export const TrackLane: React.FC<TrackLaneProps> = ({
 
   const handleDragLeave = useCallback(() => {
     setIsDragOver(false);
-    setDropHint("Drop to add clip");
+    setDropHint("松开以添加片段");
   }, []);
 
   const handleDrop = useCallback(
@@ -179,7 +179,7 @@ export const TrackLane: React.FC<TrackLaneProps> = ({
       e.preventDefault();
       e.stopPropagation();
       setIsDragOver(false);
-      setDropHint("Drop to add clip");
+      setDropHint("松开以添加片段");
 
       // External OS file drop (e.g. from Windows Explorer)
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
@@ -208,7 +208,7 @@ export const TrackLane: React.FC<TrackLaneProps> = ({
                 .project.mediaLibrary.items.find(i => !beforeIds.has(i.id));
               if (newItem) {
                 await placeMediaClip(newItem.id, track.id, snapResult.time);
-                toast.success(`Added to ${track.name}`, file.name);
+                toast.success(`已添加到 ${track.name}`, file.name);
               }
             }
           } catch (err) {

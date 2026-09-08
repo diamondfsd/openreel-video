@@ -33,7 +33,7 @@ export interface SizePreset {
 const MB = 1024 * 1024;
 
 export const COMPRESSION_SIZE_PRESETS: readonly SizePreset[] = [
-  { id: "email", label: "Email (25 MB)", bytes: 25 * MB },
+  { id: "email", label: "邮件 (25 MB)", bytes: 25 * MB },
   { id: "whatsapp", label: "WhatsApp (16 MB)", bytes: 16 * MB },
   { id: "discord", label: "Discord (10 MB)", bytes: 10 * MB },
 ];

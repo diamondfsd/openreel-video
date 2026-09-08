@@ -93,7 +93,7 @@ export const ScriptViewDialog: React.FC<ScriptViewDialogProps> = ({
         setValidation({
           valid: false,
           errors: [
-            `Validation error: ${error instanceof Error ? error.message : "Unknown error"}`,
+            `验证错误：${error instanceof Error ? error.message : "未知错误"}`,
           ],
           warnings: [],
         });
@@ -125,7 +125,7 @@ export const ScriptViewDialog: React.FC<ScriptViewDialogProps> = ({
       setValidation({
         valid: false,
         errors: [
-          `Validation error: ${error instanceof Error ? error.message : "Unknown error"}`,
+          `验证错误：${error instanceof Error ? error.message : "未知错误"}`,
         ],
         warnings: [],
       });
@@ -148,8 +148,8 @@ export const ScriptViewDialog: React.FC<ScriptViewDialogProps> = ({
         ).length;
         if (missingCount > 0) {
           toast.warning(
-            `${missingCount} asset${missingCount !== 1 ? "s" : ""} need relinking`,
-            "Go to Assets panel → click \"Relink from Folder\" to restore missing media.",
+            `${missingCount} 个素材需要重新关联`,
+            "前往素材面板，点击“从文件夹重新关联”以恢复缺失素材。",
           );
         }
       }
@@ -157,7 +157,7 @@ export const ScriptViewDialog: React.FC<ScriptViewDialogProps> = ({
       setValidation({
         valid: false,
         errors: [
-          `Import error: ${error instanceof Error ? error.message : "Unknown error"}`,
+          `导入错误：${error instanceof Error ? error.message : "未知错误"}`,
         ],
         warnings: [],
       });
@@ -171,8 +171,8 @@ export const ScriptViewDialog: React.FC<ScriptViewDialogProps> = ({
       <Layout
         header={
           <DialogHeader
-            title="Project JSON"
-            subtitle="Export or import project as JSON"
+            title="项目 JSON"
+            subtitle="导出或导入 JSON 项目"
             onOpenChange={(open) => !open && onClose()}
             startContent={<FileCode size={20} className="text-primary" aria-hidden />}
           />
@@ -181,12 +181,12 @@ export const ScriptViewDialog: React.FC<ScriptViewDialogProps> = ({
           <LayoutContent className="flex h-[70vh] flex-col overflow-hidden p-0">
         <div className="border-b border-border p-2">
           <ToolcraftSegmentedControl<"export" | "import">
-            ariaLabel="Project JSON mode"
+            ariaLabel="项目 JSON 模式"
             value={activeTab}
             onChange={setActiveTab}
             options={[
-              { value: "export", label: "Export JSON" },
-              { value: "import", label: "Import" },
+              { value: "export", label: "导出 JSON" },
+              { value: "import", label: "导入" },
             ]}
           />
         </div>
@@ -198,7 +198,7 @@ export const ScriptViewDialog: React.FC<ScriptViewDialogProps> = ({
                 <>
                   <div className="flex gap-2 p-3 border-b border-border">
                     <Button
-                      label={copySuccess ? "Copied!" : "Copy"}
+                      label={copySuccess ? "已复制" : "复制"}
                       variant="secondary"
                       size="sm"
                       icon={
@@ -211,7 +211,7 @@ export const ScriptViewDialog: React.FC<ScriptViewDialogProps> = ({
                       onClick={handleCopy}
                     />
                     <Button
-                      label="Download JSON"
+                      label="下载 JSON"
                       variant="secondary"
                       size="sm"
                       icon={<Download size={16} aria-hidden />}
@@ -241,7 +241,7 @@ export const ScriptViewDialog: React.FC<ScriptViewDialogProps> = ({
                 <div className="flex-1 flex flex-col items-center justify-center gap-3 p-8 text-center">
                   <FileCode size={40} className="text-text-muted" />
                   <Text type="body" color="secondary">
-                    No project data to export.
+                    没有可导出的项目数据。
                   </Text>
                 </div>
               )}
@@ -251,7 +251,7 @@ export const ScriptViewDialog: React.FC<ScriptViewDialogProps> = ({
           {activeTab === "import" && (
             <div className="flex-1 flex flex-col gap-4 p-4 overflow-auto">
               <FileInput
-                label="Project JSON file"
+                label="项目 JSON 文件"
                 isLabelHidden
                 value={null}
                 onChange={(picked) => {
@@ -261,7 +261,7 @@ export const ScriptViewDialog: React.FC<ScriptViewDialogProps> = ({
                     } else {
                       setValidation({
                         valid: false,
-                        errors: ["Please upload a .json file"],
+                        errors: ["请上传 .json 文件"],
                         warnings: [],
                       });
                     }
@@ -269,8 +269,8 @@ export const ScriptViewDialog: React.FC<ScriptViewDialogProps> = ({
                 }}
                 accept=".json,application/json"
                 mode="dropzone"
-                placeholder="Drop a JSON file here or click to browse"
-                description="Accepts .json project files"
+                placeholder="将 JSON 文件拖到此处，或点击浏览"
+                description="支持 .json 项目文件"
                 width="100%"
               />
 
@@ -280,10 +280,10 @@ export const ScriptViewDialog: React.FC<ScriptViewDialogProps> = ({
                 <div className="flex items-center gap-2">
                   <FileCode size={16} className="text-text-secondary" />
                   <Text type="body" className="flex-1 text-sm">
-                    {importJson.length.toLocaleString()} characters loaded
+                    已加载 {importJson.length.toLocaleString()} 个字符
                   </Text>
                   <Button
-                    label="Clear"
+                    label="清空"
                     variant="secondary"
                     size="sm"
                     onClick={() => {
@@ -292,7 +292,7 @@ export const ScriptViewDialog: React.FC<ScriptViewDialogProps> = ({
                     }}
                   />
                   <Button
-                    label={isValidating ? "Validating..." : "Re-validate"}
+                    label={isValidating ? "验证中..." : "重新验证"}
                     variant="secondary"
                     size="sm"
                     onClick={handleValidate}
@@ -309,7 +309,7 @@ export const ScriptViewDialog: React.FC<ScriptViewDialogProps> = ({
                     <Card variant="green" padding={3} className="flex items-center gap-2 border border-primary/30">
                       <CheckCircle2 size={16} className="text-primary" />
                       <Text type="body" className="text-primary">
-                        Valid project JSON — ready to import
+                        项目 JSON 有效，可以导入
                       </Text>
                     </Card>
                   )}
@@ -318,7 +318,7 @@ export const ScriptViewDialog: React.FC<ScriptViewDialogProps> = ({
                     <Card variant="muted" padding={3} className="space-y-1 border border-error/30 bg-error/10">
                       <div className="flex items-center gap-2 text-error font-medium text-sm">
                         <AlertCircle size={16} />
-                        Errors
+                        错误
                       </div>
                       <ul className="list-disc list-inside text-xs text-error/80 space-y-0.5">
                         {validation.errors.map((err, i) => (
@@ -332,7 +332,7 @@ export const ScriptViewDialog: React.FC<ScriptViewDialogProps> = ({
                     <Card variant="muted" padding={3} className="space-y-1 border border-warning/30 bg-warning/10">
                       <div className="flex items-center gap-2 text-warning font-medium text-sm">
                         <AlertTriangle size={16} />
-                        Warnings
+                        警告
                       </div>
                       <ul className="list-disc list-inside text-xs text-warning/80 space-y-0.5">
                         {validation.warnings.map((warning, i) => (
@@ -346,11 +346,10 @@ export const ScriptViewDialog: React.FC<ScriptViewDialogProps> = ({
                     validation.missingAssets.length > 0 && (
                       <Card variant="muted" padding={3} className="space-y-1 border border-border">
                         <Text type="body" color="secondary" weight="bold" display="block" className="text-sm">
-                          Missing Assets ({validation.missingAssets.length})
+                          缺失素材 ({validation.missingAssets.length})
                         </Text>
                         <Text type="supporting" color="secondary" display="block">
-                          These assets will be imported as placeholders and can
-                          be replaced later.
+                          这些素材将作为占位片段导入，之后可以替换。
                         </Text>
                       </Card>
                     )}
@@ -360,7 +359,7 @@ export const ScriptViewDialog: React.FC<ScriptViewDialogProps> = ({
               {/* Import button */}
               {importJson && (
                 <Button
-                  label="Import Project"
+                  label="导入项目"
                   icon={<Upload size={16} aria-hidden />}
                   variant="primary"
                   onClick={handleImport}

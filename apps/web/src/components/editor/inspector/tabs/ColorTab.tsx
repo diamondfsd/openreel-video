@@ -16,7 +16,7 @@ export const ColorTab: React.FC<ColorTabProps> = ({
       {showColorGrading && (
         <>
           <InspectorSection
-            title="Color Grading"
+            title="调色"
             sectionId="color-grading"
             defaultOpen={false}
           >

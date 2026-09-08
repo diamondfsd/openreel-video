@@ -15,13 +15,13 @@ const PROPERTY_COLORS: Record<string, string> = {
 };
 
 const PROPERTY_LABELS: Record<string, string> = {
-  "position.x": "Position X",
-  "position.y": "Position Y",
-  "scale.x": "Scale X",
-  "scale.y": "Scale Y",
-  rotation: "Rotation",
-  opacity: "Opacity",
-  borderRadius: "Border Radius",
+  "position.x": "位置 X",
+  "position.y": "位置 Y",
+  "scale.x": "缩放 X",
+  "scale.y": "缩放 Y",
+  rotation: "旋转",
+  opacity: "不透明度",
+  borderRadius: "圆角",
 };
 
 interface KeyframeTrackProps {
@@ -83,7 +83,7 @@ export const KeyframeTrack: React.FC<KeyframeTrackProps> = ({
   if (propertyGroups.length === 0) {
     return (
       <div className="h-8 flex items-center justify-center text-[9px] text-text-muted">
-        No keyframes
+        暂无关键帧
       </div>
     );
   }

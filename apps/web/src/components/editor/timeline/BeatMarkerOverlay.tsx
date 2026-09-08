@@ -67,7 +67,7 @@ export const BeatMarkerOverlay: React.FC<BeatMarkerOverlayProps> = ({
             {isDownbeat && (
               <div
                 className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-orange-500"
-                title={`Beat ${marker.index + 1}`}
+                title={`节拍 ${marker.index + 1}`}
               />
             )}
           </div>

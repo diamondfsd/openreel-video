@@ -27,7 +27,7 @@ export const SpeedTab: React.FC<SpeedTabProps> = ({
         !selectedClip.mediaId.startsWith("sticker-") && (
           <>
             <InspectorSection
-              title="Speed & Direction"
+              title="速度与方向"
               sectionId="speed"
               defaultOpen={false}
             >
@@ -42,7 +42,7 @@ export const SpeedTab: React.FC<SpeedTabProps> = ({
         !selectedClip.mediaId.startsWith("svg-") &&
         !selectedClip.mediaId.startsWith("sticker-") && (
           <InspectorSection
-            title="Stabilization"
+            title="稳定"
             sectionId="stabilization"
             defaultOpen={false}
           >
@@ -56,7 +56,7 @@ export const SpeedTab: React.FC<SpeedTabProps> = ({
         !selectedClip.mediaId.startsWith("svg-") &&
         !selectedClip.mediaId.startsWith("sticker-") && (
           <InspectorSection
-            title="Speed Curves"
+            title="速度曲线"
             sectionId="speed-curves"
             defaultOpen={false}
           >

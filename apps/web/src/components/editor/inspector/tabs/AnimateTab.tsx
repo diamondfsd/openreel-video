@@ -45,9 +45,9 @@ export const AnimateTab: React.FC<AnimateTabProps> = ({
   return (
     <>
       {motionCompositionId && motionComposition && (
-        <InspectorSection title="Motion Scene" sectionId="motion-scene">
+        <InspectorSection title="动效场景" sectionId="motion-scene">
           <ClickableCard
-            label={`Open ${motionComposition.name} motion scene`}
+            label={`打开 ${motionComposition.name} 动效场景`}
             className="flex w-full items-center justify-between rounded-md border border-border bg-bg-2 px-3 py-2 text-left text-sm text-fg hover:bg-hover"
             onClick={() =>
               navigate("motion", { compositionId: motionCompositionId })
@@ -63,7 +63,7 @@ export const AnimateTab: React.FC<AnimateTabProps> = ({
           </ClickableCard>
         </InspectorSection>
       )}
-      <InspectorSection title="Keyframes" sectionId="keyframes">
+      <InspectorSection title="关键帧" sectionId="keyframes">
         <KeyframesSection clipId={clipId} />
       </InspectorSection>
       {(clipType === "video" ||
@@ -73,7 +73,7 @@ export const AnimateTab: React.FC<AnimateTabProps> = ({
         clipType === "svg" ||
         clipType === "sticker") && (
         <InspectorSection
-          title="Transitions"
+          title="转场"
           sectionId="transitions"
           defaultOpen={false}
         >
@@ -86,7 +86,7 @@ export const AnimateTab: React.FC<AnimateTabProps> = ({
         clipType === "svg" ||
         clipType === "sticker") && (
         <InspectorSection
-          title="Motion Presets"
+          title="动效预设"
           sectionId="motion-presets"
           defaultOpen={false}
         >
@@ -100,7 +100,7 @@ export const AnimateTab: React.FC<AnimateTabProps> = ({
         clipType === "svg" ||
         clipType === "sticker") && (
         <InspectorSection
-          title="Motion Path"
+          title="动效路径"
           sectionId="motion-path"
           defaultOpen={false}
         >
@@ -114,7 +114,7 @@ export const AnimateTab: React.FC<AnimateTabProps> = ({
         clipType === "svg" ||
         clipType === "sticker") && (
         <InspectorSection
-          title="Emphasis Animation"
+          title="强调动画"
           sectionId="emphasis-animation"
           defaultOpen={false}
         >
@@ -123,7 +123,7 @@ export const AnimateTab: React.FC<AnimateTabProps> = ({
       )}
       {showTextSection && (
         <InspectorSection
-          title="Text Animation"
+          title="文字动画"
           sectionId="text-animation"
           defaultOpen={false}
         >

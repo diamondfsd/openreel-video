@@ -38,8 +38,8 @@ export const AspectRatioMatchDialog: React.FC<AspectRatioMatchDialogProps> = ({
       <Layout
         header={
           <DialogHeader
-            title="Match Video Dimensions?"
-            subtitle="The video you're adding has different dimensions than your current project settings."
+            title="匹配视频尺寸？"
+            subtitle="正在添加的视频尺寸与当前项目设置不同。"
             onOpenChange={(open) => !open && onCancel()}
             startContent={<Maximize2 size={20} className="text-primary" aria-hidden />}
           />
@@ -51,13 +51,13 @@ export const AspectRatioMatchDialog: React.FC<AspectRatioMatchDialogProps> = ({
             <Card variant="muted" padding={3}>
               <div>
                 <Text type="supporting" color="secondary" display="block" className="mb-1">
-                  Video Dimensions
+                  视频尺寸
                 </Text>
                 <Text type="label" weight="bold" display="block">
                   {videoWidth} x {videoHeight}
                 </Text>
                 <Text type="supporting" color="secondary" display="block" className="mt-0.5">
-                  Aspect Ratio: {videoAspect}
+                  宽高比：{videoAspect}
                 </Text>
               </div>
             </Card>
@@ -65,22 +65,20 @@ export const AspectRatioMatchDialog: React.FC<AspectRatioMatchDialogProps> = ({
             <Card variant="default" padding={3} className="border border-border/50">
               <div>
                 <Text type="supporting" color="secondary" display="block" className="mb-1">
-                  Current Project
+                  当前项目
                 </Text>
                 <Text type="label" weight="bold" display="block">
                   {currentWidth} x {currentHeight}
                 </Text>
                 <Text type="supporting" color="secondary" display="block" className="mt-0.5">
-                  Aspect Ratio: {currentAspect}
+                  宽高比：{currentAspect}
                 </Text>
               </div>
             </Card>
           </div>
 
           <Text type="supporting" color="secondary" display="block">
-            Match the project dimensions to this video for a clean fit, or keep
-            the current canvas. Your video will be placed at its original size
-            so you can resize it freely.
+            将项目尺寸匹配为视频尺寸以获得整洁的画面，或保留当前画布。视频会以原始尺寸放置，之后仍可自由调整大小。
           </Text>
         </div>
           </LayoutContent>
@@ -89,13 +87,13 @@ export const AspectRatioMatchDialog: React.FC<AspectRatioMatchDialogProps> = ({
           <LayoutFooter hasDivider>
             <div className="flex gap-3">
               <Button
-                label="Keep Current"
+                label="保留当前设置"
                 variant="secondary"
                 className="flex-1"
                 onClick={onCancel}
               />
               <Button
-                label="Match Video"
+                label="匹配视频尺寸"
                 variant="primary"
                 className="flex-1"
                 onClick={onConfirm}

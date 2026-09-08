@@ -134,14 +134,14 @@ export const CaptionEditorPanel: React.FC<CaptionEditorPanelProps> = ({
         <div className="flex items-center justify-between gap-3">
           <div>
             <Text type="supporting" weight="bold" className="block text-[11px] text-fg">
-              Single-line captions
+              单行字幕
             </Text>
             <Text type="supporting" color="secondary" className="block text-[9px]">
-              Split each cue into timed clips for vertical video.
+              将每条字幕拆分为适合竖屏视频的定时片段。
             </Text>
           </div>
           <Selector
-            label="Maximum words per caption"
+            label="每行最多词数"
             isLabelHidden
             size="sm"
             width={84}
@@ -156,8 +156,8 @@ export const CaptionEditorPanel: React.FC<CaptionEditorPanelProps> = ({
         <Button
           label={
             selectedCount > 0
-              ? `Make ${selectedCount} selected single-line`
-              : `Make all ${captions.length} single-line`
+              ? `将选中的 ${selectedCount} 条设为单行`
+              : `将全部 ${captions.length} 条设为单行`
           }
           icon={<WrapText size={13} aria-hidden />}
           variant="secondary"
@@ -170,7 +170,7 @@ export const CaptionEditorPanel: React.FC<CaptionEditorPanelProps> = ({
 
       {captions.length === 0 ? (
         <Text type="supporting" color="secondary" className="block py-3 text-center text-[10px]">
-          Import SRT/VTT or transcribe the selected clip to create editable caption text.
+          导入 SRT/VTT 或转写所选片段，以创建可编辑字幕文字。
         </Text>
       ) : (
         <>
@@ -180,10 +180,10 @@ export const CaptionEditorPanel: React.FC<CaptionEditorPanelProps> = ({
               onClick={toggleAll}
               className="text-[10px] font-semibold text-accent hover:underline"
             >
-              {allSelected ? "Clear selection" : "Select all"}
+              {allSelected ? "清除选择" : "全选"}
             </button>
             <Text type="supporting" color="secondary" className="text-[9px]">
-              {captions.length} editable text clip{captions.length === 1 ? "" : "s"}
+              {captions.length} 个可编辑字幕片段
             </Text>
           </div>
           <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
@@ -199,7 +199,7 @@ export const CaptionEditorPanel: React.FC<CaptionEditorPanelProps> = ({
                   <div className="mb-1.5 flex items-center justify-between gap-2">
                     <button
                       type="button"
-                      aria-label={`${selected ? "Deselect" : "Select"} caption ${index + 1}`}
+                      aria-label={`${selected ? "取消选择" : "选择"}第 ${index + 1} 条字幕`}
                       aria-pressed={selected}
                       onClick={() => toggleCaption(caption.id)}
                       className={`grid h-4 w-4 place-items-center rounded border ${
@@ -215,7 +215,7 @@ export const CaptionEditorPanel: React.FC<CaptionEditorPanelProps> = ({
                     </Text>
                   </div>
                   <textarea
-                    aria-label={`Caption ${index + 1} text`}
+                    aria-label={`第 ${index + 1} 条字幕文字`}
                     rows={Math.max(2, (drafts[caption.id]?.split("\n").length ?? 1))}
                     value={drafts[caption.id] ?? caption.text}
                     onChange={(event) =>

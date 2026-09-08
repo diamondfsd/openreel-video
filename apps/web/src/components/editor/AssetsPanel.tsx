@@ -66,43 +66,43 @@ const ASSETS_TABS: ReadonlyArray<{
 }> = [
   {
     value: "media",
-    label: "Media",
-    description: "Import footage, audio, and stills.",
+    label: "素材",
+    description: "导入视频、音频和图片素材。",
   },
   {
     value: "text",
-    label: "Text",
-    description: "Add title presets and caption elements.",
+    label: "文字",
+    description: "添加标题预设和字幕元素。",
   },
   {
     value: "graphics",
-    label: "Graphics",
-    description: "Create shapes, arrows, and SVG overlays.",
+    label: "图形",
+    description: "创建形状、箭头和 SVG 叠加层。",
   },
   {
     value: "effects",
-    label: "Effects",
-    description: "Drag effects onto a clip to apply them.",
+    label: "效果",
+    description: "将效果拖到片段上即可应用。",
   },
   {
     value: "transitions",
-    label: "Transitions",
-    description: "Drag transitions onto a clip's edge.",
+    label: "转场",
+    description: "将转场拖到片段边缘即可应用。",
   },
   {
     value: "ai",
-    label: "AI Generate",
-    description: "Generate clips, captions, and assisted edits.",
+    label: "AI 生成",
+    description: "生成片段、字幕并使用智能剪辑。",
   },
   {
     value: "recipes",
-    label: "Recipes",
-    description: "Apply clip-scoped looks, overlays, and text stacks.",
+    label: "配方",
+    description: "应用片段效果、叠加层和文字组合。",
   },
   {
     value: "templates",
-    label: "Project Templates",
-    description: "Load full-project starter layouts and presets.",
+    label: "项目模板",
+    description: "加载完整项目布局和预设。",
   },
 ] as const;
 
@@ -117,11 +117,11 @@ export const TEXT_STYLE_PRESETS: ReadonlyArray<{
   text: string;
   style: Partial<TextStyle>;
 }> = [
-  { name: "Heading", text: "Heading", style: { fontSize: 72, fontWeight: 700 } },
-  { name: "Subtitle", text: "Subtitle text", style: { fontSize: 36, fontWeight: 400 } },
+  { name: "标题", text: "标题", style: { fontSize: 72, fontWeight: 700 } },
+  { name: "副标题", text: "副标题文字", style: { fontSize: 36, fontWeight: 400 } },
   {
-    name: "Lower Third",
-    text: "Name Here",
+    name: "下三分之一字幕",
+    text: "姓名",
     style: {
       fontSize: 32,
       fontWeight: 600,
@@ -131,8 +131,8 @@ export const TEXT_STYLE_PRESETS: ReadonlyArray<{
     },
   },
   {
-    name: "Caption",
-    text: "Caption text here",
+    name: "字幕",
+    text: "字幕文字",
     style: {
       fontSize: 24,
       fontWeight: 400,
@@ -144,8 +144,8 @@ export const TEXT_STYLE_PRESETS: ReadonlyArray<{
     },
   },
   {
-    name: "Hero",
-    text: "MAKE IT MOVE",
+    name: "主标题",
+    text: "让画面动起来",
     style: {
       fontSize: 112,
       fontWeight: 900,
@@ -155,8 +155,8 @@ export const TEXT_STYLE_PRESETS: ReadonlyArray<{
     },
   },
   {
-    name: "Quote",
-    text: "“Tell a better story.”",
+    name: "引用",
+    text: "讲好一个故事。",
     style: {
       fontSize: 54,
       fontWeight: 600,
@@ -168,8 +168,8 @@ export const TEXT_STYLE_PRESETS: ReadonlyArray<{
     },
   },
   {
-    name: "Outline",
-    text: "OUTLINE",
+    name: "描边",
+    text: "描边文字",
     style: {
       fontSize: 80,
       fontWeight: 900,
@@ -179,8 +179,8 @@ export const TEXT_STYLE_PRESETS: ReadonlyArray<{
     },
   },
   {
-    name: "Badge",
-    text: "NEW RELEASE",
+    name: "徽章",
+    text: "全新发布",
     style: {
       fontSize: 28,
       fontWeight: 800,
@@ -200,6 +200,50 @@ const TAB_ICONS: Record<AssetsTab, React.ElementType> = {
   recipes: Wand2,
   templates: LayoutTemplate,
 };
+
+const BACKGROUND_CATEGORY_LABELS = {
+  all: "全部",
+  solid: "纯色",
+  gradient: "渐变",
+  pattern: "图案",
+  mesh: "网格渐变",
+} as const;
+
+const BACKGROUND_PRESET_LABELS: Record<string, string> = {
+  "solid-black": "黑色",
+  "solid-white": "白色",
+  "solid-slate": "板岩灰",
+  "solid-zinc": "锌灰",
+  "solid-red": "红色",
+  "solid-blue": "蓝色",
+  "solid-green": "绿色",
+  "solid-purple": "紫色",
+  "gradient-sunset": "日落",
+  "gradient-ocean": "海洋",
+  "gradient-forest": "森林",
+  "gradient-lavender": "薰衣草",
+  "gradient-midnight": "午夜",
+  "gradient-rose": "玫瑰",
+  "gradient-gold": "金色",
+  "gradient-noir": "黑色电影",
+  "radial-spotlight": "聚光灯",
+  "radial-glow": "光晕",
+  "mesh-aurora": "极光",
+  "mesh-nebula": "星云",
+  "mesh-candy": "糖果",
+  "mesh-sunset-beach": "海滩",
+  "pattern-grid-dark": "深色网格",
+  "pattern-grid-light": "浅色网格",
+  "pattern-dots-dark": "深色点阵",
+  "pattern-dots-light": "浅色点阵",
+  "pattern-noise-dark": "胶片颗粒",
+  "waves-ocean": "海浪",
+  "waves-sunset": "日落海浪",
+  "aurora-borealis": "北极光",
+};
+
+const getBackgroundPresetLabel = (preset: BackgroundPreset): string =>
+  BACKGROUND_PRESET_LABELS[preset.id] ?? preset.name;
 
 const PanelIconButton: React.FC<{
   label: string;
@@ -313,26 +357,26 @@ const MediaThumbnail: React.FC<{
   const hoverOverlay = (
     <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center gap-2 animate-in fade-in duration-200">
       {item.kieaiError ? (
-        <PanelIconButton
-          label="Retry generation"
+          <PanelIconButton
+          label="重试生成"
           icon={<RefreshCw size={14} className="text-red-400" />}
           onClick={(e) => { e.stopPropagation(); onRetryKieAI?.(); }}
           className="p-2 bg-red-500/20 rounded-full hover:bg-red-500/40 backdrop-blur-sm transition-colors"
         />
       ) : item.isPending ? (
-        <div title="KieAI generation in progress…" className="p-2">
+        <div title="KieAI 正在生成…" className="p-2">
           <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
         </div>
       ) : item.isPlaceholder ? (
         <>
           <PanelIconButton
-            label="Replace asset"
+            label="替换素材"
             icon={<RefreshCw size={14} className="text-yellow-500" />}
             onClick={(e) => { e.stopPropagation(); onReplace(); }}
             className="p-2 bg-yellow-500/20 rounded-full hover:bg-yellow-500/40 backdrop-blur-sm transition-colors"
           />
           <PanelIconButton
-            label="Delete"
+            label="删除"
             icon={<Trash2 size={14} className="text-red-400" />}
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
             className="p-2 bg-red-500/20 rounded-full hover:bg-red-500/40 backdrop-blur-sm transition-colors"
@@ -342,20 +386,20 @@ const MediaThumbnail: React.FC<{
         <>
           {item.type === "image" && onKieAI && (
             <PanelIconButton
-              label="Create with KieAI"
+              label="使用 KieAI 创建"
               icon={<Sparkles size={14} className="text-primary" />}
               onClick={(e) => { e.stopPropagation(); onKieAI(); }}
               className="p-2 bg-primary/20 rounded-full hover:bg-primary/40 backdrop-blur-sm transition-colors"
             />
           )}
           <PanelIconButton
-            label="Add to timeline"
+            label="添加到时间线"
             icon={<Plus size={14} className="text-primary" />}
             onClick={(e) => { e.stopPropagation(); onAddToTimeline(); }}
             className="p-2 bg-primary/20 rounded-full hover:bg-primary/40 backdrop-blur-sm transition-colors"
           />
           <PanelIconButton
-            label="Delete"
+            label="删除"
             icon={<Trash2 size={14} className="text-red-400" />}
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
             className="p-2 bg-red-500/20 rounded-full hover:bg-red-500/40 backdrop-blur-sm transition-colors"
@@ -425,25 +469,25 @@ const MediaThumbnail: React.FC<{
           <div className="flex items-center gap-1 flex-shrink-0">
             {item.kieaiError ? (
               <PanelIconButton
-                label="Retry generation"
+                label="重试生成"
                 icon={<RefreshCw size={12} className="text-red-400" />}
                 onClick={(e) => { e.stopPropagation(); onRetryKieAI?.(); }}
                 className="p-1 bg-red-500/20 rounded hover:bg-red-500/40 transition-colors"
               />
             ) : item.isPending ? (
-              <div className="p-1" title="Generating…">
+              <div className="p-1" title="正在生成…">
                 <div className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent" />
               </div>
             ) : item.isPlaceholder ? (
               <>
                 <PanelIconButton
-                  label="Replace asset"
+                  label="替换素材"
                   icon={<RefreshCw size={12} className="text-yellow-500" />}
                   onClick={(e) => { e.stopPropagation(); onReplace(); }}
                   className="p-1 bg-yellow-500/20 rounded hover:bg-yellow-500/40 transition-colors"
                 />
                 <PanelIconButton
-                  label="Delete"
+                  label="删除"
                   icon={<Trash2 size={12} className="text-red-400" />}
                   onClick={(e) => { e.stopPropagation(); onDelete(); }}
                   className="p-1 bg-red-500/20 rounded hover:bg-red-500/40 transition-colors"
@@ -453,20 +497,20 @@ const MediaThumbnail: React.FC<{
               <>
                 {item.type === "image" && onKieAI && (
                   <PanelIconButton
-                    label="Create with KieAI"
+                    label="使用 KieAI 创建"
                     icon={<Sparkles size={12} className="text-primary" />}
                     onClick={(e) => { e.stopPropagation(); onKieAI(); }}
                     className="p-1 bg-primary/20 rounded hover:bg-primary/40 transition-colors"
                   />
                 )}
                 <PanelIconButton
-                  label="Add to timeline"
+                  label="添加到时间线"
                   icon={<Plus size={12} className="text-primary" />}
                   onClick={(e) => { e.stopPropagation(); onAddToTimeline(); }}
                   className="p-1 bg-primary/20 rounded hover:bg-primary/40 transition-colors"
                 />
                 <PanelIconButton
-                  label="Delete"
+                  label="删除"
                   icon={<Trash2 size={12} className="text-red-400" />}
                   onClick={(e) => { e.stopPropagation(); onDelete(); }}
                   className="p-1 bg-red-500/20 rounded hover:bg-red-500/40 transition-colors"
@@ -531,7 +575,7 @@ const MediaThumbnail: React.FC<{
         {item.kieaiError && (
           <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-red-500 rounded text-[8px] text-white font-bold flex items-center gap-1">
             <AlertTriangle size={8} />
-            Failed
+            失败
           </div>
         )}
 
@@ -547,7 +591,7 @@ const MediaThumbnail: React.FC<{
         {!item.kieaiError && !item.isPending && item.isPlaceholder && (
           <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-yellow-500 rounded text-[8px] text-black font-bold flex items-center gap-1">
             <AlertTriangle size={10} />
-            Missing
+            缺失
           </div>
         )}
 
@@ -605,13 +649,13 @@ const EmptyState: React.FC<{ onImport: () => void }> = ({ onImport }) => (
       <Upload size={24} className="text-fg-muted" />
     </div>
     <Text type="body" color="secondary" weight="bold" display="block" className="mb-2 text-sm text-fg">
-      No media imported
+      尚未导入素材
     </Text>
     <Text type="supporting" color="secondary" display="block" className="mb-6 text-xs text-fg-3">
-      Drag files here or click to import
+      将文件拖到这里，或点击导入
     </Text>
     <Button
-      label="Import Media"
+      label="导入素材"
       variant="ghost"
       onClick={onImport}
       className="px-4 py-2 bg-bg-2 hover:bg-bg-3 border border-border text-fg-2 text-xs font-medium rounded-lg transition-all hover:border-accent/50"
@@ -634,7 +678,7 @@ export const AssetsPanel: React.FC = () => {
 
   const setActiveTab = useCallback((tab: AssetsTab) => {
     if (activeTab === "ai" && tab !== "ai" && ttsHasUnsaved) {
-      toast.warning("Unsaved audio discarded", "Save to media or download next time to keep it.");
+      toast.warning("未保存的音频已丢弃", "请先保存到素材库或下载。");
     }
     setActiveTabRaw(tab);
   }, [activeTab, ttsHasUnsaved]);
@@ -706,14 +750,14 @@ export const AssetsPanel: React.FC = () => {
         for (let i = 0; i < fileArray.length; i++) {
           const file = fileArray[i];
           setImportProgress(
-            `Importing ${file.name} (${i + 1}/${fileArray.length})...`,
+          `正在导入 ${file.name}（${i + 1}/${fileArray.length}）...`,
           );
 
           const result = await importMedia(file);
 
           // If it's a video with audio, extract audio to separate track
           if (result.success && file.type.startsWith("video/")) {
-            setImportProgress(`Extracting audio from ${file.name}...`);
+            setImportProgress(`正在从 ${file.name} 提取音频...`);
             // Audio extraction is handled by the importMedia function
             // The audio track is created automatically when adding to timeline
           }
@@ -795,7 +839,7 @@ export const AssetsPanel: React.FC = () => {
         const file = (e.target as HTMLInputElement).files?.[0];
         if (file) {
           setIsImporting(true);
-          setImportProgress(`Replacing asset...`);
+          setImportProgress(`正在替换素材...`);
           try {
             await replaceMediaAsset(itemId, file);
           } catch (error) {
@@ -813,7 +857,7 @@ export const AssetsPanel: React.FC = () => {
 
   const handleRelinkFromFolder = useCallback(async () => {
     if (!("showDirectoryPicker" in window)) {
-      toast.error("Folder picker not supported", "Please relink assets individually using the refresh button on each missing asset.");
+      toast.error("不支持选择文件夹", "请使用缺失素材旁的刷新按钮逐个重新关联。");
       return;
     }
     let dirHandle: FileSystemDirectoryHandle;
@@ -850,7 +894,7 @@ export const AssetsPanel: React.FC = () => {
         : null;
       const entry = key ? fileMap.get(key) : null;
       if (entry) {
-        setImportProgress(`Relinking ${item.name}…`);
+        setImportProgress(`正在重新关联 ${item.name}…`);
         try {
           // Save individual file handle for future auto-restore
           try { await saveFileHandle(entry.file.name, entry.file.size, entry.handle); } catch { /* best-effort */ }
@@ -865,9 +909,9 @@ export const AssetsPanel: React.FC = () => {
     setImportProgress("");
 
     if (linked > 0) {
-      toast.success(`Relinked ${linked} of ${placeholders.length} asset${placeholders.length !== 1 ? "s" : ""}`);
+      toast.success(`已重新关联 ${linked}/${placeholders.length} 个素材`);
     } else {
-      toast.error("No matches found", "None of the files in the selected folder matched the missing assets by filename.");
+      toast.error("未找到匹配项", "所选文件夹中没有按文件名匹配到缺失素材的文件。");
     }
   }, [replaceMediaAsset]);
 
@@ -980,7 +1024,7 @@ export const AssetsPanel: React.FC = () => {
     try {
       const blob = await loadMediaBlob(item.id);
       if (!blob) {
-        toast.error("Asset not found", "Cannot load the image data for this asset.");
+        toast.error("未找到素材", "无法加载该素材的图像数据。");
         return;
       }
       const mimeType = blob.type || (item.name.match(/\.png$/i) ? "image/png" : "image/jpeg");
@@ -988,7 +1032,7 @@ export const AssetsPanel: React.FC = () => {
       setKieaiDialog({ file, previewUrl: item.thumbnailUrl });
     } catch (err) {
       console.error("[KieAI] Failed to load media blob:", err);
-      toast.error("Failed to open KieAI", err instanceof Error ? err.message : "Unknown error");
+      toast.error("无法打开 KieAI", err instanceof Error ? err.message : "未知错误");
     }
   }, []);
 
@@ -1005,11 +1049,11 @@ export const AssetsPanel: React.FC = () => {
         return (
           <div className="flex min-h-0 flex-1 flex-col">
             <div className="px-4 pt-[18px] shrink-0">
-              <div className="font-bold text-[18px] text-fg mb-[14px]">Media</div>
+              <div className="font-bold text-[18px] text-fg mb-[14px]">素材</div>
               <div className="flex gap-2 mb-[18px]">
                 <button
                   type="button"
-                  aria-label="Import media"
+                  aria-label="导入素材"
                   onClick={triggerFileInput}
                   className="flex-1 flex items-center justify-center gap-[7px] bg-bg border border-border rounded-[9px] p-[10px] font-medium text-[13px] text-fg-2"
                 >
@@ -1026,11 +1070,11 @@ export const AssetsPanel: React.FC = () => {
                     <path d="M12 16V4M7 9l5-5 5 5" />
                     <path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2" />
                   </svg>
-                  Import
+                  导入
                 </button>
                 <button
                   type="button"
-                  aria-label="Record"
+                  aria-label="录制"
                   onClick={() => openModal("recorder")}
                   className="flex-1 flex items-center justify-center gap-[7px] bg-bg border border-border rounded-[9px] p-[10px] font-medium text-[13px] text-fg-2"
                 >
@@ -1045,11 +1089,11 @@ export const AssetsPanel: React.FC = () => {
                     <circle cx="12" cy="12" r="8" />
                     <circle cx="12" cy="12" r="3" fill="var(--fg-3)" stroke="none" />
                   </svg>
-                  Record
+                  录制
                 </button>
                 <button
                   type="button"
-                  aria-label="Sort media"
+                  aria-label="排序素材"
                   onClick={() =>
                     setSortOrder((prev) =>
                       prev === "none" ? "asc" : prev === "asc" ? "desc" : "none",
@@ -1075,7 +1119,7 @@ export const AssetsPanel: React.FC = () => {
             {missingAssetsCount > 0 && (
               <div className="px-4 pb-3 space-y-2">
                 <PanelButton
-                  label="Show Only Missing Assets"
+                  label="仅显示缺失素材"
                   onClick={() => setShowOnlyMissing(!showOnlyMissing)}
                   className={`w-full px-3 py-2 rounded-lg border text-xs font-medium transition-all flex items-center justify-between ${
                     showOnlyMissing
@@ -1085,19 +1129,19 @@ export const AssetsPanel: React.FC = () => {
                 >
                   <div className="flex items-center gap-2">
                     <AlertTriangle size={14} />
-                    <span>Show Only Missing Assets</span>
+                    <span>仅显示缺失素材</span>
                   </div>
                   <div className="px-2 py-0.5 rounded-full bg-yellow-500 text-black text-[10px] font-bold">
                     {missingAssetsCount}
                   </div>
                 </PanelButton>
                 <PanelButton
-                  label="Relink from Folder"
+                  label="从文件夹重新关联"
                   onClick={handleRelinkFromFolder}
                   className="w-full px-3 py-2 rounded-lg border border-yellow-500/40 bg-yellow-500/5 text-yellow-500 text-xs font-medium transition-all hover:bg-yellow-500/15 flex items-center gap-2"
                 >
                   <RefreshCw size={14} />
-                  <span>Relink from Folder…</span>
+                  <span>从文件夹重新关联…</span>
                 </PanelButton>
               </div>
             )}
@@ -1111,7 +1155,7 @@ export const AssetsPanel: React.FC = () => {
               <div className="px-4 pb-[18px] relative">
                 {filteredItems.length > 0 && (
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-[13px] font-semibold text-fg-2">Project Media</span>
+                    <span className="text-[13px] font-semibold text-fg-2">项目素材</span>
                     <span className="text-[12px] font-medium text-fg-muted">{filteredItems.length}</span>
                   </div>
                 )}
@@ -1136,13 +1180,13 @@ export const AssetsPanel: React.FC = () => {
                     ))}
                     <div className="flex flex-col">
                       <PanelButton
-                        label="Add media"
+                        label="添加素材"
                         onClick={triggerFileInput}
                         className="h-[78px] bg-bg-2 rounded-lg border border-dashed border-border hover:border-accent/50 hover:bg-accent-soft relative flex items-center justify-center cursor-pointer transition-all overflow-hidden group"
                       >
                         <div className="flex flex-col items-center gap-1.5">
                           <Upload size={20} className="text-fg-muted group-hover:text-accent transition-colors" />
-                          <span className="text-[10px] text-fg-muted group-hover:text-accent transition-colors font-medium">Add media</span>
+                          <span className="text-[10px] text-fg-muted group-hover:text-accent transition-colors font-medium">添加素材</span>
                         </div>
                       </PanelButton>
                     </div>
@@ -1152,7 +1196,7 @@ export const AssetsPanel: React.FC = () => {
                 {isDragOver && (
                   <div className="absolute inset-4 border-2 border-dashed border-accent rounded-xl flex items-center justify-center bg-accent-soft pointer-events-none z-50 backdrop-blur-sm">
                     <div className="text-accent text-sm font-bold bg-bg-1 px-4 py-2 rounded-full shadow-lg">
-                      Drop files to import
+                      将文件拖到这里导入
                     </div>
                   </div>
                 )}
@@ -1167,9 +1211,9 @@ export const AssetsPanel: React.FC = () => {
               <div className="px-4 py-4">
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-3">
-                    <Text type="label" color="secondary" weight="bold" display="block" className="flex items-center gap-1.5 text-xs">
+                      <Text type="label" color="secondary" weight="bold" display="block" className="flex items-center gap-1.5 text-xs">
                       <Palette size={12} />
-                      Backgrounds
+                      背景
                     </Text>
                   </div>
                   <div className="flex gap-1.5 mb-3 flex-wrap">
@@ -1177,7 +1221,7 @@ export const AssetsPanel: React.FC = () => {
                       (cat) => (
                         <SelectableCard
                           key={cat}
-                          label={cat.charAt(0).toUpperCase() + cat.slice(1)}
+                          label={BACKGROUND_CATEGORY_LABELS[cat]}
                           isSelected={backgroundCategory === cat}
                           onChange={() => setBackgroundCategory(cat)}
                           onClick={() => setBackgroundCategory(cat)}
@@ -1189,7 +1233,7 @@ export const AssetsPanel: React.FC = () => {
                               : "bg-background-tertiary text-text-muted hover:text-text-secondary"
                           }`}
                         >
-                          {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                          {BACKGROUND_CATEGORY_LABELS[cat]}
                         </SelectableCard>
                       ),
                     )}
@@ -1198,7 +1242,7 @@ export const AssetsPanel: React.FC = () => {
                     {filteredBackgrounds.map((preset) => (
                       <PanelButton
                         key={preset.id}
-                        label={preset.name}
+                        label={getBackgroundPresetLabel(preset)}
                         onClick={() => handleImportBackground(preset)}
                         isDisabled={generatingBackground !== null}
                         className="aspect-square rounded-lg border border-border hover:border-primary/50 transition-all overflow-hidden relative group disabled:opacity-50"
@@ -1213,7 +1257,7 @@ export const AssetsPanel: React.FC = () => {
                           <Plus size={16} className="text-white" />
                         </div>
                         <span className="absolute bottom-0 left-0 right-0 text-[8px] text-white bg-black/60 py-0.5 px-1 truncate opacity-0 group-hover:opacity-100 transition-opacity">
-                          {preset.name}
+                          {getBackgroundPresetLabel(preset)}
                         </span>
                       </PanelButton>
                     ))}
@@ -1222,31 +1266,31 @@ export const AssetsPanel: React.FC = () => {
 
                 <div className="mb-6">
                   <Text type="label" color="secondary" weight="bold" display="block" className="mb-3 text-xs">
-                    Shapes
+                    形状
                   </Text>
                   <div className="grid grid-cols-3 gap-2">
                     {[
                       {
                         type: "rectangle" as ShapeType,
                         icon: Square,
-                        label: "Rectangle",
+                        label: "矩形",
                       },
-                      { type: "circle" as ShapeType, icon: Circle, label: "Circle" },
+                      { type: "circle" as ShapeType, icon: Circle, label: "圆形" },
                       {
                         type: "triangle" as ShapeType,
                         icon: Triangle,
-                        label: "Triangle",
+                        label: "三角形",
                       },
-                      { type: "star" as ShapeType, icon: Star, label: "Star" },
+                      { type: "star" as ShapeType, icon: Star, label: "星形" },
                       {
                         type: "arrow" as ShapeType,
                         icon: ArrowRight,
-                        label: "Arrow",
+                        label: "箭头",
                       },
                       {
                         type: "polygon" as ShapeType,
                         icon: Hexagon,
-                        label: "Polygon",
+                        label: "多边形",
                       },
                     ].map((shape) => (
                       <PanelButton
@@ -1289,16 +1333,16 @@ export const AssetsPanel: React.FC = () => {
 
                 <div className="mb-6">
                   <Text type="label" color="secondary" weight="bold" display="block" className="mb-3 text-xs">
-                    3D Objects
+                    3D 对象
                   </Text>
                   <div className="grid grid-cols-3 gap-2">
                     {([
-                      { type: "mesh-cube" as ShapeType, label: "Cube", icon: "□" },
-                      { type: "mesh-sphere" as ShapeType, label: "Sphere", icon: "○" },
-                      { type: "mesh-torus" as ShapeType, label: "Torus", icon: "◯" },
-                      { type: "mesh-cone" as ShapeType, label: "Cone", icon: "△" },
-                      { type: "mesh-cylinder" as ShapeType, label: "Cylinder", icon: "▯" },
-                      { type: "mesh-icosahedron" as ShapeType, label: "Icosahedron", icon: "◆" },
+                      { type: "mesh-cube" as ShapeType, label: "立方体", icon: "□" },
+                      { type: "mesh-sphere" as ShapeType, label: "球体", icon: "○" },
+                      { type: "mesh-torus" as ShapeType, label: "圆环", icon: "◯" },
+                      { type: "mesh-cone" as ShapeType, label: "圆锥", icon: "△" },
+                      { type: "mesh-cylinder" as ShapeType, label: "圆柱", icon: "▯" },
+                      { type: "mesh-icosahedron" as ShapeType, label: "二十面体", icon: "◆" },
                     ]).map((mesh) => (
                       <PanelButton
                         key={mesh.type}
@@ -1345,10 +1389,10 @@ export const AssetsPanel: React.FC = () => {
 
                 <div className="mb-6">
                   <Text type="label" color="secondary" weight="bold" display="block" className="mb-3 text-xs">
-                    SVG Import
+                    SVG 导入
                   </Text>
                   <PanelButton
-                    label="Import SVG File"
+                    label="导入 SVG 文件"
                     onClick={() => {
                       const input = document.createElement("input");
                       input.type = "file";
@@ -1383,7 +1427,7 @@ export const AssetsPanel: React.FC = () => {
                       className="text-text-secondary group-hover:text-primary transition-colors"
                     />
                     <span className="text-xs text-text-secondary group-hover:text-text-primary">
-                      Import SVG File
+                      导入 SVG 文件
                     </span>
                   </PanelButton>
                 </div>
@@ -1401,7 +1445,7 @@ export const AssetsPanel: React.FC = () => {
             <div className="min-h-0 flex-1 overflow-auto">
               <div className="min-w-0 px-4 py-4 space-y-3">
                 <PanelButton
-                  label="Add Title"
+                  label="添加标题"
                   onClick={async () => {
                     const created = await insertTimelineOverlay(
                       playheadPosition,
@@ -1412,7 +1456,7 @@ export const AssetsPanel: React.FC = () => {
                           .createTextClip(
                             trackId,
                             playheadPosition,
-                            "New Title",
+                            "新标题",
                             5,
                             DEFAULT_TITLE_STYLE,
                           ),
@@ -1428,7 +1472,7 @@ export const AssetsPanel: React.FC = () => {
                   className="flex min-h-[72px] w-full min-w-0 flex-col items-center justify-center rounded-lg border border-border bg-background-tertiary px-3 py-3 text-center transition-all hover:border-primary/50 hover:bg-primary/5"
                 >
                   <span className="block max-w-full truncate text-base font-bold leading-tight text-text-primary">
-                    Add Title
+                    添加标题
                   </span>
                   <Text
                     type="supporting"
@@ -1437,7 +1481,7 @@ export const AssetsPanel: React.FC = () => {
                     maxLines={1}
                     className="mt-1 max-w-full text-[11px] leading-tight"
                   >
-                    Click to add text to timeline
+                    点击将文字添加到时间线
                   </Text>
                 </PanelButton>
                 <div className="grid min-w-0 grid-cols-2 gap-2">
@@ -1557,7 +1601,7 @@ export const AssetsPanel: React.FC = () => {
         <input
           ref={fileInputRef}
           type="file"
-          aria-label="Import media"
+              aria-label="导入素材"
           accept="video/*,audio/*,image/*"
           multiple
           className="hidden"

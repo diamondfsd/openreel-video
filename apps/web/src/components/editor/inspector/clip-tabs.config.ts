@@ -27,14 +27,14 @@ export interface InspectorTabDef {
 }
 
 export const TAB_DEFS: Record<InspectorTabId, InspectorTabDef> = {
-  transform: { id: "transform", label: "Transform", icon: Move },
-  color: { id: "color", label: "Color", icon: Palette },
-  effects: { id: "effects", label: "Effects", icon: Wand2 },
-  audio: { id: "audio", label: "Audio", icon: Volume2 },
-  speed: { id: "speed", label: "Speed", icon: Gauge },
-  animate: { id: "animate", label: "Animate", icon: Film },
+  transform: { id: "transform", label: "变换", icon: Move },
+  color: { id: "color", label: "调色", icon: Palette },
+  effects: { id: "effects", label: "效果", icon: Wand2 },
+  audio: { id: "audio", label: "音频", icon: Volume2 },
+  speed: { id: "speed", label: "速度", icon: Gauge },
+  animate: { id: "animate", label: "动效", icon: Film },
   ai: { id: "ai", label: "AI", icon: Sparkles },
-  style: { id: "style", label: "Style", icon: Type },
+  style: { id: "style", label: "样式", icon: Type },
 };
 
 const TABS_BY_CLIP_TYPE: Record<InspectorClipType, InspectorTabId[]> = {

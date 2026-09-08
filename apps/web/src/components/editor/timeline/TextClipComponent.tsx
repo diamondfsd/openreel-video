@@ -238,7 +238,7 @@ export const TextClipComponent: React.FC<TextClipComponentProps> = ({
           ref={clipRef}
           role="button"
           tabIndex={0}
-          aria-label={`Select text clip ${textClip.text || "Text"}`}
+          aria-label={`选择文字片段：${textClip.text || "文字"}`}
           aria-pressed={isSelected}
           onClick={handleClick}
           onMouseDown={handleMouseDown}
@@ -283,7 +283,7 @@ export const TextClipComponent: React.FC<TextClipComponentProps> = ({
           <div className="w-full h-full flex items-center gap-1 px-3">
             <Type size={12} className="text-fg-2 flex-shrink-0" />
             <span className="text-[10px] font-semibold text-fg truncate">
-              {textClip.text || "Text"}
+              {textClip.text || "文字"}
             </span>
           </div>
           {isSelected && (

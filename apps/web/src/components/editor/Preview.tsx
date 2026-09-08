@@ -365,8 +365,21 @@ const aspectLabelFor = (width: number, height: number): string => {
       closest = preset;
     }
   }
-  return smallestDelta < 0.01 ? closest.label : "Custom";
+  return smallestDelta < 0.01 ? closest.label : "自定义";
 };
+
+const PREVIEW_EXPORT_PHASE_LABELS: Record<string, string> = {
+  "initializing...": "正在初始化...",
+  "preparing...": "准备中...",
+  "rendering...": "正在渲染...",
+  "encoding...": "正在编码...",
+  "complete!": "已完成",
+  "saved!": "已保存",
+};
+
+function previewExportPhaseLabel(phase: string): string {
+  return PREVIEW_EXPORT_PHASE_LABELS[phase.trim().toLowerCase()] ?? phase;
+}
 
 // Draws `source` cover-fit and Gaussian-blurred across the whole canvas — the
 // blurred letterbox backdrop. Called inline with the live decoded base frame
@@ -3294,14 +3307,14 @@ export const Preview: React.FC = () => {
                 ctx.font = "bold 20px Inter, sans-serif";
                 ctx.textAlign = "center";
                 ctx.fillText(
-                  "Drop media here",
+          "将素材拖到此处",
                   canvas.width / 2,
                   canvas.height / 2,
                 );
                 ctx.font = "14px Inter, sans-serif";
                 ctx.fillStyle = emptyText;
                 ctx.fillText(
-                  "Replace this placeholder with your content",
+          "用你的内容替换此占位片段",
                   canvas.width / 2,
                   canvas.height / 2 + 28,
                 );
@@ -3371,7 +3384,7 @@ export const Preview: React.FC = () => {
         ctx.font = "24px Inter, sans-serif";
         ctx.textAlign = "center";
         ctx.fillText(
-          "Import media to get started",
+          "导入素材即可开始",
           canvas.width / 2,
           canvas.height / 2,
         );
@@ -7553,7 +7566,7 @@ export const Preview: React.FC = () => {
       ref={containerRef}
       data-tour="preview"
       tabIndex={0}
-      aria-label="Preview canvas"
+      aria-label="预览画布"
       onKeyDown={handlePreviewKeyDown}
       onPointerDownCapture={(event) => {
         const target = event.target as HTMLElement;
@@ -7566,9 +7579,9 @@ export const Preview: React.FC = () => {
       {/* ── Panel bar header (mockup: 'Player') ───────────────── */}
       {!isMaximized && !isFullscreen && (
         <div className="flex items-center px-3.5 py-2 border-b border-border bg-bg-1 gap-2.5 min-h-[38px] shrink-0">
-          <Text type="label" color="primary" weight="semibold" className="text-[13px] tracking-tight text-fg m-0">Player</Text>
+          <Text type="label" color="primary" weight="semibold" className="text-[13px] tracking-tight text-fg m-0">播放器</Text>
           <div className="ml-auto flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent" title="Live preview" />
+          <span className="w-1.5 h-1.5 rounded-full bg-accent" title="实时预览" />
           </div>
         </div>
       )}
@@ -7636,7 +7649,7 @@ export const Preview: React.FC = () => {
 
           {showCompositionGrid && !cropMode ? (
             <div
-              aria-label="Composition grid"
+              aria-label="构图网格"
               className="pointer-events-none absolute inset-0 z-20"
             >
               {[1, 2].map((line) => (
@@ -7656,13 +7669,13 @@ export const Preview: React.FC = () => {
 
           {showSafeMargins && !cropMode ? (
             <div
-              aria-label="Title and action safe margins"
+              aria-label="标题与操作安全区"
               className="pointer-events-none absolute inset-0 z-20"
             >
               <span className="absolute inset-[5%] border border-dashed border-white/60 shadow-[0_0_1px_rgba(0,0,0,0.9)]" />
               <span className="absolute inset-[10%] border border-white/75 shadow-[0_0_1px_rgba(0,0,0,0.9)]" />
               <span className="absolute left-[10%] top-[10%] rounded-br bg-black/55 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white/80">
-                Title safe
+                标题安全区
               </span>
             </div>
           ) : null}
@@ -7735,7 +7748,7 @@ export const Preview: React.FC = () => {
                       display="block"
                       className="text-sm leading-5 text-white"
                     >
-                      Exporting Video
+                      正在导出视频
                     </Text>
                     <Text
                       type="supporting"
@@ -7743,7 +7756,7 @@ export const Preview: React.FC = () => {
                       maxLines={2}
                       className="mt-1 text-xs leading-4 text-white/75"
                     >
-                      {exportState.phase || "Preparing..."}
+                      {previewExportPhaseLabel(exportState.phase || "Preparing...")}
                     </Text>
                   </div>
                 </div>
@@ -7751,7 +7764,7 @@ export const Preview: React.FC = () => {
                 <div className="mb-4 min-w-0">
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <span className="text-[11px] font-medium text-white/80">
-                      Export Progress
+                      导出进度
                     </span>
                     <span className="shrink-0 font-mono text-[11px] font-semibold text-white">
                       {Math.round(exportState.progress)}%
@@ -7772,7 +7785,7 @@ export const Preview: React.FC = () => {
                   display="block"
                   className="text-center text-[11px] leading-4 text-white/70"
                 >
-                  You can keep editing once the export finishes.
+                  导出完成后即可继续编辑。
                 </Text>
               </div>
             </div>
@@ -7796,14 +7809,14 @@ export const Preview: React.FC = () => {
               <div
                 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-primary/80 rounded-full flex items-center justify-center cursor-move pointer-events-auto hover:bg-primary transition-colors"
                 onMouseDown={handleClipMouseDown}
-                title="Drag to move"
+                title="拖动移动"
               >
                 <Move size={14} className="text-white" />
               </div>
 
               {/* Aspect ratio lock toggle */}
               <Button
-                label={lockAspectRatio ? "Unlock aspect ratio" : "Lock aspect ratio"}
+                label={lockAspectRatio ? "解锁宽高比" : "锁定宽高比"}
                 variant="ghost"
                 className={`absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-[10px] rounded pointer-events-auto transition-colors ${
                   lockAspectRatio
@@ -7812,7 +7825,7 @@ export const Preview: React.FC = () => {
                 }`}
                 onClick={() => setLockAspectRatio(!lockAspectRatio)}
               >
-                {lockAspectRatio ? "🔒 Locked" : "🔓 Free"}
+                {lockAspectRatio ? "🔒 已锁定" : "🔓 自由调整"}
               </Button>
 
               {/* Corner resize handles */}
@@ -7871,14 +7884,14 @@ export const Preview: React.FC = () => {
               <div
                 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-cyan-500/80 rounded-full flex items-center justify-center cursor-move pointer-events-auto hover:bg-cyan-500 transition-colors"
                 onMouseDown={handleTextClipMouseDown}
-                title="Drag to move text"
+                title="拖动移动文字"
               >
                 <Move size={14} className="text-white" />
               </div>
 
               {/* Aspect ratio lock toggle */}
               <Button
-                label={lockAspectRatio ? "Unlock aspect ratio" : "Lock aspect ratio"}
+                label={lockAspectRatio ? "解锁宽高比" : "锁定宽高比"}
                 variant="ghost"
                 className={`absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-[10px] rounded pointer-events-auto transition-colors ${
                   lockAspectRatio
@@ -7887,7 +7900,7 @@ export const Preview: React.FC = () => {
                 }`}
                 onClick={() => setLockAspectRatio(!lockAspectRatio)}
               >
-                {lockAspectRatio ? "🔒 Locked" : "🔓 Free"}
+                {lockAspectRatio ? "🔒 已锁定" : "🔓 自由调整"}
               </Button>
 
               {/* Corner resize handles */}
@@ -7947,14 +7960,14 @@ export const Preview: React.FC = () => {
               <div
                 className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-green-500/80 rounded-full flex items-center justify-center cursor-move pointer-events-auto hover:bg-green-500 transition-colors"
                 onMouseDown={handleShapeClipMouseDown}
-                title="Drag to move shape"
+                title="拖动移动图形"
               >
                 <Move size={14} className="text-white" />
               </div>
 
               {/* Aspect ratio lock toggle */}
               <Button
-                label={lockAspectRatio ? "Unlock aspect ratio" : "Lock aspect ratio"}
+                label={lockAspectRatio ? "解锁宽高比" : "锁定宽高比"}
                 variant="ghost"
                 className={`absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 text-[10px] rounded pointer-events-auto transition-colors ${
                   lockAspectRatio
@@ -7963,7 +7976,7 @@ export const Preview: React.FC = () => {
                 }`}
                 onClick={() => setLockAspectRatio(!lockAspectRatio)}
               >
-                {lockAspectRatio ? "🔒 Locked" : "🔓 Free"}
+                {lockAspectRatio ? "🔒 已锁定" : "🔓 自由调整"}
               </Button>
 
               {/* Corner resize handles */}
@@ -8018,7 +8031,7 @@ export const Preview: React.FC = () => {
               {/* Selection border - yellow/orange for subtitles */}
               <div className="absolute inset-0 border-2 border-yellow-500 rounded-lg pointer-events-none animate-pulse" />
               <div className="absolute -top-6 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-yellow-500 rounded text-[10px] font-medium text-black whitespace-nowrap">
-                Subtitle Selected - Edit in Inspector
+                已选择字幕 - 请在检查器中编辑
               </div>
             </div>
           )}
@@ -8047,7 +8060,7 @@ export const Preview: React.FC = () => {
                     aria-hidden="true"
                     className="absolute -top-6 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-black/70 rounded text-[10px] text-white whitespace-nowrap"
                   >
-                    Click to select
+                    点击选择
                   </div>
                 </div>
               );
@@ -8088,7 +8101,7 @@ export const Preview: React.FC = () => {
 
         <div className="flex items-center gap-4 mx-auto">
           <IconButton
-            label="Skip back 5s"
+            label="后退 5 秒"
             icon={<SkipBack size={18} />}
             variant="ghost"
             size="sm"
@@ -8096,7 +8109,7 @@ export const Preview: React.FC = () => {
             className="w-8 h-8 grid place-items-center rounded-md text-fg-2 hover:bg-hover hover:text-fg transition-colors"
           />
           <IconButton
-            label={playbackLockedReason ?? (isPlaying ? "Pause" : "Play")}
+            label={playbackLockedReason ?? (isPlaying ? "暂停" : "播放")}
             icon={
               isPlaying ? (
                 <Pause size={18} fill="currentColor" />
@@ -8119,7 +8132,7 @@ export const Preview: React.FC = () => {
             }`}
           />
           <IconButton
-            label="Skip forward 5s"
+            label="前进 5 秒"
             icon={<SkipForward size={18} />}
             variant="ghost"
             size="sm"
@@ -8130,7 +8143,7 @@ export const Preview: React.FC = () => {
 
         <div className="flex gap-1.5 items-center">
           <IconButton
-            label={isMuted ? "Unmute" : "Mute"}
+            label={isMuted ? "取消静音" : "静音"}
             icon={isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
             variant="ghost"
             size="sm"
@@ -8145,7 +8158,7 @@ export const Preview: React.FC = () => {
           {/* Aspect ratio (project canvas size) */}
           <div className="relative">
             <Button
-              label="Aspect ratio"
+              label="宽高比"
               variant="ghost"
               onClick={() => setShowAspectMenu(!showAspectMenu)}
               className="flex items-center gap-1.5 rounded-[7px] bg-bg-2 px-[11px] py-[7px] text-[12px] font-medium text-fg-2 hover:bg-bg-3 hover:text-fg transition-colors"
@@ -8169,7 +8182,7 @@ export const Preview: React.FC = () => {
                     return (
                       <Button
                         key={opt.label}
-                        label={`${opt.label} ${opt.width} by ${opt.height}`}
+                        label={`${opt.label} ${opt.width} x ${opt.height}`}
                         variant="ghost"
                         onClick={() => {
                           void updateSettings({
@@ -8197,13 +8210,13 @@ export const Preview: React.FC = () => {
           {/* Playback Quality (render resolution) */}
           <div className="relative">
             <Button
-              label="Playback quality"
+              label="播放质量"
               variant="ghost"
               onClick={() => setShowQualityMenu(!showQualityMenu)}
               className="rounded-[7px] bg-bg-2 px-[11px] py-[7px] text-[12px] font-medium text-fg-2 hover:bg-bg-3 hover:text-fg transition-colors"
             >
               {PREVIEW_QUALITY_OPTIONS.find((o) => o.value === playbackQuality)
-                ?.label ?? "Auto"}
+                ?.label ?? "自动"}
             </Button>
             {showQualityMenu && (
               <>
@@ -8238,7 +8251,7 @@ export const Preview: React.FC = () => {
           {/* Zoom Control */}
           <div className="relative">
             <Button
-              label="Preview Zoom"
+              label="预览缩放"
               variant="ghost"
               onClick={() => setShowZoomMenu(!showZoomMenu)}
               className="flex items-center gap-1.5 rounded-[7px] bg-bg-2 px-[11px] py-[7px] text-[12px] font-medium text-fg-2 hover:bg-bg-3 hover:text-fg transition-colors"
@@ -8279,7 +8292,7 @@ export const Preview: React.FC = () => {
           </div>
 
           <IconButton
-            label="Canvas snapping"
+            label="画布吸附"
             icon={<Magnet size={16} />}
             variant="ghost"
             size="sm"
@@ -8295,7 +8308,7 @@ export const Preview: React.FC = () => {
             }`}
           />
           <IconButton
-            label="Composition grid"
+            label="构图网格"
             icon={<Move size={16} />}
             variant="ghost"
             size="sm"
@@ -8308,7 +8321,7 @@ export const Preview: React.FC = () => {
             }`}
           />
           <IconButton
-            label="Title and action safe margins"
+            label="标题与操作安全区"
             icon={<Proportions size={16} />}
             variant="ghost"
             size="sm"
@@ -8322,7 +8335,7 @@ export const Preview: React.FC = () => {
           />
 
           <IconButton
-            label={isFullscreen ? "Exit Full Screen" : "Full Screen"}
+            label={isFullscreen ? "退出全屏" : "全屏"}
             icon={<Monitor size={16} />}
             variant="ghost"
             size="sm"
@@ -8334,7 +8347,7 @@ export const Preview: React.FC = () => {
             }`}
           />
           <IconButton
-            label={isMaximized ? "Restore Size" : "Maximize Preview"}
+            label={isMaximized ? "恢复大小" : "最大化预览"}
             icon={isMaximized ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
             variant="ghost"
             size="sm"

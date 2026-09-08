@@ -64,7 +64,7 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
         <div className="flex items-center gap-2">
           {isPaused ? (
             <IconButton
-              label="Resume recording"
+              label="继续录制"
               icon={<Play size={20} className="text-white" aria-hidden />}
               size="lg"
               variant="primary"
@@ -73,7 +73,7 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
             />
           ) : (
             <IconButton
-              label="Pause recording"
+              label="暂停录制"
               icon={<Pause size={20} className="text-warning" aria-hidden />}
               size="lg"
               variant="secondary"
@@ -83,7 +83,7 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
           )}
 
           <IconButton
-            label="Stop recording"
+            label="停止录制"
             icon={<Square size={20} className="text-white fill-white" aria-hidden />}
             size="lg"
             variant="destructive"
@@ -92,7 +92,7 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
           />
 
           <IconButton
-            label="Cancel recording"
+            label="取消录制"
             icon={<X size={20} className="text-text-muted" aria-hidden />}
             size="lg"
             variant="ghost"
@@ -104,7 +104,7 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
         <div className="w-px h-8 bg-border" />
 
         <IconButton
-          label="Minimize controls"
+          label="收起控制栏"
           icon={<Minimize2 size={16} aria-hidden />}
           size="sm"
           variant="ghost"

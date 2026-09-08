@@ -9,6 +9,27 @@ import {
   type ProcessingTask,
 } from "../../services/processing-manager";
 
+const PROCESSING_STATUS_LABELS: Record<ProcessingTask["status"], string> = {
+  queued: "排队中",
+  processing: "处理中",
+  completed: "已完成",
+  failed: "失败",
+};
+
+const PROCESSING_MESSAGE_LABELS: Record<string, string> = {
+  "Waiting to start...": "等待开始...",
+  Complete: "已完成",
+  Failed: "失败",
+  "Initializing AI model...": "正在初始化 AI 模型...",
+  "Preparing background detection...": "正在准备背景检测...",
+  "Configuring effect pipeline...": "正在配置效果处理...",
+  "Finalizing setup...": "正在完成设置...",
+};
+
+function processingMessage(message: string): string {
+  return PROCESSING_MESSAGE_LABELS[message] ?? message;
+}
+
 const TaskItem: React.FC<{ task: ProcessingTask }> = ({ task }) => {
   const getIcon = () => {
     switch (task.status) {
@@ -45,13 +66,15 @@ const TaskItem: React.FC<{ task: ProcessingTask }> = ({ task }) => {
             {PROCESSING_TYPE_LABELS[task.type]}
           </Text>
           <Text type="supporting" className={`text-[10px] ${getStatusColor()}`}>
-            {task.status === "processing" ? `${task.progress}%` : task.status}
+            {task.status === "processing"
+              ? `${task.progress}%`
+              : PROCESSING_STATUS_LABELS[task.status]}
           </Text>
         </div>
         {task.status === "processing" && (
           <div className="mt-1">
             <ProgressBar
-              label={`${PROCESSING_TYPE_LABELS[task.type]} progress`}
+              label={`${PROCESSING_TYPE_LABELS[task.type]}进度`}
               isLabelHidden
               value={task.progress}
               max={100}
@@ -64,7 +87,7 @@ const TaskItem: React.FC<{ task: ProcessingTask }> = ({ task }) => {
               maxLines={1}
               className="mt-0.5 text-[9px]"
             >
-              {task.message}
+              {processingMessage(task.message)}
             </Text>
           </div>
         )}
@@ -104,11 +127,10 @@ export const ProcessingOverlay: React.FC = () => {
           </div>
           <div>
             <Text as="h3" type="label" weight="bold" display="block">
-              Processing Effects
+              正在处理效果
             </Text>
             <Text type="supporting" color="secondary" display="block">
-              {activeTasks.length} task{activeTasks.length !== 1 ? "s" : ""} in
-              progress
+              {activeTasks.length} 个任务处理中
             </Text>
           </div>
         </div>
@@ -116,14 +138,14 @@ export const ProcessingOverlay: React.FC = () => {
         <div className="mb-4">
           <div className="flex items-center justify-between mb-1">
             <Text type="supporting" color="secondary" className="text-[10px]">
-              Overall Progress
+              总进度
             </Text>
             <Text type="supporting" color="secondary" className="text-[10px] font-mono">
               {progress}%
             </Text>
           </div>
           <ProgressBar
-            label="Overall progress"
+            label="总体进度"
             isLabelHidden
             value={progress}
             max={100}
@@ -140,7 +162,7 @@ export const ProcessingOverlay: React.FC = () => {
         </div>
 
         <Text type="supporting" color="secondary" display="block" justify="center" className="mt-4 text-[10px]">
-          Please wait while effects are being applied...
+          正在应用效果，请稍候...
         </Text>
       </Card>
     </div>

@@ -85,17 +85,17 @@ export function useGraphicsClipContextMenuItems({
   const getClipTypeLabel = () => {
     switch (clipType) {
       case "shape":
-        return "Shape";
+        return "形状";
       case "svg":
         return "SVG";
       case "sticker":
-        return "Sticker";
+        return "贴纸";
       case "emoji":
-        return "Emoji";
+        return "表情";
       case "text":
-        return "Text";
+        return "文字";
       default:
-        return "Graphics";
+        return "图形";
     }
   };
 
@@ -111,10 +111,10 @@ export function useGraphicsClipContextMenuItems({
   const items: ContextMenuOption[] = [
     {
       type: "section",
-      title: `${getClipTypeLabel()} Clip`,
+      title: `${getClipTypeLabel()}片段`,
       items: [
         {
-          label: `${getClipTypeLabel()} Clip`,
+          label: `${getClipTypeLabel()}片段`,
           icon: getClipTypeIcon(),
           isDisabled: true,
         },
@@ -126,7 +126,7 @@ export function useGraphicsClipContextMenuItems({
   if (onDuplicate) {
     items.push(
       {
-        label: "Duplicate",
+        label: "创建副本",
         icon: <Layers size={14} aria-hidden />,
         onClick: handleDuplicate,
       },
@@ -136,7 +136,7 @@ export function useGraphicsClipContextMenuItems({
 
   items.push(
     {
-      label: isCaption ? "Select All Captions" : "Select All Clips on Track",
+    label: isCaption ? "选择所有字幕" : "选择轨道上的所有片段",
       icon: <ListChecks size={14} aria-hidden />,
       onClick: handleSelectTrackClips,
     },
@@ -144,7 +144,7 @@ export function useGraphicsClipContextMenuItems({
   );
 
   items.push({
-    label: "Delete",
+    label: "删除",
     icon: <Trash2 size={14} aria-hidden />,
     onClick: handleDelete,
   });

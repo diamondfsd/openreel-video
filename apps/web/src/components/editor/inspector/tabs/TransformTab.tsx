@@ -96,13 +96,13 @@ export const TransformTab: React.FC<TransformTabProps> = ({
       {showTransformControls && (
         <>
           <InspectorSection
-            title="Transform"
+            title="变换"
             sectionId="transform"
             defaultOpen
           >
             <div className="space-y-3">
               <NumberField
-                label="Position"
+                label="位置"
                 fields={[
                   {
                     axis: "X",
@@ -126,14 +126,14 @@ export const TransformTab: React.FC<TransformTabProps> = ({
               />
               <div className="flex items-center gap-2">
                 <span className="w-[90px] flex-none text-[11px] font-medium text-fg-muted">
-                  {usesNormalizedPosition ? "Canvas pixels" : "Offset pixels"}
+                  {usesNormalizedPosition ? "画布像素" : "偏移像素"}
                 </span>
-                <div className="grid flex-1 grid-cols-4 gap-1" role="group" aria-label="Nudge position by one pixel">
+                <div className="grid flex-1 grid-cols-4 gap-1" role="group" aria-label="将位置移动 1 像素">
                   {([
-                    ["Nudge left 1 pixel", ArrowLeft, -1, 0],
-                    ["Nudge up 1 pixel", ArrowUp, 0, -1],
-                    ["Nudge down 1 pixel", ArrowDown, 0, 1],
-                    ["Nudge right 1 pixel", ArrowRight, 1, 0],
+                    ["向左移动 1 像素", ArrowLeft, -1, 0],
+                    ["向上移动 1 像素", ArrowUp, 0, -1],
+                    ["向下移动 1 像素", ArrowDown, 0, 1],
+                    ["向右移动 1 像素", ArrowRight, 1, 0],
                   ] as const).map(([label, Icon, x, y]) => (
                     <button
                       key={label}
@@ -151,7 +151,7 @@ export const TransformTab: React.FC<TransformTabProps> = ({
 
               <div className="flex items-center">
                 <span className="w-[90px] flex-none text-[13px] font-medium text-fg-3">
-                  Scale
+                  缩放
                 </span>
                 <MockSlider
                   className="flex-1"
@@ -170,7 +170,7 @@ export const TransformTab: React.FC<TransformTabProps> = ({
 
               <div className="flex items-center">
                 <span className="w-[90px] flex-none text-[13px] font-medium text-fg-3">
-                  Rotation
+                  旋转
                 </span>
                 <div className="flex flex-1 items-center justify-between rounded-[7px] border border-border px-[10px] py-[7px] focus-within:border-accent">
                   <input
@@ -190,7 +190,7 @@ export const TransformTab: React.FC<TransformTabProps> = ({
                   <div className="flex flex-none flex-col">
                     <button
                       type="button"
-                      aria-label="Increase rotation"
+                      aria-label="增大旋转角度"
                       onClick={() =>
                         handleTransformChange({
                           rotation: stepRotation(transform.rotation, 1),
@@ -211,7 +211,7 @@ export const TransformTab: React.FC<TransformTabProps> = ({
                     </button>
                     <button
                       type="button"
-                      aria-label="Decrease rotation"
+                      aria-label="减小旋转角度"
                       onClick={() =>
                         handleTransformChange({
                           rotation: stepRotation(transform.rotation, -1),
@@ -235,7 +235,7 @@ export const TransformTab: React.FC<TransformTabProps> = ({
               </div>
 
               <NumberField
-                label="Anchor Point"
+                label="锚点"
                 fields={[
                   {
                     axis: "X",
@@ -266,7 +266,7 @@ export const TransformTab: React.FC<TransformTabProps> = ({
 
               <div className="flex items-center">
                 <span className="w-[90px] flex-none text-[13px] font-medium text-fg-3">
-                  Opacity
+                  不透明度
                 </span>
                 <MockSlider
                   className="flex-1"
@@ -283,7 +283,7 @@ export const TransformTab: React.FC<TransformTabProps> = ({
 
               <div className="flex items-center">
                 <span className="w-[90px] flex-none text-[13px] font-medium text-fg-3">
-                  Radius
+                  圆角
                 </span>
                 <MockSlider
                   className="flex-1"
@@ -305,7 +305,7 @@ export const TransformTab: React.FC<TransformTabProps> = ({
                     color="secondary"
                     className="text-[11px] text-fg-3"
                   >
-                    Fit Mode
+                    适配模式
                   </Text>
                   <div className="grid grid-cols-3 gap-1.5">
                     {(["contain", "cover", "stretch"] as FitMode[]).map(
@@ -317,7 +317,7 @@ export const TransformTab: React.FC<TransformTabProps> = ({
                         return (
                           <ClickableCard
                             key={mode}
-                            label={`Set fit mode to ${mode}`}
+                            label={`设置为${mode === "contain" ? "适应" : mode === "cover" ? "填充" : "拉伸"}模式`}
                             onClick={() =>
                               handleTransformChange({ fitMode: mode })
                             }
@@ -328,10 +328,10 @@ export const TransformTab: React.FC<TransformTabProps> = ({
                             }`}
                           >
                             {mode === "contain"
-                              ? "Fit"
+                              ? "适应"
                               : mode === "cover"
-                                ? "Fill"
-                                : mode}
+                                ? "填充"
+                                : "拉伸"}
                           </ClickableCard>
                         );
                       },
@@ -350,7 +350,7 @@ export const TransformTab: React.FC<TransformTabProps> = ({
         !selectedClip.mediaId.startsWith("shape-") &&
         !selectedClip.mediaId.startsWith("svg-") &&
         !selectedClip.mediaId.startsWith("sticker-") && (
-          <InspectorSection title="Crop" sectionId="crop" defaultOpen={false}>
+          <InspectorSection title="裁剪" sectionId="crop" defaultOpen={false}>
             <CropSection clip={selectedClip as Clip} />
           </InspectorSection>
         )}
@@ -362,7 +362,7 @@ export const TransformTab: React.FC<TransformTabProps> = ({
         clipType === "svg" ||
         clipType === "sticker") && (
         <InspectorSection
-          title="Alignment"
+          title="对齐"
           sectionId="alignment"
           defaultOpen={false}
         >
@@ -394,7 +394,7 @@ export const TransformTab: React.FC<TransformTabProps> = ({
         clipType === "svg" ||
         clipType === "sticker") && (
         <InspectorSection
-          title="3D Transforms"
+          title="3D 变换"
           sectionId="transform-3d"
           defaultOpen={false}
         >

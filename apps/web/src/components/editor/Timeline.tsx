@@ -83,12 +83,12 @@ const TRACK_LAYER_FILTERS: readonly {
   id: TrackLayerFilter;
   label: string;
 }[] = [
-  { id: "all", label: "All" },
-  { id: "video", label: "Video" },
-  { id: "image", label: "Image" },
-  { id: "audio", label: "Audio" },
-  { id: "text", label: "Text" },
-  { id: "graphics", label: "Graphics" },
+  { id: "all", label: "全部" },
+  { id: "video", label: "视频" },
+  { id: "image", label: "图片" },
+  { id: "audio", label: "音频" },
+  { id: "text", label: "文字" },
+  { id: "graphics", label: "图形" },
 ];
 
 const ADD_TRACK_ROW_HEIGHT = 36;
@@ -885,38 +885,38 @@ export const Timeline: React.FC = () => {
   const addTrackItems: DropdownMenuOption[] = useMemo(
     () => [
       {
-        label: "Track",
+        label: "轨道",
         icon: <Layers size={16} className="text-foreground" aria-hidden />,
         onClick: () => addTrack("video", undefined, { mode: "standard" }),
       },
       {
-        label: "Dialogue",
+        label: "对白",
         icon: <Music size={16} className="text-clip-audio" aria-hidden />,
         onClick: () =>
           addTrack("video", undefined, {
             mode: "standard",
             role: "dialogue",
-            name: "Dialogue",
+            name: "对白",
           }),
       },
       {
-        label: "Music",
+        label: "音乐",
         icon: <Music size={16} className="text-clip-audio" aria-hidden />,
         onClick: () =>
           addTrack("video", undefined, {
             mode: "standard",
             role: "music",
-            name: "Music",
+            name: "音乐",
           }),
       },
       {
-        label: "Captions",
+        label: "字幕",
         icon: <Type size={16} className="text-clip-text" aria-hidden />,
         onClick: () =>
           addTrack("video", undefined, {
             mode: "standard",
             role: "captions",
-            name: "Captions",
+            name: "字幕",
           }),
       },
     ],
@@ -941,7 +941,7 @@ export const Timeline: React.FC = () => {
   }) => (
     <button
       type="button"
-      aria-label={title ?? "Timeline tool"}
+      aria-label={title ?? "时间线工具"}
       onClick={onClick}
       disabled={disabled}
       data-tip-bottom={title}
@@ -961,10 +961,10 @@ export const Timeline: React.FC = () => {
     >
       {/* ── Timeline toolbar (mock: 48px line-icon tools + emerald zoom slider) ── */}
       <div className="flex items-center h-12 px-4 gap-4 bg-bg-1 border-b border-border shrink-0 relative z-50">
-        <TLTool onClick={undo} disabled={!canUndo()} title="Undo (⌘Z)">
+        <TLTool onClick={undo} disabled={!canUndo()} title="撤销 (⌘Z)">
           <Undo2 size={16} aria-hidden />
         </TLTool>
-        <TLTool onClick={redo} disabled={!canRedo()} title="Redo (⇧⌘Z)">
+        <TLTool onClick={redo} disabled={!canRedo()} title="重做 (⇧⌘Z)">
           <Redo2 size={16} aria-hidden />
         </TLTool>
 
@@ -973,42 +973,42 @@ export const Timeline: React.FC = () => {
         <TLTool
           onClick={handleSplit}
           disabled={splittableSelectedClipIds.length === 0}
-          title="Split (S)"
+          title="分割 (S)"
         >
           <Scissors size={16} aria-hidden />
         </TLTool>
         <TLTool
           onClick={() => handleTrimToPlayhead(true)}
           disabled={splittableSelectedClipIds.length === 0}
-          title="Trim start to playhead (Q)"
+          title="裁剪到播放头起点 (Q)"
         >
           <CornerDownLeft size={16} aria-hidden />
         </TLTool>
         <TLTool
           onClick={() => handleTrimToPlayhead(false)}
           disabled={splittableSelectedClipIds.length === 0}
-          title="Trim end to playhead (W)"
+          title="裁剪到播放头终点 (W)"
         >
           <CornerDownRight size={16} aria-hidden />
         </TLTool>
         <TLTool
           onClick={handleDelete}
           disabled={selectedClipIds.length === 0}
-          title="Delete (Del)"
+          title="删除 (Del)"
         >
           <Trash2 size={16} aria-hidden />
         </TLTool>
         <TLTool
           onClick={handleDuplicate}
           disabled={selectedClipIds.length === 0}
-          title="Duplicate (⌘D)"
+          title="复制 (⌘D)"
         >
           <Copy size={16} aria-hidden />
         </TLTool>
         <TLTool
           onClick={handleRippleDelete}
           disabled={!canRippleDelete}
-          title="Ripple delete (⇧Del)"
+          title="波纹删除 (⇧Del)"
         >
           <Delete size={16} aria-hidden />
         </TLTool>
@@ -1021,7 +1021,7 @@ export const Timeline: React.FC = () => {
           menuWidth={192}
           hasChevron
           button={{
-            label: "Add track",
+            label: "添加轨道",
             size: "sm",
             variant: "ghost",
             icon: <Plus size={16} aria-hidden />,
@@ -1043,11 +1043,11 @@ export const Timeline: React.FC = () => {
           placement="above"
           alignment="start"
           width={340}
-          label="Track layers"
+          label="轨道层"
           content={
             <>
               <div className="flex items-center justify-between px-3 py-2.5 border-b border-border bg-bg-2">
-                <span className="text-xs font-semibold text-fg">Track Layers</span>
+                <span className="text-xs font-semibold text-fg">轨道层</span>
                 <span className="text-[10px] tabular-nums text-fg-3">
                   {filteredTrackEntries.length}/{tracks.length}
                 </span>
@@ -1055,14 +1055,14 @@ export const Timeline: React.FC = () => {
               {pendingTrackDelete ? (
                 <div
                   role="alertdialog"
-                  aria-label={`Delete ${pendingTrackDelete.name}`}
+                  aria-label={`删除 ${pendingTrackDelete.name}`}
                   className="border-b border-danger/30 bg-danger/10 px-3 py-2.5"
                 >
                   <p className="text-[11px] font-semibold text-danger">
-                    Delete “{pendingTrackDelete.name}”?
+                    删除“{pendingTrackDelete.name}”？
                   </p>
                   <p className="mt-0.5 text-[10px] leading-relaxed text-fg-3">
-                    Its clips will be removed. You can undo this action.
+                    该轨道中的片段将被移除，可以撤销此操作。
                   </p>
                   <div className="mt-2 flex justify-end gap-1.5">
                     <button
@@ -1070,7 +1070,7 @@ export const Timeline: React.FC = () => {
                       onClick={() => setPendingTrackDeleteId(null)}
                       className="h-7 rounded-md border border-border bg-bg-1 px-2.5 text-[10px] font-semibold text-fg-2 hover:bg-hover"
                     >
-                      Cancel
+                      取消
                     </button>
                     <button
                       type="button"
@@ -1080,7 +1080,7 @@ export const Timeline: React.FC = () => {
                       }}
                       className="h-7 rounded-md bg-danger px-2.5 text-[10px] font-semibold text-white hover:opacity-90"
                     >
-                      Delete track
+                      删除轨道
                     </button>
                   </div>
                 </div>
@@ -1090,14 +1090,14 @@ export const Timeline: React.FC = () => {
                   type="search"
                   value={trackLayerQuery}
                   onChange={(event) => setTrackLayerQuery(event.currentTarget.value)}
-                  placeholder="Search tracks"
-                  aria-label="Search track layers"
+                  placeholder="搜索轨道"
+                  aria-label="搜索轨道层"
                   className="h-8 w-full rounded-md border border-border bg-bg-1 px-2.5 text-[11px] text-fg outline-none placeholder:text-fg-muted focus:border-accent"
                 />
                 <div
                   className="flex gap-1 overflow-x-auto pb-0.5"
                   role="group"
-                  aria-label="Track layer types"
+                  aria-label="轨道层类型"
                 >
                   {TRACK_LAYER_FILTERS.map((filter) => {
                     const count =
@@ -1125,7 +1125,7 @@ export const Timeline: React.FC = () => {
               <div className="p-2 max-h-60 overflow-y-auto">
                 {tracks.length === 0 ? (
                   <Text type="supporting" color="secondary" className="text-xs text-fg-muted text-center py-6">
-                    No tracks yet
+                    暂无轨道
                   </Text>
                 ) : filteredTrackEntries.length === 0 ? (
                   <Text
@@ -1133,7 +1133,7 @@ export const Timeline: React.FC = () => {
                     color="secondary"
                     className="block py-6 text-center text-xs text-fg-muted"
                   >
-                    No tracks match your filters
+                    没有符合筛选条件的轨道
                   </Text>
                 ) : (
                   <div className="space-y-0.5">
@@ -1155,7 +1155,7 @@ export const Timeline: React.FC = () => {
                           {renamingTrackId === track.id ? (
                             <input
                               autoFocus
-                              aria-label={`Rename ${name}`}
+                              aria-label={`重命名 ${name}`}
                               value={trackNameDraft}
                               onChange={(event) =>
                                 setTrackNameDraft(event.currentTarget.value)
@@ -1182,21 +1182,21 @@ export const Timeline: React.FC = () => {
                           )}
                           <div className="flex gap-0.5 opacity-60 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                             <IconButton
-                              label={`Rename ${name}`}
+                              label={`重命名 ${name}`}
                               icon={<Pencil size={12} aria-hidden />}
                               size="sm"
                               variant="ghost"
                               onClick={() => startTrackRename(track.id, name)}
                             />
                             <IconButton
-                              label={`Duplicate ${name}`}
+                              label={`复制 ${name}`}
                               icon={<Copy size={12} aria-hidden />}
                               size="sm"
                               variant="ghost"
                               onClick={() => void duplicateTrack(track.id)}
                             />
                             <IconButton
-                              label={`Delete ${name}`}
+                              label={`删除 ${name}`}
                               icon={<Trash2 size={12} aria-hidden />}
                               size="sm"
                               variant="ghost"
@@ -1204,7 +1204,7 @@ export const Timeline: React.FC = () => {
                             />
                             {isVisual ? (
                               <IconButton
-                                label={`Hide ${name}`}
+                                label={`${track.hidden ? "显示" : "隐藏"} ${name}`}
                                 icon={
                                   track.hidden ? (
                                     <EyeOff size={12} aria-hidden />
@@ -1221,7 +1221,7 @@ export const Timeline: React.FC = () => {
                             {isAudio ? (
                               <>
                                 <IconButton
-                                  label={`Mute ${name}`}
+                                  label={`${track.muted ? "取消静音" : "静音"} ${name}`}
                                   icon={
                                     track.muted ? (
                                       <VolumeX size={12} aria-hidden />
@@ -1236,7 +1236,7 @@ export const Timeline: React.FC = () => {
                                 />
                                 <button
                                   type="button"
-                                  aria-label={`Solo ${name}`}
+                                  aria-label={`${track.solo ? "清除独奏" : "独奏"} ${name}`}
                                   aria-pressed={track.solo}
                                   onClick={() => void soloTrack(track.id, !track.solo)}
                                   className={`flex h-7 min-w-7 items-center justify-center rounded-md px-1 text-[10px] font-black transition-colors ${
@@ -1250,7 +1250,7 @@ export const Timeline: React.FC = () => {
                               </>
                             ) : null}
                             <IconButton
-                              label={`Lock ${name}`}
+                              label={`${track.locked ? "解锁" : "锁定"} ${name}`}
                               icon={
                                 track.locked ? (
                                   <Unlock size={12} aria-hidden />
@@ -1264,7 +1264,7 @@ export const Timeline: React.FC = () => {
                               onClick={() => void lockTrack(track.id, !track.locked)}
                             />
                             <IconButton
-                              label={`Move ${name} up`}
+                              label={`将 ${name} 上移`}
                               icon={<ChevronUp size={12} aria-hidden />}
                               size="sm"
                               variant="ghost"
@@ -1274,7 +1274,7 @@ export const Timeline: React.FC = () => {
                               isDisabled={index === 0}
                             />
                             <IconButton
-                              label={`Move ${name} down`}
+                              label={`将 ${name} 下移`}
                               icon={<ChevronDown size={12} aria-hidden />}
                               size="sm"
                               variant="ghost"
@@ -1295,11 +1295,11 @@ export const Timeline: React.FC = () => {
           }
         >
           <IconButton
-            label="Manage track layers"
+            label="管理轨道层"
             icon={<Layers size={16} aria-hidden />}
             size="sm"
             variant={showLayersPanel ? "secondary" : "ghost"}
-            data-tip-bottom="Track layers"
+            data-tip-bottom="轨道层"
           />
         </Popover>
 
@@ -1308,7 +1308,7 @@ export const Timeline: React.FC = () => {
         <div className="ml-auto flex items-center gap-3">
           {/* Zoom control (mock: minus / emerald slider track + knob / plus) */}
           <div className="flex items-center gap-2.5">
-            <TLTool onClick={zoomOut} title="Zoom out">
+            <TLTool onClick={zoomOut} title="缩小">
               <ZoomOut size={16} aria-hidden />
             </TLTool>
             <div className="relative h-5 w-[150px]">
@@ -1348,8 +1348,8 @@ export const Timeline: React.FC = () => {
               />
               <input
                 type="range"
-                aria-label="Timeline zoom"
-                aria-valuetext={`${Math.round(pixelsPerSecond)} pixels per second`}
+                aria-label="时间线缩放"
+                aria-valuetext={`${Math.round(pixelsPerSecond)} 像素/秒`}
                 min={ZOOM_PRESETS.MIN}
                 max={ZOOM_PRESETS.MAX}
                 step={1}
@@ -1358,7 +1358,7 @@ export const Timeline: React.FC = () => {
                 className="absolute inset-0 h-full w-full cursor-ew-resize opacity-0"
               />
             </div>
-            <TLTool onClick={zoomIn} title="Zoom in">
+            <TLTool onClick={zoomIn} title="放大">
               <ZoomIn size={16} aria-hidden />
             </TLTool>
           </div>
@@ -1369,7 +1369,7 @@ export const Timeline: React.FC = () => {
             <TLTool
               onClick={toggleSnap}
               active={snapSettings.enabled}
-              title={snapSettings.enabled ? "Snap on (N)" : "Snap off (N)"}
+              title={snapSettings.enabled ? "吸附已开启 (N)" : "吸附已关闭 (N)"}
             >
               <Magnet size={16} />
             </TLTool>
@@ -1380,7 +1380,7 @@ export const Timeline: React.FC = () => {
                 useTimelineStore.setState({ trackHeights: {} });
               }}
               active={trackHeight >= 52}
-              title="Large tracks"
+              title="大轨道"
             >
               <Rows3 size={16} />
             </TLTool>
@@ -1390,7 +1390,7 @@ export const Timeline: React.FC = () => {
                 useTimelineStore.setState({ trackHeights: {} });
               }}
               active={trackHeight < 52}
-              title="Compact tracks"
+              title="紧凑轨道"
             >
               <Rows2 size={16} />
             </TLTool>
@@ -1400,8 +1400,8 @@ export const Timeline: React.FC = () => {
               active={timelineMaximized}
               title={
                 timelineMaximized
-                  ? "Restore layout"
-                  : "Maximize timeline (more room)"
+                  ? "恢复布局"
+                  : "最大化时间线（更多空间）"
               }
             >
               {timelineMaximized ? (
@@ -1495,7 +1495,7 @@ export const Timeline: React.FC = () => {
                   addTrack("video", undefined, { mode: "standard" })
                 }
                 className="mx-3 my-1 h-7 flex items-center justify-center gap-1.5 rounded-[7px] border border-dashed border-border-strong text-fg-muted hover:text-fg-2 hover:border-fg-3 transition-colors"
-                aria-label="Add track"
+                aria-label="添加轨道"
               >
                 <Plus size={16} aria-hidden />
               </button>
@@ -1605,7 +1605,7 @@ export const Timeline: React.FC = () => {
                             t.clips.some(c => c.mediaId === newItem.id)
                           );
                         if (track) {
-                          toast.success(`Added to ${track.name}`, file.name);
+                          toast.success(`已添加到 ${track.name}`, file.name);
                         }
                       }
                     }

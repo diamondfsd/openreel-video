@@ -46,10 +46,10 @@ export const AudioTab: React.FC<AudioTabProps> = ({
   return (
     <>
       {showAudioEffects && clip && (
-        <InspectorSection title="Clip Audio" sectionId="clip-audio" defaultOpen>
+        <InspectorSection title="音频片段" sectionId="clip-audio" defaultOpen>
           <div className="space-y-4">
             <PropertySlider
-              label="Volume"
+              label="音量"
               value={clip.volume * 100}
               onChange={(value) => updateAudio("audio/setVolume", { volume: value / 100 })}
               min={0}
@@ -58,7 +58,7 @@ export const AudioTab: React.FC<AudioTabProps> = ({
               formatValue={(value) => `${Math.round(value)}%`}
             />
             <PropertySlider
-              label="Fade in"
+              label="淡入"
               value={clip.fade?.fadeIn ?? 0}
               onChange={(fadeIn) => updateAudio("audio/setFade", { fadeIn })}
               min={0}
@@ -67,7 +67,7 @@ export const AudioTab: React.FC<AudioTabProps> = ({
               formatValue={(value) => `${value.toFixed(1)}s`}
             />
             <PropertySlider
-              label="Fade out"
+              label="淡出"
               value={clip.fade?.fadeOut ?? 0}
               onChange={(fadeOut) => updateAudio("audio/setFade", { fadeOut })}
               min={0}
@@ -80,7 +80,7 @@ export const AudioTab: React.FC<AudioTabProps> = ({
       )}
       {showAudioEffects && (
         <InspectorSection
-          title="Auto Cut Silence"
+          title="自动剪除静音"
           sectionId="auto-cut-silence"
           defaultOpen={false}
         >
@@ -88,7 +88,7 @@ export const AudioTab: React.FC<AudioTabProps> = ({
         </InspectorSection>
       )}
       {clipType === "audio" && (
-        <InspectorSection title="Beat Sync" sectionId="beat-sync" defaultOpen={false}>
+        <InspectorSection title="节拍同步" sectionId="beat-sync" defaultOpen={false}>
           <AudioTextSyncPanel clipId={clipId} />
         </InspectorSection>
       )}
@@ -104,7 +104,7 @@ export const AudioTab: React.FC<AudioTabProps> = ({
       {showAudioEffects && (
         <>
           <InspectorSection
-            title="Audio Effects"
+            title="音频效果"
             sectionId="audio-effects"
             defaultOpen={false}
           >
@@ -114,7 +114,7 @@ export const AudioTab: React.FC<AudioTabProps> = ({
       )}
       {showAudioEffects && (
         <InspectorSection
-          title="Audio Ducking"
+          title="音频闪避"
           sectionId="audio-ducking"
           defaultOpen={false}
         >

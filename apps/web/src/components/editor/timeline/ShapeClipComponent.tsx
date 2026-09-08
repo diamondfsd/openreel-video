@@ -10,6 +10,24 @@ import { useUIStore } from "../../../stores/ui-store";
 
 type GraphicClipUnion = ShapeClip | SVGClip | StickerClip;
 
+const SHAPE_LABELS: Record<string, string> = {
+  rectangle: "矩形",
+  circle: "圆形",
+  ellipse: "椭圆",
+  triangle: "三角形",
+  arrow: "箭头",
+  line: "直线",
+  polygon: "多边形",
+  path: "路径",
+  star: "星形",
+  "mesh-cube": "立方体",
+  "mesh-sphere": "球体",
+  "mesh-torus": "圆环",
+  "mesh-cone": "圆锥体",
+  "mesh-cylinder": "圆柱体",
+  "mesh-icosahedron": "二十面体",
+};
+
 interface ShapeClipComponentProps {
   shapeClip: GraphicClipUnion;
   pixelsPerSecond: number;
@@ -230,12 +248,11 @@ export const ShapeClipComponent: React.FC<ShapeClipComponentProps> = ({
   const isSticker = shapeClip.type === "sticker" || shapeClip.type === "emoji";
   const shapeLabel =
     isShape && "shapeType" in shapeClip
-      ? shapeClip.shapeType.charAt(0).toUpperCase() +
-        shapeClip.shapeType.slice(1)
+      ? SHAPE_LABELS[shapeClip.shapeType] ?? "形状"
       : isSticker
         ? shapeClip.type === "emoji"
-          ? "Emoji"
-          : "Sticker"
+          ? "表情"
+          : "贴纸"
         : "SVG";
   const IconComponent = isShape ? Shapes : isSticker ? Smile : FileCode;
   const colorClass = isShape ? "green" : isSticker ? "pink" : "green";
@@ -253,7 +270,7 @@ export const ShapeClipComponent: React.FC<ShapeClipComponentProps> = ({
           ref={clipRef}
           role="button"
           tabIndex={0}
-          aria-label={`Select ${shapeLabel} clip`}
+          aria-label={`选择${shapeLabel}片段`}
           aria-pressed={isSelected}
           onClick={handleClick}
           onMouseDown={handleMouseDown}

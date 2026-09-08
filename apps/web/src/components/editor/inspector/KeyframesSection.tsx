@@ -39,24 +39,24 @@ interface AnimatableProperty {
 const ANIMATABLE_PROPERTIES: AnimatableProperty[] = [
   {
     id: "position.x",
-    label: "Position X",
-    category: "Transform",
+    label: "位置 X",
+    category: "变换",
     defaultValue: 0,
     min: -2000,
     max: 2000,
   },
   {
     id: "position.y",
-    label: "Position Y",
-    category: "Transform",
+    label: "位置 Y",
+    category: "变换",
     defaultValue: 0,
     min: -2000,
     max: 2000,
   },
   {
     id: "scale.x",
-    label: "Scale X",
-    category: "Transform",
+    label: "缩放 X",
+    category: "变换",
     defaultValue: 1,
     min: 0,
     max: 10,
@@ -64,8 +64,8 @@ const ANIMATABLE_PROPERTIES: AnimatableProperty[] = [
   },
   {
     id: "scale.y",
-    label: "Scale Y",
-    category: "Transform",
+    label: "缩放 Y",
+    category: "变换",
     defaultValue: 1,
     min: 0,
     max: 10,
@@ -73,16 +73,16 @@ const ANIMATABLE_PROPERTIES: AnimatableProperty[] = [
   },
   {
     id: "rotation",
-    label: "Rotation",
-    category: "Transform",
+    label: "旋转",
+    category: "变换",
     defaultValue: 0,
     min: -360,
     max: 360,
   },
   {
     id: "opacity",
-    label: "Opacity",
-    category: "Transform",
+    label: "不透明度",
+    category: "变换",
     defaultValue: 1,
     min: 0,
     max: 1,
@@ -91,16 +91,16 @@ const ANIMATABLE_PROPERTIES: AnimatableProperty[] = [
   // Effect parameters
   {
     id: "effect.brightness",
-    label: "Brightness",
-    category: "Effects",
+    label: "亮度",
+    category: "效果",
     defaultValue: 0,
     min: -100,
     max: 100,
   },
   {
     id: "effect.contrast",
-    label: "Contrast",
-    category: "Effects",
+    label: "对比度",
+    category: "效果",
     defaultValue: 1,
     min: 0,
     max: 2,
@@ -108,8 +108,8 @@ const ANIMATABLE_PROPERTIES: AnimatableProperty[] = [
   },
   {
     id: "effect.saturation",
-    label: "Saturation",
-    category: "Effects",
+    label: "饱和度",
+    category: "效果",
     defaultValue: 1,
     min: 0,
     max: 2,
@@ -117,16 +117,16 @@ const ANIMATABLE_PROPERTIES: AnimatableProperty[] = [
   },
   {
     id: "effect.blur",
-    label: "Blur",
-    category: "Effects",
+    label: "模糊",
+    category: "效果",
     defaultValue: 0,
     min: 0,
     max: 100,
   },
   {
     id: "volume",
-    label: "Volume",
-    category: "Audio",
+    label: "音量",
+    category: "音频",
     defaultValue: 1,
     min: 0,
     max: 2,
@@ -134,8 +134,8 @@ const ANIMATABLE_PROPERTIES: AnimatableProperty[] = [
   },
   {
     id: "pan",
-    label: "Pan",
-    category: "Audio",
+    label: "声道平衡",
+    category: "音频",
     defaultValue: 0,
     min: -1,
     max: 1,
@@ -143,7 +143,64 @@ const ANIMATABLE_PROPERTIES: AnimatableProperty[] = [
   },
 ];
 
+const EASING_LABELS: Record<string, string> = {
+  linear: "线性",
+  ease: "缓动",
+  "ease-in": "缓入",
+  "ease-out": "缓出",
+  "ease-in-out": "缓入缓出",
+  hold: "保持",
+  bezier: "贝塞尔",
+  smoothstep: "平滑阶梯",
+  smootherstep: "更平滑阶梯",
+  snappy: "快速",
+  smooth: "平滑",
+};
+
+const EASING_CATEGORY_LABELS: Record<string, string> = {
+  Basic: "基础",
+  Quad: "二次",
+  Cubic: "三次",
+  Quart: "四次",
+  Quint: "五次",
+  Sine: "正弦",
+  Expo: "指数",
+  Circ: "圆弧",
+  Back: "回弹",
+  Elastic: "弹性",
+  Bounce: "弹跳",
+};
+
+const EASING_FAMILY_LABELS: Record<string, string> = {
+  Quad: "二次",
+  Cubic: "三次",
+  Quart: "四次",
+  Quint: "五次",
+  Sine: "正弦",
+  Expo: "指数",
+  Circ: "圆弧",
+  Back: "回弹",
+  Elastic: "弹性",
+  Bounce: "弹跳",
+};
+
+const EASING_DIRECTION_LABELS: Record<string, string> = {
+  In: "缓入",
+  Out: "缓出",
+  InOut: "缓入缓出",
+};
+
 const formatEasingLabel = (easing: string): string => {
+  const exactLabel = EASING_LABELS[easing];
+  if (exactLabel) return exactLabel;
+
+  const match = easing.match(/^ease(InOut|In|Out)(Quad|Cubic|Quart|Quint|Sine|Expo|Circ|Back|Elastic|Bounce)(Strong|Soft)?$/);
+  if (match) {
+    const [, direction, family, modifier] = match;
+    const modifierLabel = modifier === "Strong" ? "强力" : modifier === "Soft" ? "柔和" : "";
+    return `${modifierLabel}${EASING_FAMILY_LABELS[family]}${EASING_DIRECTION_LABELS[direction]}`;
+  }
+
   return (
     easing
       .replace(/([A-Z])/g, " $1")
@@ -164,7 +221,7 @@ const PropertySelector: React.FC<{
   const selectedLabel = selectedProperty
     ? ANIMATABLE_PROPERTIES.find((p) => p.id === selectedProperty)?.label ||
       selectedProperty
-    : "Select Property";
+    : "选择属性";
 
   return (
     <Popover
@@ -173,14 +230,14 @@ const PropertySelector: React.FC<{
       placement="below"
       alignment="start"
       width="min(260px, 100vw - 32px)"
-      label="Animate property"
+      label="设置动效属性"
       content={
         <div className="max-h-64 overflow-y-auto p-1.5">
           {categories.map((category) => (
             <div key={category} className="space-y-1">
               <div className="px-2 py-1 bg-bg-2">
                 <Text type="supporting" color="secondary" weight="bold">
-                  {category}
+                  {EASING_CATEGORY_LABELS[category] ?? category}
                 </Text>
               </div>
               {ANIMATABLE_PROPERTIES.filter(
@@ -190,7 +247,7 @@ const PropertySelector: React.FC<{
                 return (
                   <ClickableCard
                     key={prop.id}
-                    label={`Select ${prop.label}`}
+                    label={`选择${prop.label}`}
                     onClick={() => {
                       onSelect(prop.id);
                       setIsOpen(false);
@@ -293,20 +350,20 @@ const EasingSelector: React.FC<{
       placement="below"
       alignment="end"
       width={208}
-      label={`Easing: ${currentLabel}`}
+      label={`缓动：${currentLabel}`}
       content={
         <div className="max-h-64 overflow-y-auto p-1.5">
           {EASING_CATEGORIES.map((category) => (
             <div key={category.name} className="space-y-1">
               <div className="sticky top-0 px-2 py-1 bg-bg-2">
                 <Text type="supporting" color="secondary" weight="bold">
-                  {category.name}
+                  {EASING_CATEGORY_LABELS[category.name] ?? category.name}
                 </Text>
               </div>
               {category.easings.map((easing) => (
                 <ClickableCard
                   key={easing}
-                  label={`Use ${formatEasingLabel(easing)} easing`}
+                  label={`使用${formatEasingLabel(easing)}缓动`}
                   onClick={() => {
                     onChange(easing);
                     setIsOpen(false);
@@ -373,7 +430,7 @@ const KeyframeItem: React.FC<{
             •
           </Text>
           <ToolcraftNumberInputControl
-            label="Keyframe value"
+            label="关键帧值"
             isLabelHidden
             value={typeof keyframe.value === "number" ? keyframe.value : 0}
             onChange={(value) => onUpdate({ value: value ?? 0 })}
@@ -387,7 +444,7 @@ const KeyframeItem: React.FC<{
       </div>
       <EasingSelector value={keyframe.easing} onChange={onEasingChange} />
       <IconButton
-        label="Delete keyframe"
+        label="删除关键帧"
         icon={<Trash2 size={12} aria-hidden />}
         variant="ghost"
         size="sm"
@@ -533,7 +590,7 @@ export const KeyframesSection: React.FC<KeyframesSectionProps> = ({
   if (!clip) {
     return (
       <Text type="supporting" color="secondary" className="block text-center py-4">
-        No clip selected
+        未选择片段
       </Text>
     );
   }
@@ -542,7 +599,7 @@ export const KeyframesSection: React.FC<KeyframesSectionProps> = ({
     <div className="space-y-4">
       <div className="space-y-2">
         <Text type="supporting" color="secondary" weight="bold" className="block">
-          Animate Property
+          动效属性
         </Text>
         <PropertySelector
           selectedProperty={selectedProperty}
@@ -558,7 +615,7 @@ export const KeyframesSection: React.FC<KeyframesSectionProps> = ({
           className="flex items-center justify-between gap-3 border border-border"
         >
           <Text type="supporting" color="secondary">
-            Value at {playheadPosition.toFixed(2)}s
+            {playheadPosition.toFixed(2)} 秒处的值
           </Text>
           <Text type="supporting" color="primary" className="font-mono">
             {typeof currentValue === "number"
@@ -572,8 +629,8 @@ export const KeyframesSection: React.FC<KeyframesSectionProps> = ({
         <Button
           label={
             hasKeyframeAtPlayhead
-              ? `Keyframe exists at ${playheadPosition.toFixed(2)}s`
-              : `Add Keyframe at ${playheadPosition.toFixed(2)}s`
+              ? `${playheadPosition.toFixed(2)} 秒处已有关键帧`
+              : `在 ${playheadPosition.toFixed(2)} 秒处添加关键帧`
           }
           icon={
             hasKeyframeAtPlayhead ? (
@@ -594,7 +651,7 @@ export const KeyframesSection: React.FC<KeyframesSectionProps> = ({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Text type="supporting" color="secondary" weight="bold">
-              Keyframes ({propertyKeyframes.length})
+              关键帧（{propertyKeyframes.length}）
             </Text>
           </div>
           <div className="space-y-1.5 max-h-48 overflow-y-auto">
@@ -616,14 +673,14 @@ export const KeyframesSection: React.FC<KeyframesSectionProps> = ({
         <div className="text-center py-4">
           <Key size={24} className="mx-auto text-fg-3 mb-2" aria-hidden />
           <Text type="supporting" color="secondary">
-            Select a property to animate
+            选择要添加动效的属性
           </Text>
         </div>
       )}
 
       {selectedProperty && propertyKeyframes.length === 0 && (
         <Text type="supporting" color="secondary" className="block text-center py-2">
-          No keyframes for this property. Add one to start animating.
+          此属性暂无关键帧。添加关键帧以开始制作动效。
         </Text>
       )}
     </div>

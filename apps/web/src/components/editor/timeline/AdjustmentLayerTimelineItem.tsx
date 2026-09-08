@@ -87,7 +87,7 @@ export const AdjustmentLayerTimelineItem: React.FC<AdjustmentLayerTimelineItemPr
   return (
     <div
       data-testid="adjustment-layer-timeline-item"
-      aria-label={`${layer.name}, adjustment layer`}
+      aria-label={`${layer.name}，调整图层`}
       className={`absolute top-1 z-20 flex h-5 min-w-[12px] items-center overflow-hidden rounded border text-[9px] font-semibold shadow-sm ${
         layer.enabled
           ? "border-violet-300/70 bg-violet-500/85 text-white"
@@ -102,15 +102,15 @@ export const AdjustmentLayerTimelineItem: React.FC<AdjustmentLayerTimelineItemPr
     >
       <button
         type="button"
-        aria-label={`Trim start of ${layer.name}`}
+        aria-label={`裁剪 ${layer.name} 起点`}
         className="h-full w-1.5 shrink-0 cursor-ew-resize bg-white/20 hover:bg-white/50"
         onMouseDown={(event) => startGesture(event, "left")}
       />
       <Layers size={10} className="ml-1 shrink-0" aria-hidden />
-      <span className="truncate px-1">FX · {layer.name}</span>
+      <span className="truncate px-1">效果 · {layer.name}</span>
       <button
         type="button"
-        aria-label={`Trim end of ${layer.name}`}
+        aria-label={`裁剪 ${layer.name} 终点`}
         className="ml-auto h-full w-1.5 shrink-0 cursor-ew-resize bg-white/20 hover:bg-white/50"
         onMouseDown={(event) => startGesture(event, "right")}
       />

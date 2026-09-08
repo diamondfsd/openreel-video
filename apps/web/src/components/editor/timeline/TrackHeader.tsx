@@ -109,12 +109,12 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
 
   const menuItems: ContextMenuOption[] = [
     {
-      label: "Rename Track",
+      label: "重命名轨道",
       icon: <Pencil size={14} aria-hidden />,
       onClick: startRename,
     },
     {
-      label: "Remove Gaps",
+      label: "闭合空隙",
       icon: <AlignLeft size={14} aria-hidden />,
       isDisabled: !hasGaps,
       onClick: handleRemoveGaps,
@@ -122,7 +122,7 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
     ...(track.groupId
       ? [
           {
-            label: "Ungroup Track",
+            label: "取消轨道编组",
             icon: <Unlink size={14} aria-hidden />,
             onClick: () => groupTracks(track.id),
           } satisfies ContextMenuOption,
@@ -132,9 +132,9 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
       ? [
           {
             type: "section" as const,
-            title: "Move & trim together",
+            title: "一起移动和修剪",
             items: groupCandidates.map((candidate) => ({
-              label: `Group with ${candidate.name}`,
+              label: `与 ${candidate.name} 编组`,
               icon: <Link2 size={14} aria-hidden />,
               onClick: () => groupTracks(track.id, candidate.id),
             })),
@@ -143,7 +143,7 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
       : []),
     { type: "divider" },
     {
-      label: "Delete Track",
+      label: "删除轨道",
       icon: <Trash2 size={14} aria-hidden />,
       onClick: handleRemoveTrack,
     },
@@ -168,7 +168,7 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
             {isRenaming ? (
               <ToolcraftTextInputControl
                 ref={inputRef}
-                label="Track name"
+                label="轨道名称"
                 isLabelHidden
                 size="sm"
                 width="100%"
@@ -197,13 +197,13 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
               <Link2
                 size={13}
                 className="text-accent"
-                aria-label="Track is grouped"
+                aria-label="轨道已编组"
               />
             )}
             {isVisual && (
               <button
                 type="button"
-                aria-label={track.hidden ? "Show track" : "Hide track"}
+                aria-label={track.hidden ? "显示轨道" : "隐藏轨道"}
                 className="text-fg-muted hover:text-fg-2 transition-colors"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -221,9 +221,9 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
               <>
                 <button
                   type="button"
-                  aria-label={track.muted ? `Unmute ${track.name}` : `Mute ${track.name}`}
+                  aria-label={track.muted ? `取消 ${track.name} 静音` : `将 ${track.name} 静音`}
                   aria-pressed={track.muted}
-                  title={track.muted ? "Unmute track" : "Mute track"}
+                  title={track.muted ? "取消轨道静音" : "静音轨道"}
                   className={`transition-colors ${
                     track.muted ? "text-destructive" : "text-fg-muted hover:text-fg-2"
                   }`}
@@ -240,9 +240,9 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
                 </button>
                 <button
                   type="button"
-                  aria-label={track.solo ? `Clear solo ${track.name}` : `Solo ${track.name}`}
+                  aria-label={track.solo ? `取消 ${track.name} 独奏` : `${track.name} 独奏`}
                   aria-pressed={track.solo}
-                  title={track.solo ? "Clear solo" : "Solo track"}
+                  title={track.solo ? "取消独奏" : "轨道独奏"}
                   className={`flex h-[18px] min-w-[18px] items-center justify-center rounded px-1 text-[9px] font-black transition-colors ${
                     track.solo
                       ? "bg-status-warning text-black"
@@ -259,7 +259,7 @@ export const TrackHeader: React.FC<TrackHeaderProps> = ({
             )}
             <button
               type="button"
-              aria-label={track.locked ? "Unlock" : "Lock"}
+              aria-label={track.locked ? "解锁轨道" : "锁定轨道"}
               className={`transition-colors ${
                 track.locked ? "text-fg-2" : "text-fg-muted hover:text-fg-2"
               }`}
