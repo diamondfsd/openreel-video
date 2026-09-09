@@ -12,6 +12,7 @@ import { ToolcraftSelectableCard as SelectableCard } from "@openreel/ui";
 import { ToolcraftText as Text } from "@openreel/ui";
 import { ToolcraftTextInputControl } from "@openreel/ui";
 import { useProjectStore } from "../../stores/project-store";
+import { projectManager } from "../../services/project-manager";
 import { useAnalytics, AnalyticsEvents } from "../../hooks/useAnalytics";
 import {
   SOCIAL_MEDIA_PRESETS,
@@ -22,7 +23,7 @@ import {
 import { getSocialCategoryLabel, getPlatformLabel } from "./localization";
 
 interface StartFromScratchProps {
-  onProjectCreated?: () => void;
+  onProjectCreated?: (projectId?: string) => void;
 }
 
 interface PresetGroup {
@@ -79,10 +80,16 @@ export const StartFromScratch: React.FC<StartFromScratchProps> = ({
     setIsCreating(true);
 
     const settings = createProjectSettingsFromPreset(preset);
-    createNewProject(
-      projectName.trim() || `${getSocialCategoryLabel(selectedPreset, info?.name)} 项目`,
-    );
-    await updateSettings(settings);
+    const name = projectName.trim() || `${getSocialCategoryLabel(selectedPreset, info?.name)} 项目`;
+    let projectId: string | undefined;
+    if (window.openreel?.lunaProject) {
+      const project = await projectManager.createLunaProject(name, settings);
+      useProjectStore.getState().loadProject(project);
+      projectId = project.id;
+    } else {
+      createNewProject(name);
+      await updateSettings(settings);
+    }
 
     track(AnalyticsEvents.PROJECT_CREATED, {
       preset: selectedPreset,
@@ -94,10 +101,11 @@ export const StartFromScratch: React.FC<StartFromScratchProps> = ({
 
     setTimeout(() => {
       setIsCreating(false);
-      onProjectCreated?.();
+      onProjectCreated?.(projectId);
     }, 100);
   }, [
     createNewProject,
+    projectManager,
     updateSettings,
     preset,
     projectName,

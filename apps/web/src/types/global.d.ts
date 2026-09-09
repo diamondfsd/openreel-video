@@ -176,6 +176,13 @@ export interface OpenReelLunaProjectSnapshot {
   editorDocument: string | null;
 }
 
+export interface OpenReelLunaProjectSummary {
+  projectId: string;
+  projectName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface OpenReelLunaAsset {
   id: string;
   name: string;
@@ -284,13 +291,18 @@ declare global {
         install(): Promise<void>;
       };
       lunaProject?: {
+        list(): Promise<OpenReelLunaProjectSummary[]>;
+        create(name: string): Promise<OpenReelLunaProjectSummary>;
         load(projectId: string): Promise<OpenReelLunaProjectSnapshot>;
         save(projectId: string, editorDocument: string): Promise<void>;
+        delete(projectId: string): Promise<void>;
+        rename(projectId: string, name: string): Promise<OpenReelLunaProjectSummary>;
         chooseAssets(projectId: string, existingPaths?: string[]): Promise<OpenReelLunaAsset[]>;
       };
       lunaMedia?: {
         readFileBytes(sourcePath: string): Promise<ArrayBuffer>;
         resolveThumbnail(sourcePath: string, kind?: "image" | "video"): Promise<string | null>;
+        matchImportAsset?(name: string, size: number): (OpenReelLunaAsset & { size?: number }) | null;
       };
       crash: {
         report(payload: { message: string; stack?: string; type?: string; context?: unknown }): void;

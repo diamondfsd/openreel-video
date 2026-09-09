@@ -10,12 +10,12 @@ export const ProjectListScreen: React.FC = () => {
   const { navigate } = useRouter();
   const [showCreateForm, setShowCreateForm] = useState(false);
 
-  const handleProjectSelected = useCallback(() => {
-    navigate("editor");
+  const handleProjectSelected = useCallback((projectId?: string) => {
+    navigate(projectId ? "luna-editor" : "editor", projectId ? { projectId } : undefined);
   }, [navigate]);
 
-  const handleProjectCreated = useCallback(() => {
-    navigate("editor");
+  const handleProjectCreated = useCallback((projectId?: string) => {
+    navigate(projectId ? "luna-editor" : "editor", projectId ? { projectId } : undefined);
   }, [navigate]);
 
   return (

@@ -3015,8 +3015,15 @@ export const useProjectStore = create<ProjectState>()(
 
           const restoredItems = await Promise.all(
             recoveredProject.mediaLibrary.items.map(async (item) => {
+              const lunaMedia = window.openreel?.lunaMedia;
               try {
-                return await restoreMediaItem(item, blobMap.get(item.id));
+                const restored = await restoreMediaItem(item, blobMap.get(item.id));
+                if (!restored.isPlaceholder || !item.sourcePath || !lunaMedia?.readFileBytes) {
+                  return restored;
+                }
+
+                const [hydrated] = await hydrateLunaMediaItems([item]);
+                return hydrated ?? restored;
               } catch (error) {
                 console.warn(
                   `[ProjectStore] Failed to restore media ${item.name}; marking it missing:`,

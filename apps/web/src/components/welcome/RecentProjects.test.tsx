@@ -5,6 +5,9 @@ import { RecentProjects } from "./RecentProjects";
 const mockCheckForRecovery = vi.fn();
 const mockRecoverFromAutoSave = vi.fn();
 const mockTrack = vi.fn();
+const { mockDeleteProject } = vi.hoisted(() => ({
+  mockDeleteProject: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock("../../services/auto-save", () => ({
   checkForRecovery: () => mockCheckForRecovery(),
@@ -13,6 +16,13 @@ vi.mock("../../services/auto-save", () => ({
 vi.mock("../../stores/project-store", () => ({
   useProjectStore: (selector: (state: unknown) => unknown) =>
     selector({ recoverFromAutoSave: mockRecoverFromAutoSave }),
+}));
+
+vi.mock("../../services/project-manager", () => ({
+  projectManager: {
+    getRecentProjects: vi.fn(),
+    deleteProject: mockDeleteProject,
+  },
 }));
 
 vi.mock("../../hooks/useAnalytics", () => ({
@@ -125,7 +135,7 @@ describe("RecentProjects", () => {
     });
   });
 
-  it("removes project from list when delete is clicked", async () => {
+  it("confirms and deletes project when delete is clicked", async () => {
     mockCheckForRecovery.mockResolvedValue([
       {
         id: "project-1-slot-0",
@@ -143,12 +153,15 @@ describe("RecentProjects", () => {
       expect(screen.getByText("Project to Remove")).toBeInTheDocument();
     });
 
-    const removeButton = screen.getByTitle("Remove from recent");
-    fireEvent.click(removeButton);
+    fireEvent.click(screen.getByTitle("删除项目"));
+
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /^删除$/ }));
 
     await waitFor(() => {
+      expect(mockDeleteProject).toHaveBeenCalledWith("project-1");
       expect(screen.queryByText("Project to Remove")).not.toBeInTheDocument();
-      expect(screen.getByText("No Recent Projects")).toBeInTheDocument();
+      expect(screen.getByText("暂无最近项目")).toBeInTheDocument();
     });
   });
 

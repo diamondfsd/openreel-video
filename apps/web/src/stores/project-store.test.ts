@@ -14,6 +14,7 @@ import {
   listGeneratedMotionShaders,
 } from "@openreel/core/motion/shaders";
 import { createEmptyProject } from "./project/project-helpers";
+import { autoSaveManager } from "../services/auto-save";
 
 const {
   mockEffectsBridge,
@@ -125,8 +126,17 @@ vi.mock("../services/auto-save", () => ({
     getRecentSaves: vi.fn().mockResolvedValue([]),
     loadSave: vi.fn(),
     deleteSave: vi.fn(),
+    recover: vi.fn(),
   },
   initializeAutoSave: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../services/media-storage", () => ({
+  saveMediaBlob: vi.fn().mockResolvedValue(undefined),
+  loadProjectMedia: vi.fn().mockResolvedValue([]),
+  loadFileHandle: vi.fn().mockResolvedValue(null),
+  loadDirectoryHandle: vi.fn().mockResolvedValue(null),
+  deleteMediaBlob: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("../bridges/media-bridge", () => ({
@@ -719,6 +729,7 @@ describe("ProjectStore", () => {
         blob: null,
         sourceAssetId: asset.id,
         sourcePath: asset.path,
+        thumbnailUrl: asset.thumbnailUrl,
         originalUrl: "file:///Users/test/%E6%97%85%E8%A1%8C%E7%89%87%E6%AE%B5.mp4",
         metadata: {
           duration: asset.duration,
@@ -775,6 +786,54 @@ describe("ProjectStore", () => {
       expect(readFileBytes).toHaveBeenCalledWith("/tmp/clip.mp4");
       expect(resolveThumbnail).toHaveBeenCalledWith("/tmp/clip.mp4", "video");
       expect(item?.thumbnailUrl).toBe("file:///tmp/clip.v2.webp");
+      delete (window as any).openreel;
+    });
+
+    it("restores a Luna asset from its saved local path during auto-save recovery", async () => {
+      const readFileBytes = vi.fn(async () => new Uint8Array([3, 4, 5]).buffer);
+      const resolveThumbnail = vi.fn(async () => "file:///tmp/recovered-clip.webp");
+      (window as any).openreel = {
+        lunaMedia: { readFileBytes, resolveThumbnail },
+      };
+
+      const sourceProject = useProjectStore.getState().project;
+      const recoveredProject: Project = {
+        ...sourceProject,
+        id: "luna-project-auto-save-restore",
+        mediaLibrary: {
+          items: [{
+            id: "luna-asset-auto-save-restore",
+            name: "recovered-clip.mp4",
+            type: "video",
+            fileHandle: null,
+            blob: null,
+            metadata: {
+              duration: 3,
+              width: 1920,
+              height: 1080,
+              frameRate: 30,
+              codec: "",
+              sampleRate: 0,
+              channels: 0,
+              fileSize: 3,
+            },
+            thumbnailUrl: null,
+            waveformData: null,
+            sourcePath: "/tmp/recovered-clip.mp4",
+          }],
+        },
+      };
+      vi.mocked(autoSaveManager.recover).mockResolvedValue(recoveredProject);
+
+      const success = await useProjectStore.getState().recoverFromAutoSave("recovery-1");
+
+      expect(success).toBe(true);
+      const item = useProjectStore.getState().getMediaItem("luna-asset-auto-save-restore");
+      expect(item?.blob).toBeInstanceOf(Blob);
+      expect(item?.isPlaceholder).toBe(false);
+      expect(readFileBytes).toHaveBeenCalledWith("/tmp/recovered-clip.mp4");
+      expect(resolveThumbnail).toHaveBeenCalledWith("/tmp/recovered-clip.mp4", "video");
+      expect(item?.thumbnailUrl).toBe("file:///tmp/recovered-clip.webp");
       delete (window as any).openreel;
     });
 

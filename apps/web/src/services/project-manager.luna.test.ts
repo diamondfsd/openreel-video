@@ -99,4 +99,53 @@ describe("ProjectManager Luna project persistence", () => {
     expect(serialized.mediaLibrary.items[0].waveformData).toBeNull();
     expect(serialized.mediaLibrary.items[0].thumbnailUrl).toBeNull();
   });
+
+  it("lists and creates projects through the native Luna project bridge", async () => {
+    const save = vi.fn(async () => undefined);
+    const create = vi.fn(async () => ({
+      projectId: "luna-project-2",
+      projectName: "New Luna Project",
+      createdAt: "2026-09-09T08:00:00.000Z",
+      updatedAt: "2026-09-09T08:00:00.000Z",
+    }));
+    const list = vi.fn(async () => [
+      {
+        projectId: "luna-project-1",
+        projectName: "Stored Luna Project",
+        createdAt: "2026-09-09T07:00:00.000Z",
+        updatedAt: "2026-09-09T07:30:00.000Z",
+      },
+    ]);
+    (window as any).openreel = {
+      lunaProject: { list, create, save },
+    };
+
+    const recent = await projectManager.getRecentProjects();
+    const project = await projectManager.createLunaProject("New Luna Project", {
+      width: 1080,
+      height: 1920,
+      frameRate: 30,
+    });
+
+    expect(list).toHaveBeenCalledTimes(1);
+    expect(recent[0]).toMatchObject({
+      id: "luna-project-1",
+      name: "Stored Luna Project",
+    });
+    expect(create).toHaveBeenCalledWith("New Luna Project");
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(project.id).toBe("luna-project-2");
+    expect(project.settings).toMatchObject({ width: 1080, height: 1920 });
+  });
+
+  it("deletes projects through the native Luna project bridge", async () => {
+    const deleteProject = vi.fn(async () => undefined);
+    (window as any).openreel = {
+      lunaProject: { delete: deleteProject },
+    };
+
+    await projectManager.deleteProject("luna-project-1");
+
+    expect(deleteProject).toHaveBeenCalledWith("luna-project-1");
+  });
 });

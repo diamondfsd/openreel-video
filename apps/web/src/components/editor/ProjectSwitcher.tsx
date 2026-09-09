@@ -16,6 +16,7 @@ import { ToolcraftText as Text } from "@openreel/ui";
 import { ToolcraftTextInputControl } from "@openreel/ui";
 import { useProjectStore } from "../../stores/project-store";
 import { autoSaveManager, type AutoSaveMetadata } from "../../services/auto-save";
+import { projectManager } from "../../services/project-manager";
 
 function formatTimeAgo(timestamp: number): string {
   const seconds = Math.floor((Date.now() - timestamp) / 1000);
@@ -45,6 +46,19 @@ export const ProjectSwitcher: React.FC = () => {
   useEffect(() => {
     const loadSavedProjects = async () => {
       try {
+        if (window.openreel?.lunaProject) {
+          const projects = await projectManager.getRecentProjects();
+          setSavedProjects(projects.map((saved) => ({
+            id: saved.id,
+            projectId: saved.id,
+            projectName: saved.name,
+            timestamp: saved.lastOpened,
+            slot: 0,
+            isRecovery: false,
+          })));
+          return;
+        }
+
         await autoSaveManager.initialize();
         const saves = await autoSaveManager.checkForRecovery();
         const uniqueProjects = saves.reduce((acc, save) => {
@@ -108,8 +122,18 @@ export const ProjectSwitcher: React.FC = () => {
     [handleSaveName, project.name]
   );
 
-  const handleNewProject = useCallback(() => {
-    createNewProject();
+  const handleNewProject = useCallback(async () => {
+    if (window.openreel?.lunaProject) {
+      try {
+        const created = await projectManager.createLunaProject("Untitled Project");
+        useProjectStore.getState().loadProject(created);
+      } catch (error) {
+        console.error("[ProjectSwitcher] Failed to create Luna project:", error);
+        return;
+      }
+    } else {
+      createNewProject();
+    }
     setIsOpen(false);
   }, [createNewProject]);
 
@@ -117,7 +141,12 @@ export const ProjectSwitcher: React.FC = () => {
     async (saveId: string) => {
       setIsLoading(true);
       try {
-        await recoverFromAutoSave(saveId);
+        if (window.openreel?.lunaProject) {
+          const loaded = await projectManager.loadLunaProject(saveId);
+          useProjectStore.getState().loadProject(loaded);
+        } else {
+          await recoverFromAutoSave(saveId);
+        }
         setIsOpen(false);
       } catch (err) {
         console.error("[ProjectSwitcher] Failed to switch project:", err);

@@ -3,10 +3,11 @@ import { Clock, Trash2, Film } from "@/icons/lucide-compat";
 import { ToolcraftClickableCard as ClickableCard } from "@openreel/ui";
 import { ToolcraftIconButton as IconButton } from "@openreel/ui";
 import { ToolcraftText as Text } from "@openreel/ui";
-import {
-  checkForRecovery,
-  type AutoSaveMetadata,
-} from "../../services/auto-save";
+import { ToolcraftButton as Button } from "@openreel/ui";
+import { ToolcraftDialog as Dialog, ToolcraftDialogHeader as DialogHeader } from "@openreel/ui";
+import { ToolcraftLayout as Layout, ToolcraftLayoutFooter as LayoutFooter } from "@openreel/ui";
+import { checkForRecovery, type AutoSaveMetadata } from "../../services/auto-save";
+import { projectManager } from "../../services/project-manager";
 import { useProjectStore } from "../../stores/project-store";
 import { useAnalytics, AnalyticsEvents } from "../../hooks/useAnalytics";
 
@@ -18,7 +19,7 @@ interface RecentProject {
 }
 
 interface RecentProjectsProps {
-  onProjectSelected?: () => void;
+  onProjectSelected?: (projectId?: string) => void;
 }
 
 export const RecentProjects: React.FC<RecentProjectsProps> = ({
@@ -27,6 +28,8 @@ export const RecentProjects: React.FC<RecentProjectsProps> = ({
   const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadingProjectId, setLoadingProjectId] = useState<string | null>(null);
+  const [projectToDelete, setProjectToDelete] = useState<RecentProject | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const recoverFromAutoSave = useProjectStore(
     (state) => state.recoverFromAutoSave,
   );
@@ -35,6 +38,17 @@ export const RecentProjects: React.FC<RecentProjectsProps> = ({
   useEffect(() => {
     async function loadProjects() {
       try {
+        if (window.openreel?.lunaProject) {
+          const projects = await projectManager.getRecentProjects();
+          setRecentProjects(projects.map((project) => ({
+            id: project.id,
+            saveId: project.id,
+            name: project.name,
+            lastModified: project.lastOpened,
+          })));
+          return;
+        }
+
         const saves = await checkForRecovery();
         const projectMap = new Map<string, AutoSaveMetadata>();
 
@@ -69,12 +83,21 @@ export const RecentProjects: React.FC<RecentProjectsProps> = ({
     async (project: RecentProject) => {
       setLoadingProjectId(project.id);
       try {
-        const success = await recoverFromAutoSave(project.saveId);
+        let success = false;
+        if (window.openreel?.lunaProject) {
+          const loaded = await projectManager.loadLunaProject(project.id);
+          if (loaded) {
+            useProjectStore.getState().loadProject(loaded);
+            success = true;
+          }
+        } else {
+          success = await recoverFromAutoSave(project.saveId);
+        }
         if (success) {
           track(AnalyticsEvents.PROJECT_OPENED, {
             source: "recent_projects",
           });
-          onProjectSelected?.();
+          onProjectSelected?.(window.openreel?.lunaProject ? project.id : undefined);
         }
       } catch (error) {
         console.error("Failed to load project:", error);
@@ -85,13 +108,27 @@ export const RecentProjects: React.FC<RecentProjectsProps> = ({
     [recoverFromAutoSave, onProjectSelected, track],
   );
 
-  const handleRemoveProject = useCallback(
-    (projectId: string, event: React.MouseEvent) => {
+  const handleRequestDelete = useCallback(
+    (project: RecentProject, event: React.MouseEvent) => {
       event.stopPropagation();
-      setRecentProjects((prev) => prev.filter((p) => p.id !== projectId));
+      setProjectToDelete(project);
     },
     [],
   );
+
+  const handleDeleteProject = useCallback(async () => {
+    if (!projectToDelete || isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await projectManager.deleteProject(projectToDelete.id);
+      setRecentProjects((prev) => prev.filter((project) => project.id !== projectToDelete.id));
+      setProjectToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete project:", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [isDeleting, projectToDelete]);
 
   const formatDate = (timestamp: number): string => {
     const date = new Date(timestamp);
@@ -179,9 +216,10 @@ export const RecentProjects: React.FC<RecentProjectsProps> = ({
               </ClickableCard>
 
               <IconButton
-                label="从最近项目中移除"
-                onClick={(e) => handleRemoveProject(project.id, e)}
+                label="删除项目"
+                onClick={(e) => handleRequestDelete(project, e)}
                 icon={<Trash2 size={14} aria-hidden />}
+                isDisabled={isDeleting}
                 size="sm"
                 variant="ghost"
                 className="absolute top-2 right-2 p-1.5 text-text-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all rounded-lg bg-background/80 hover:bg-red-500/10 backdrop-blur-sm"
@@ -191,9 +229,45 @@ export const RecentProjects: React.FC<RecentProjectsProps> = ({
         })}
       </div>
 
-      <Text type="supporting" color="secondary" className="text-xs text-text-muted text-center">
-        最近项目保存在本地浏览器中
-      </Text>
+      {projectToDelete && (
+        <Dialog
+          isOpen
+          onOpenChange={(open) => {
+            if (!open && !isDeleting) setProjectToDelete(null);
+          }}
+          width={448}
+          purpose="form"
+        >
+          <Layout
+            header={(
+              <DialogHeader
+                title="删除项目"
+                subtitle={`确认删除“${projectToDelete.name}”？此操作无法恢复。`}
+                onOpenChange={(open) => !open && !isDeleting && setProjectToDelete(null)}
+                startContent={<Trash2 className="h-5 w-5 text-status-error" aria-hidden />}
+              />
+            )}
+            footer={(
+              <LayoutFooter>
+                <Button
+                  label="取消"
+                  variant="secondary"
+                  isDisabled={isDeleting}
+                  onClick={() => setProjectToDelete(null)}
+                />
+                <Button
+                  label="删除"
+                  variant="destructive"
+                  isLoading={isDeleting}
+                  isDisabled={isDeleting}
+                  onClick={() => void handleDeleteProject()}
+                />
+              </LayoutFooter>
+            )}
+          />
+        </Dialog>
+      )}
+
     </div>
   );
 };

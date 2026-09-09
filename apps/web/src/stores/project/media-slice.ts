@@ -129,7 +129,7 @@ export function createMediaSlice(set: Set, get: Get): MediaSlice {
           channels: 0,
           fileSize: asset.fileSize ?? 0,
         },
-        thumbnailUrl: asset.kind === "image" ? asset.thumbnailUrl ?? null : null,
+        thumbnailUrl: asset.thumbnailUrl ?? null,
         waveformData: null,
         originalUrl: fileUrlForPath(asset.path),
         sourceAssetId: asset.id,
@@ -178,6 +178,8 @@ export function createMediaSlice(set: Set, get: Get): MediaSlice {
         }
 
         const processedMedia = importResult.media;
+        const matchImportAsset = window.openreel?.lunaMedia?.matchImportAsset;
+        const sourceAsset = matchImportAsset ? matchImportAsset(file.name, file.size) : null;
 
         let thumbnailUrl: string | null = null;
         const filmstripThumbnails: { timestamp: number; url: string }[] = [];
@@ -225,6 +227,16 @@ export function createMediaSlice(set: Set, get: Get): MediaSlice {
           mediaType = "image";
         }
 
+        if (!thumbnailUrl && sourceAsset) {
+          const resolveThumbnail = window.openreel?.lunaMedia?.resolveThumbnail;
+          if (resolveThumbnail) {
+            thumbnailUrl = await resolveThumbnail(
+              sourceAsset.path,
+              mediaType === "image" ? "image" : "video",
+            ).catch(() => null);
+          }
+        }
+
         if (mediaType === "video" && !thumbnailUrl) {
           try {
             const thumbs = await mediaBridge.generateThumbnailsForMedia(
@@ -263,7 +275,7 @@ export function createMediaSlice(set: Set, get: Get): MediaSlice {
             hasVideo: processedMedia.metadata.hasVideo,
             hasAudio: processedMedia.metadata.hasAudio,
           },
-          thumbnailUrl,
+          thumbnailUrl: thumbnailUrl ?? sourceAsset?.thumbnailUrl ?? null,
           waveformData: processedMedia.waveformData?.peaks || null,
           filmstripThumbnails:
             filmstripThumbnails.length > 0 ? filmstripThumbnails : undefined,
@@ -272,6 +284,13 @@ export function createMediaSlice(set: Set, get: Get): MediaSlice {
             size: file.size,
             lastModified: file.lastModified,
           },
+          ...(sourceAsset
+            ? {
+                originalUrl: fileUrlForPath(sourceAsset.path),
+                sourceAssetId: sourceAsset.id,
+                sourcePath: sourceAsset.path,
+              }
+            : {}),
         };
 
         const updatedProject = {

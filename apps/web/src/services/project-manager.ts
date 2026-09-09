@@ -352,6 +352,26 @@ class ProjectManager {
     return project;
   }
 
+  async createLunaProject(
+    name: string,
+    settings?: Partial<ProjectSettings>,
+  ): Promise<Project> {
+    const bridge = window.openreel?.lunaProject;
+    if (!bridge) {
+      throw new Error("Luna project storage is unavailable");
+    }
+
+    const summary = await bridge.create(name.trim() || "Untitled Project");
+    const project = await this.createProject({
+      id: summary.projectId,
+      lunaProjectId: summary.projectId,
+      name: summary.projectName,
+      settings,
+    });
+    await this.saveLunaProject(summary.projectId, project);
+    return project;
+  }
+
   async saveLunaProject(projectId: string, project: Project): Promise<void> {
     const normalizedProjectId = projectId.trim();
     const bridge = window.openreel?.lunaProject;
@@ -584,6 +604,15 @@ class ProjectManager {
   async openRecentProject(
     recentProject: RecentProject,
   ): Promise<Project | null> {
+    if (window.openreel?.lunaProject) {
+      try {
+        return await this.loadLunaProject(recentProject.id);
+      } catch (error) {
+        console.error("[ProjectManager] Open Luna recent failed:", error);
+        return null;
+      }
+    }
+
     if (recentProject.fileHandle) {
       if (isNativeRef(recentProject.fileHandle)) {
         try {
@@ -654,6 +683,21 @@ class ProjectManager {
   }
 
   async getRecentProjects(): Promise<RecentProject[]> {
+    const lunaBridge = window.openreel?.lunaProject;
+    if (lunaBridge) {
+      const projects = await lunaBridge.list();
+      return projects
+        .map((project) => ({
+          id: project.projectId,
+          name: project.projectName,
+          lastOpened: Date.parse(project.updatedAt) || Date.parse(project.createdAt) || 0,
+          duration: 0,
+          trackCount: 0,
+        }))
+        .sort((a, b) => b.lastOpened - a.lastOpened)
+        .slice(0, MAX_RECENT_PROJECTS);
+    }
+
     if (!this.db) {
       await this.initialize();
     }
@@ -680,10 +724,30 @@ class ProjectManager {
     });
   }
 
+  async deleteProject(projectId: string): Promise<void> {
+    const normalizedProjectId = projectId.trim();
+    if (!normalizedProjectId) {
+      throw new Error("Missing project id");
+    }
+
+    const lunaBridge = window.openreel?.lunaProject;
+    if (lunaBridge) {
+      await lunaBridge.delete(normalizedProjectId);
+      if (this.currentLunaProjectId === normalizedProjectId) {
+        this.currentLunaProjectId = null;
+        this.currentFileHandle = null;
+      }
+      return;
+    }
+
+    await this.removeFromRecent(normalizedProjectId);
+  }
+
   async addToRecent(
     project: Project,
     fileHandle?: ProjectFileRef,
   ): Promise<void> {
+    if (window.openreel?.lunaProject) return;
     if (!this.db) return;
 
     const recentProject: RecentProject = {
@@ -732,6 +796,7 @@ class ProjectManager {
   }
 
   async removeFromRecent(id: string): Promise<void> {
+    if (window.openreel?.lunaProject) return;
     if (!this.db) return;
 
     return new Promise((resolve) => {
@@ -759,6 +824,7 @@ class ProjectManager {
   }
 
   async clearRecentProjects(): Promise<void> {
+    if (window.openreel?.lunaProject) return;
     if (!this.db) return;
 
     return new Promise((resolve) => {
