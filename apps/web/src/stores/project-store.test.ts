@@ -693,7 +693,7 @@ describe("ProjectStore", () => {
   });
 
   describe("media operations", () => {
-    it("imports a Luna asset as a deduplicated reference without copying its blob", async () => {
+    it("imports a Luna asset as a deduplicated reference", async () => {
       const asset = {
         id: "luna-asset-1",
         name: "旅行片段.mp4",
@@ -728,6 +728,54 @@ describe("ProjectStore", () => {
           fileSize: asset.fileSize,
         },
       });
+    });
+
+    it("restores a Luna asset from its saved local path", async () => {
+      const readFileBytes = vi.fn(async () => new Uint8Array([0, 1, 2]).buffer);
+      const resolveThumbnail = vi.fn(async () => "file:///tmp/clip.v2.webp");
+      (window as any).openreel = {
+        lunaMedia: { readFileBytes, resolveThumbnail },
+      };
+
+      const sourceProject = useProjectStore.getState().project;
+      useProjectStore.getState().loadProject({
+        ...sourceProject,
+        id: "luna-project-restore",
+        mediaLibrary: {
+          items: [{
+            id: "luna-asset-restore",
+            name: "clip.mp4",
+            type: "video",
+            fileHandle: null,
+            blob: null,
+            metadata: {
+              duration: 3,
+              width: 1920,
+              height: 1080,
+              frameRate: 30,
+              codec: "",
+              sampleRate: 0,
+              channels: 0,
+              fileSize: 3,
+            },
+            thumbnailUrl: null,
+            waveformData: null,
+            sourcePath: "/tmp/clip.mp4",
+          }],
+        },
+      });
+
+      await vi.waitFor(() => {
+        const item = useProjectStore.getState().getMediaItem("luna-asset-restore");
+        expect(item?.blob).toBeInstanceOf(Blob);
+        expect(item?.isPlaceholder).toBe(false);
+      });
+
+      const item = useProjectStore.getState().getMediaItem("luna-asset-restore");
+      expect(readFileBytes).toHaveBeenCalledWith("/tmp/clip.mp4");
+      expect(resolveThumbnail).toHaveBeenCalledWith("/tmp/clip.mp4", "video");
+      expect(item?.thumbnailUrl).toBe("file:///tmp/clip.v2.webp");
+      delete (window as any).openreel;
     });
 
     it("should get media item by id", () => {

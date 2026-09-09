@@ -288,6 +288,10 @@ declare global {
         save(projectId: string, editorDocument: string): Promise<void>;
         chooseAssets(projectId: string, existingPaths?: string[]): Promise<OpenReelLunaAsset[]>;
       };
+      lunaMedia?: {
+        readFileBytes(sourcePath: string): Promise<ArrayBuffer>;
+        resolveThumbnail(sourcePath: string, kind?: "image" | "video"): Promise<string | null>;
+      };
       crash: {
         report(payload: { message: string; stack?: string; type?: string; context?: unknown }): void;
       };

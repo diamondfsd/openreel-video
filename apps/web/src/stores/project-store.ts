@@ -54,7 +54,7 @@ import {
 import { createMarkerSlice } from "./project/marker-slice";
 import { createSubtitleSlice } from "./project/subtitle-slice";
 import { createTrackSlice } from "./project/track-slice";
-import { createMediaSlice } from "./project/media-slice";
+import { createMediaSlice, hydrateLunaMediaItems } from "./project/media-slice";
 import { createProjectStoreHelpers } from "./project/store-helpers";
 import { createTextGraphicsSlice } from "./project/text-graphics-slice";
 import { createHistorySlice } from "./project/history-slice";
@@ -1787,6 +1787,26 @@ export const useProjectStore = create<ProjectState>()(
           lastPastedClipIds: [],
           error: null,
         });
+
+        if (fixedProject.mediaLibrary.items.some((item) => item.sourcePath)) {
+          void hydrateLunaMediaItems(fixedProject.mediaLibrary.items).then((items) => {
+            const currentProject = get().project;
+            if (currentProject.id !== fixedProject.id) return;
+            const hydratedItems = new Map(items.map((item) => [item.id, item]));
+            set({
+              project: {
+                ...currentProject,
+                mediaLibrary: {
+                  ...currentProject.mediaLibrary,
+                  items: currentProject.mediaLibrary.items.map(
+                    (item) => hydratedItems.get(item.id) ?? item,
+                  ),
+                },
+                modifiedAt: Date.now(),
+              },
+            });
+          });
+        }
 
         // Auto-restore placeholder assets from saved FileSystemFileHandles (same machine)
         const placeholders = fixedProject.mediaLibrary.items.filter(

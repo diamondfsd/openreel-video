@@ -17,6 +17,82 @@ function fileUrlForPath(filePath: string): string {
     .replace(/\?/g, "%3F");
 }
 
+function mimeTypeForAsset(name: string, kind: OpenReelLunaAsset["kind"]): string {
+  const extension = name.split(".").pop()?.toLowerCase();
+  if (kind === "image") {
+    if (extension === "png") return "image/png";
+    if (extension === "webp") return "image/webp";
+    if (extension === "gif") return "image/gif";
+    if (extension === "heic" || extension === "heif") return "image/heic";
+    return "image/jpeg";
+  }
+  if (extension === "webm") return "video/webm";
+  if (extension === "mov") return "video/quicktime";
+  if (extension === "mkv") return "video/x-matroska";
+  return "video/mp4";
+}
+
+async function readLunaAssetFile(asset: OpenReelLunaAsset): Promise<Blob | null> {
+  const readFileBytes = window.openreel?.lunaMedia?.readFileBytes;
+  if (!readFileBytes) return null;
+
+  const bytes = await readFileBytes(asset.path);
+  if (!(bytes instanceof ArrayBuffer) || bytes.byteLength === 0) {
+    throw new Error(`无法读取素材：${asset.name}`);
+  }
+  return new File([bytes], asset.name, { type: mimeTypeForAsset(asset.name, asset.kind) });
+}
+
+async function hydrateLunaMediaItem(item: MediaItem): Promise<MediaItem> {
+  if (!item.sourcePath || !window.openreel?.lunaMedia?.readFileBytes) return item;
+
+  try {
+    const bytes = await window.openreel.lunaMedia.readFileBytes(item.sourcePath);
+    if (!(bytes instanceof ArrayBuffer) || bytes.byteLength === 0) {
+      throw new Error("empty media file");
+    }
+    const blob = new File([bytes], item.name, {
+      type: mimeTypeForAsset(item.name, item.type === "image" ? "image" : "video"),
+    });
+    let thumbnailUrl = item.thumbnailUrl;
+    const resolveThumbnail = window.openreel.lunaMedia.resolveThumbnail;
+    if ((item.type === "video" || !thumbnailUrl) && resolveThumbnail) {
+      const resolvedThumbnail = await resolveThumbnail(
+        item.sourcePath,
+        item.type === "image" ? "image" : "video",
+      ).catch(() => null);
+      thumbnailUrl = resolvedThumbnail ?? (item.type === "video" ? null : thumbnailUrl);
+    }
+    return {
+      ...item,
+      blob,
+      thumbnailUrl,
+      isPlaceholder: false,
+      sourceFile: item.sourceFile ?? {
+        name: item.name,
+        size: item.metadata.fileSize,
+        lastModified: 0,
+      },
+    };
+  } catch (error) {
+    console.warn(`[ProjectStore] Failed to restore Luna media ${item.name}:`, error);
+    return {
+      ...item,
+      blob: null,
+      isPlaceholder: true,
+      sourceFile: item.sourceFile ?? {
+        name: item.name,
+        size: item.metadata.fileSize,
+        lastModified: 0,
+      },
+    };
+  }
+}
+
+export async function hydrateLunaMediaItems(items: readonly MediaItem[]): Promise<MediaItem[]> {
+  return Promise.all(items.map((item) => hydrateLunaMediaItem(item)));
+}
+
 export type MediaSlice = Pick<
   ProjectState,
   | "importMedia"
@@ -36,12 +112,13 @@ export function createMediaSlice(set: Set, get: Get): MediaSlice {
       ));
       if (existing) return { success: true, actionId: existing.id };
 
+      const blob = await readLunaAssetFile(asset);
       const mediaItem: MediaItem = {
         id: `luna-asset-${asset.id}`,
         name: asset.name,
         type: asset.kind,
         fileHandle: null,
-        blob: null,
+        blob,
         metadata: {
           duration: asset.duration ?? 0,
           width: asset.width ?? 0,
@@ -52,11 +129,16 @@ export function createMediaSlice(set: Set, get: Get): MediaSlice {
           channels: 0,
           fileSize: asset.fileSize ?? 0,
         },
-        thumbnailUrl: asset.thumbnailUrl ?? null,
+        thumbnailUrl: asset.kind === "image" ? asset.thumbnailUrl ?? null : null,
         waveformData: null,
         originalUrl: fileUrlForPath(asset.path),
         sourceAssetId: asset.id,
         sourcePath: asset.path,
+        sourceFile: {
+          name: asset.name,
+          size: asset.fileSize ?? blob?.size ?? 0,
+          lastModified: 0,
+        },
       };
 
       set({
