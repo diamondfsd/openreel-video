@@ -1,5 +1,6 @@
 import React, { useCallback, useState, useEffect } from "react";
 import {
+  ArrowLeft,
   X,
   Settings,
   MoreHorizontal,
@@ -417,11 +418,20 @@ export const Toolbar: React.FC = () => {
   return (
     <header className="h-[60px] flex items-center gap-[18px] px-[18px] bg-bg-1 border-b border-border shrink-0 z-30 relative">
       {/* ─── Left: mode switch ────────────────────────────────── */}
-      <WorkspaceModeTabs
-        activeMode="video"
-        onSelectMode={handleWorkspaceModeSelect}
-        className="shrink-0"
-      />
+      <div className="flex items-center gap-2 shrink-0">
+        <ToolcraftIconButton
+          label="返回项目列表"
+          icon={<ArrowLeft size={16} aria-hidden />}
+          size="md"
+          variant="ghost"
+          onClick={() => navigate("projects")}
+        />
+        <WorkspaceModeTabs
+          activeMode="video"
+          onSelectMode={handleWorkspaceModeSelect}
+          className="shrink-0"
+        />
+      </div>
 
       {/* ─── Center: project name ─────────────────────────────── */}
       <div className="flex flex-1 min-w-0 items-center justify-center gap-1.5">
