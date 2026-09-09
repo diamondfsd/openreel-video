@@ -3,6 +3,7 @@ import { shareBaseOrigin } from "../services/share-origin";
 
 export type AppRoute =
   | "welcome"
+  | "projects"
   | "editor"
   | "new"
   | "templates"
@@ -44,6 +45,7 @@ function parseHash(hash: string): RouterState {
   let route: AppRoute = (pathParts[0] || "welcome") as AppRoute;
   const validRoutes: AppRoute[] = [
     "welcome",
+    "projects",
     "editor",
     "new",
     "templates",

@@ -5,6 +5,7 @@ import { SearchModal } from "./components/editor/SearchModal";
 import { MobileBlocker } from "./components/MobileBlocker";
 import { WelcomeScreen } from "./components/welcome";
 import { RecoveryDialog } from "./components/welcome/RecoveryDialog";
+import { ProjectListScreen } from "./components/projects/ProjectListScreen";
 import { SharePage } from "./pages/SharePage";
 import { useUIStore } from "./stores/ui-store";
 import { useProjectStore } from "./stores/project-store";
@@ -160,7 +161,7 @@ function App() {
       navigate("editor");
     } else if (route === "editor" && skipWelcomeScreen) {
       hasHandledInitialRoute.current = true;
-    } else if (["welcome", "templates", "recent"].includes(route)) {
+    } else if (["welcome", "projects", "templates", "recent"].includes(route)) {
       hasHandledInitialRoute.current = true;
     }
   }, [
@@ -194,6 +195,7 @@ function App() {
 
   const showWelcome =
     ["welcome", "templates", "recent"].includes(route) && !skipWelcomeScreen;
+  const showProjectList = route === "projects";
   const initialTab =
     route === "templates"
       ? "templates"
@@ -221,6 +223,8 @@ function App() {
         ) : (
           <LoadingSpinner message="正在打开项目..." />
         )
+      ) : showProjectList ? (
+        <ProjectListScreen />
       ) : showWelcome ? (
         <WelcomeScreen initialTab={initialTab} />
       ) : (
