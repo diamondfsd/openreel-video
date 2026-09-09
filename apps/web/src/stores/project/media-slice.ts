@@ -4,13 +4,23 @@ import type { Action, MediaItem } from "@openreel/core";
 import type { ProjectState } from "../project-store";
 import { getMediaBridge, initializeMediaBridge } from "../../bridges/media-bridge";
 import { saveMediaBlob, deleteMediaBlob } from "../../services/media-storage";
+import type { OpenReelLunaAsset } from "../../types/global";
 
 type Get = StoreApi<ProjectState>["getState"];
 type Set = StoreApi<ProjectState>["setState"];
 
+function fileUrlForPath(filePath: string): string {
+  if (/^(?:data|blob|https?|file):/i.test(filePath)) return filePath;
+  const normalized = filePath.replace(/\\/g, "/");
+  return encodeURI(`file://${normalized.startsWith("/") ? "" : "/"}${normalized}`)
+    .replace(/#/g, "%23")
+    .replace(/\?/g, "%3F");
+}
+
 export type MediaSlice = Pick<
   ProjectState,
   | "importMedia"
+  | "importWorkspaceAsset"
   | "deleteMedia"
   | "replaceMediaAsset"
   | "renameMedia"
@@ -19,6 +29,50 @@ export type MediaSlice = Pick<
 
 export function createMediaSlice(set: Set, get: Get): MediaSlice {
   return {
+    importWorkspaceAsset: async (asset: OpenReelLunaAsset) => {
+      const { project } = get();
+      const existing = project.mediaLibrary.items.find((item) => (
+        item.sourceAssetId === asset.id || item.sourcePath === asset.path
+      ));
+      if (existing) return { success: true, actionId: existing.id };
+
+      const mediaItem: MediaItem = {
+        id: `luna-asset-${asset.id}`,
+        name: asset.name,
+        type: asset.kind,
+        fileHandle: null,
+        blob: null,
+        metadata: {
+          duration: asset.duration ?? 0,
+          width: asset.width ?? 0,
+          height: asset.height ?? 0,
+          frameRate: asset.frameRate ?? 0,
+          codec: "",
+          sampleRate: 0,
+          channels: 0,
+          fileSize: asset.fileSize ?? 0,
+        },
+        thumbnailUrl: asset.thumbnailUrl ?? null,
+        waveformData: null,
+        originalUrl: fileUrlForPath(asset.path),
+        sourceAssetId: asset.id,
+        sourcePath: asset.path,
+      };
+
+      set({
+        project: {
+          ...project,
+          mediaLibrary: {
+            ...project.mediaLibrary,
+            items: [...project.mediaLibrary.items, mediaItem],
+          },
+          modifiedAt: Date.now(),
+        },
+      });
+
+      return { success: true, actionId: mediaItem.id };
+    },
+
     importMedia: async (file: File) => {
       const { project } = get();
 

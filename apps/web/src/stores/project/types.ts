@@ -39,6 +39,7 @@ import type {
   ColorGradingSettings,
 } from "../../bridges/effects-bridge";
 import type { AutoSaveMetadata } from "../../services/auto-save";
+import type { OpenReelLunaAsset } from "../../types/global";
 
 export type ClipHistoryEntryType = "shape" | "text" | "svg" | "sticker";
 
@@ -136,6 +137,7 @@ export interface ProjectState {
   updateSettings: (settings: Partial<ProjectSettings>) => Promise<ActionResult>;
 
   importMedia: (file: File) => Promise<ActionResult>;
+  importWorkspaceAsset: (asset: OpenReelLunaAsset) => Promise<ActionResult>;
   deleteMedia: (mediaId: string) => Promise<ActionResult>;
   renameMedia: (mediaId: string, name: string) => Promise<ActionResult>;
   getMediaItem: (mediaId: string) => MediaItem | undefined;

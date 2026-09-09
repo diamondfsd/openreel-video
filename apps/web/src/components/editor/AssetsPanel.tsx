@@ -616,6 +616,7 @@ export const AssetsPanel: React.FC = () => {
   const {
     project,
     importMedia,
+    importWorkspaceAsset,
     deleteMedia,
     replaceMediaAsset,
     updateSettings,
@@ -895,6 +896,35 @@ export const AssetsPanel: React.FC = () => {
     fileInputRef.current?.click();
   }, []);
 
+  const handleWorkspaceImport = useCallback(async () => {
+    const chooseAssets = window.openreel?.lunaProject?.chooseAssets;
+    if (!chooseAssets) {
+      triggerFileInput();
+      return;
+    }
+
+    setIsImporting(true);
+    setImportProgress("正在打开素材选择器...");
+    try {
+      const existingPaths = project.mediaLibrary.items
+        .map((item) => item.sourcePath)
+        .filter((path): path is string => Boolean(path));
+      const assets = await chooseAssets(project.id, existingPaths);
+      for (const asset of assets) {
+        const result = await importWorkspaceAsset(asset);
+        if (!result.success) {
+          throw new Error(result.error?.message || "素材导入失败");
+        }
+      }
+    } catch (error) {
+      console.error("Workspace asset import failed:", error);
+      toast.error(error instanceof Error ? error.message : "素材导入失败");
+    } finally {
+      setIsImporting(false);
+      setImportProgress("");
+    }
+  }, [importWorkspaceAsset, project, triggerFileInput]);
+
   const handleImportBackground = useCallback(
     async (preset: BackgroundPreset) => {
       setGeneratingBackground(preset.id);
@@ -934,7 +964,7 @@ export const AssetsPanel: React.FC = () => {
                 <button
                   type="button"
                   aria-label="导入素材"
-                  onClick={triggerFileInput}
+                  onClick={handleWorkspaceImport}
                   className="flex-1 flex items-center justify-center gap-[7px] bg-bg border border-border rounded-[9px] p-[10px] font-medium text-[13px] text-fg-2"
                 >
                   <svg
@@ -1040,7 +1070,7 @@ export const AssetsPanel: React.FC = () => {
                   </div>
                 )}
                 {filteredItems.length === 0 ? (
-                  <EmptyState onImport={triggerFileInput} />
+                  <EmptyState onImport={handleWorkspaceImport} />
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
                     {filteredItems.map((item) => (
@@ -1059,7 +1089,7 @@ export const AssetsPanel: React.FC = () => {
                     <div className="flex flex-col">
                       <PanelButton
                         label="添加素材"
-                        onClick={triggerFileInput}
+                        onClick={handleWorkspaceImport}
                         className="h-[78px] bg-bg-2 rounded-lg border border-dashed border-border hover:border-accent/50 hover:bg-accent-soft relative flex items-center justify-center cursor-pointer transition-all overflow-hidden group"
                       >
                         <div className="flex flex-col items-center gap-1.5">

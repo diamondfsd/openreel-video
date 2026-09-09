@@ -103,6 +103,7 @@ import {
   type CreationCameraEditPatch,
 } from "../motion/creation-camera-editing";
 import { planRecoverMotionScene3DLayer } from "../motion/creation-recovery";
+import type { OpenReelLunaAsset } from "../types/global";
 
 /**
  * ProjectState - Complete state interface for project management
@@ -157,6 +158,7 @@ export interface ProjectState {
 
   // Media library actions
   importMedia: (file: File) => Promise<ActionResult>;
+  importWorkspaceAsset: (asset: OpenReelLunaAsset) => Promise<ActionResult>;
   deleteMedia: (mediaId: string) => Promise<ActionResult>;
   replaceMediaAsset: (mediaId: string, file: File, sourceFolder?: string) => Promise<ActionResult>;
   renameMedia: (mediaId: string, name: string) => Promise<ActionResult>;

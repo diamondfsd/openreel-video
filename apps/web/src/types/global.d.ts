@@ -176,6 +176,25 @@ export interface OpenReelLunaProjectSnapshot {
   editorDocument: string | null;
 }
 
+export interface OpenReelLunaAsset {
+  id: string;
+  name: string;
+  path: string;
+  kind: "image" | "video";
+  thumbnailUrl?: string | null;
+  sourceDeviceId?: string;
+  sourceDeviceName?: string;
+  cameraType?: string;
+  cameraSerial?: string;
+  watermarkProfileId?: string;
+  isLivePhoto?: boolean;
+  duration?: number;
+  width?: number;
+  height?: number;
+  frameRate?: number;
+  fileSize?: number;
+}
+
 declare global {
   interface Window {
     openreel?: {
@@ -267,6 +286,7 @@ declare global {
       lunaProject?: {
         load(projectId: string): Promise<OpenReelLunaProjectSnapshot>;
         save(projectId: string, editorDocument: string): Promise<void>;
+        chooseAssets(projectId: string, existingPaths?: string[]): Promise<OpenReelLunaAsset[]>;
       };
       crash: {
         report(payload: { message: string; stack?: string; type?: string; context?: unknown }): void;

@@ -66,6 +66,10 @@ export interface MediaItem {
   readonly filmstripThumbnails?: FilmstripThumbnail[];
   readonly isPlaceholder?: boolean;
   readonly originalUrl?: string;
+  /** Luna workspace asset identity for embedded desktop projects. */
+  readonly sourceAssetId?: string;
+  /** Original local path used to resolve this reference by the desktop host. */
+  readonly sourcePath?: string;
   /** File hint stored in JSON for cross-session/cross-machine asset matching */
   readonly sourceFile?: { name: string; size: number; lastModified: number; folder?: string };
   /** True while a background KieAI generation task is in progress */

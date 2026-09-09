@@ -693,6 +693,43 @@ describe("ProjectStore", () => {
   });
 
   describe("media operations", () => {
+    it("imports a Luna asset as a deduplicated reference without copying its blob", async () => {
+      const asset = {
+        id: "luna-asset-1",
+        name: "旅行片段.mp4",
+        path: "/Users/test/旅行片段.mp4",
+        kind: "video" as const,
+        thumbnailUrl: "file:///tmp/旅行片段.jpg",
+        duration: 12.5,
+        width: 3840,
+        height: 2160,
+        frameRate: 30,
+        fileSize: 1024,
+      };
+
+      const first = await useProjectStore.getState().importWorkspaceAsset(asset);
+      const second = await useProjectStore.getState().importWorkspaceAsset(asset);
+      const items = useProjectStore.getState().project.mediaLibrary.items;
+
+      expect(first).toMatchObject({ success: true, actionId: "luna-asset-luna-asset-1" });
+      expect(second).toMatchObject({ success: true, actionId: first.actionId });
+      expect(items).toHaveLength(1);
+      expect(items[0]).toMatchObject({
+        name: asset.name,
+        blob: null,
+        sourceAssetId: asset.id,
+        sourcePath: asset.path,
+        originalUrl: "file:///Users/test/%E6%97%85%E8%A1%8C%E7%89%87%E6%AE%B5.mp4",
+        metadata: {
+          duration: asset.duration,
+          width: asset.width,
+          height: asset.height,
+          frameRate: asset.frameRate,
+          fileSize: asset.fileSize,
+        },
+      });
+    });
+
     it("should get media item by id", () => {
       const projectWithMedia: Project = {
         id: "test-project",
