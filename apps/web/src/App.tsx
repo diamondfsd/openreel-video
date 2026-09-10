@@ -12,6 +12,7 @@ import { useProjectStore } from "./stores/project-store";
 import { useRouter } from "./hooks/use-router";
 import { useProjectRecovery } from "./hooks/useProjectRecovery";
 import { projectManager } from "./services/project-manager";
+import { installMcpListener } from "./services/agent/mcp-listener";
 import { SOCIAL_MEDIA_PRESETS, type SocialMediaCategory } from "@openreel/core";
 import { ToolcraftText as Text } from "@openreel/ui";
 
@@ -75,6 +76,8 @@ function App() {
     window.location.hostname.startsWith("motion.");
   const isMotionSurface = isMotionHost || route === "motion";
   const isLunaEditor = route === "luna-editor";
+
+  useEffect(() => installMcpListener(), []);
 
   useEffect(() => {
     if (!isLunaEditor) {
