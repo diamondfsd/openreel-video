@@ -243,7 +243,11 @@ export const Toolbar: React.FC = () => {
           };
 
           const preset = presets[type] ?? presets.mp4;
-          const writable = await showSavePicker(exportFilename(project.name, preset.ext), preset.ext);
+          const writable = await showSavePicker(
+            exportFilename(project.name, preset.ext),
+            preset.ext,
+            { streamToFile: true },
+          );
 
           beginExport();
 
@@ -264,7 +268,11 @@ export const Toolbar: React.FC = () => {
 
       try {
         const ext = extForFormat(settings.format);
-        const writable = await showSavePicker(exportFilename(project.name, ext), ext);
+        const writable = await showSavePicker(
+          exportFilename(project.name, ext),
+          ext,
+          { streamToFile: true },
+        );
 
         beginExport();
 

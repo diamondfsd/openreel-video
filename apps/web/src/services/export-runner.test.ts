@@ -465,6 +465,29 @@ describe("useExportRunner showSavePicker fallback", () => {
     expect(writeChunk).toHaveBeenCalledWith("handle-1", chunk, 0);
   });
 
+  it("streams embedded video exports to the selected native path by default", async () => {
+    const writeChunk = vi.fn().mockResolvedValue(undefined);
+    const openWrite = vi.fn().mockResolvedValue("handle-1");
+    win.openreel = {
+      fs: {
+        showSaveDialog: vi.fn().mockResolvedValue("/Users/me/Movies/Rubik.mp4"),
+        openWrite,
+        writeChunk,
+        closeWrite: vi.fn().mockResolvedValue(undefined),
+        abortWrite: vi.fn().mockResolvedValue(undefined),
+      },
+    };
+
+    const { result } = renderHook(() => useExportRunner({ project: fakeProject() }));
+    const writable = await result.current.showSavePicker("Rubik.mp4", "mp4");
+    const chunk = new Uint8Array([1, 2, 3]);
+
+    await writable.write(chunk);
+
+    expect(openWrite).toHaveBeenCalledWith("/Users/me/Movies/Rubik.mp4");
+    expect(writeChunk).toHaveBeenCalledWith("handle-1", chunk, 0);
+  });
+
   it("createDownloadWritable rethrows AbortError when the native save dialog is cancelled", async () => {
     win.openreel = {
       platform: "desktop",

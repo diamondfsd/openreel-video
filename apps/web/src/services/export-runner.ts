@@ -459,10 +459,10 @@ export function useExportRunner(options: ExportRunnerOptions): UseExportRunner {
         }
         (window as { __openreelExportPath?: string }).__openreelExportPath = chosen;
 
-        // The WAV path and any WebCodecs export (streamToFile) mux directly to
-        // disk through the fs bridge. The native ffmpeg video path writes the
-        // file itself via __openreelExportPath, so it gets the no-op stub below.
-        if (ext === "wav" || opts?.streamToFile === true) {
+        // WAV and WebCodecs exports mux directly to disk through the fs bridge.
+        // Native ffmpeg explicitly passes streamToFile=false because it writes
+        // the selected path itself.
+        if (ext === "wav" || opts?.streamToFile !== false) {
           const handleId = await window.openreel.fs.openWrite(chosen);
           let cursor = 0;
           return {
