@@ -16,11 +16,14 @@ export function useLunaProjectPersistence(): void {
 
   queueSaveRef.current = (snapshot: Project) => {
     const projectId = projectManager.getCurrentLunaProjectId();
-    if (!projectId) return Promise.resolve();
+    if (!projectId || projectId !== snapshot.id) return Promise.resolve();
 
     const queuedSave = saveQueueRef.current
       .catch(() => undefined)
-      .then(() => projectManager.saveLunaProject(projectId, snapshot));
+      .then(() => {
+        if (projectManager.getCurrentLunaProjectId() !== snapshot.id) return;
+        return projectManager.saveLunaProject(snapshot.id, snapshot);
+      });
     const settledSave = queuedSave.catch((error) => {
       console.error("[LunaProjectPersistence] Save failed:", error);
     });

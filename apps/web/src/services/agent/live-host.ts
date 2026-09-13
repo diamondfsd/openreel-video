@@ -41,6 +41,7 @@ import type { CapabilityManifest } from "@openreel/core/capabilities/manifest";
 import { useProjectStore } from "../../stores/project-store";
 import { insertTimelineOverlay } from "../../stores/project/insert-timeline-overlay";
 import { checkForRecovery } from "../auto-save";
+import { projectManager } from "../project-manager";
 import { inspectGltfModel } from "../../motion/model-inspection";
 import {
   exportMotionCompositionScene,
@@ -216,6 +217,16 @@ export class LiveEditorHost implements EditingHost {
       ...(options.height !== undefined ? { height: options.height } : {}),
       ...(options.frameRate !== undefined ? { frameRate: options.frameRate } : {}),
     };
+
+    if (typeof window !== "undefined" && window.openreel?.lunaProject) {
+      const project = await projectManager.createLunaProject(
+        options.name ?? "Untitled Project",
+        settings,
+      );
+      useProjectStore.getState().loadProject(project);
+      return projectRef(project);
+    }
+
     useProjectStore.getState().createNewProject(options.name, settings);
     return projectRef(useProjectStore.getState().project);
   }

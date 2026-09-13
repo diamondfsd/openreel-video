@@ -5,6 +5,7 @@ import {
   Settings,
   MoreHorizontal,
   Video,
+  Copy,
 } from "@/icons/lucide-compat";
 import { useProjectStore } from "../../stores/project-store";
 import { useUIStore } from "../../stores/ui-store";
@@ -35,12 +36,21 @@ import { Icon } from "@/icons/Icon";
 import { toast } from "../../stores/notification-store";
 import { useAnalytics, AnalyticsEvents } from "../../hooks/useAnalytics";
 import {
+  ToolcraftButton as Button,
   ToolcraftDropdownMenu as DropdownMenu,
   ToolcraftDropdownMenuItem as DropdownMenuItem,
   ToolcraftIconButton,
   ToolcraftText as Text,
   ToolcraftTextInputControl,
 } from "@openreel/ui";
+
+function requestAgentPromptCopy(): void {
+  if (window.parent === window) return;
+  window.parent.postMessage(
+    { source: "luna-openreel", type: "copy-agent-prompt" },
+    "*",
+  );
+}
 
 type ExportType =
   | "mp4"
@@ -438,6 +448,14 @@ export const Toolbar: React.FC = () => {
           activeMode="video"
           onSelectMode={handleWorkspaceModeSelect}
           className="shrink-0"
+        />
+        <Button
+          label="复制 Agent 提示词"
+          icon={<Copy size={14} aria-hidden />}
+          size="md"
+          variant="secondary"
+          className="shrink-0"
+          onClick={requestAgentPromptCopy}
         />
       </div>
 

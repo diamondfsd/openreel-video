@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import type { Action } from "@openreel/core";
 import { executeTool } from "@openreel/agent";
 import type { EditorStateView } from "@openreel/agent";
 import { useProjectStore } from "../../stores/project-store";
+import { projectManager } from "../project-manager";
 import { LiveEditorHost } from "./live-host";
 
 const act = (type: string, params: Record<string, unknown>): Action => ({
@@ -14,6 +15,7 @@ const act = (type: string, params: Record<string, unknown>): Action => ({
 
 describe("LiveEditorHost", () => {
   beforeEach(() => {
+    void projectManager.createProject();
     useProjectStore.getState().createNewProject();
   });
 
@@ -33,6 +35,43 @@ describe("LiveEditorHost", () => {
     useProjectStore.setState({ hasOpenProject: false });
     const host = new LiveEditorHost();
     expect(() => host.getProject()).toThrow(/No project is open/);
+  });
+
+  it("creates and activates a persisted Luna project", async () => {
+    const create = vi.fn(async () => ({
+      projectId: "luna-project-from-agent",
+      projectName: "Agent Cut",
+      createdAt: "2026-09-13T08:00:00.000Z",
+      updatedAt: "2026-09-13T08:00:00.000Z",
+    }));
+    const save = vi.fn(
+      async (_projectId: string, _editorDocument: string) => undefined,
+    );
+    Reflect.set(window, "openreel", {
+      lunaProject: { create, save },
+    });
+
+    const host = new LiveEditorHost();
+    const ref = await host.createProject({
+      name: "Agent Cut",
+      width: 1080,
+      height: 1920,
+      frameRate: 30,
+    });
+
+    expect(create).toHaveBeenCalledWith("Agent Cut");
+    expect(save).toHaveBeenCalledTimes(1);
+    expect(save).toHaveBeenCalledWith(
+      "luna-project-from-agent",
+      expect.any(String),
+    );
+    expect(JSON.parse(save.mock.calls[0][1])).toMatchObject({
+      id: "luna-project-from-agent",
+      name: "Agent Cut",
+    });
+    expect(ref.id).toBe("luna-project-from-agent");
+    expect(useProjectStore.getState().project.id).toBe(ref.id);
+    expect(projectManager.getCurrentLunaProjectId()).toBe(ref.id);
   });
 
   it("rolls a transaction back as one unit", async () => {
