@@ -26,6 +26,110 @@ export interface McpBridgeResponse {
   readonly error?: string;
 }
 
+const LOCAL_MEDIA_TOOLS = [
+  {
+    name: "list_local_media",
+    description:
+      "List image and video files in Luna AI Cut's local media library, sorted by capture time (newest first). Use this to find the user's recent outing before editing.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        limit: { type: "integer", minimum: 1, maximum: 500, description: "Maximum number of files to return. Defaults to 100." },
+        from: { type: "string", description: "Optional ISO date/time lower bound for capture time." },
+        to: { type: "string", description: "Optional ISO date/time upper bound for capture time." },
+        kind: { type: "string", enum: ["image", "video"] },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "import_local_media",
+    description:
+      "Import selected files from Luna AI Cut's local media library into the currently open project. Pass mediaIds returned by list_local_media.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        mediaIds: {
+          type: "array",
+          items: { type: "string" },
+          minItems: 1,
+          maxItems: 50,
+          description: "One or more mediaIds returned by list_local_media.",
+        },
+      },
+      required: ["mediaIds"],
+      additionalProperties: false,
+    },
+  },
+] as const;
+
+function localMediaToolResult(
+  ok: boolean,
+  summary: string,
+  data?: unknown,
+  error?: { code: string; message: string },
+): { ok: boolean; summary: string; data?: unknown; error?: { code: string; message: string } } {
+  return { ok, summary, ...(data === undefined ? {} : { data }), ...(error ? { error } : {}) };
+}
+
+async function handleLocalMediaTool(
+  name: string,
+  args: Record<string, unknown>,
+): Promise<McpBridgeResponse | null> {
+  if (name === "list_local_media") {
+    const bridge = window.openreel?.lunaMedia;
+    if (typeof bridge?.listLocalMedia !== "function") {
+      return { ok: true, result: localMediaToolResult(false, "Local media listing is unavailable", undefined, { code: "UNSUPPORTED", message: "本地素材查询不可用" }) };
+    }
+    const query: {
+      limit?: number;
+      from?: string;
+      to?: string;
+      kind?: "image" | "video";
+    } = {
+      ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
+      ...(typeof args.from === "string" ? { from: args.from } : {}),
+      ...(typeof args.to === "string" ? { to: args.to } : {}),
+      ...(args.kind === "image" || args.kind === "video" ? { kind: args.kind } : {}),
+    };
+    try {
+      const media = await bridge.listLocalMedia(query);
+      return { ok: true, result: localMediaToolResult(true, `Found ${media.length} local media file${media.length === 1 ? "" : "s"}`, media) };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { ok: true, result: localMediaToolResult(false, message, undefined, { code: "LOCAL_MEDIA_ERROR", message }) };
+    }
+  }
+
+  if (name !== "import_local_media") return null;
+  const mediaIds = Array.isArray(args.mediaIds)
+    ? args.mediaIds.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+    : [];
+  if (mediaIds.length === 0) {
+    return { ok: true, result: localMediaToolResult(false, "mediaIds is required", undefined, { code: "INVALID_PARAMS", message: "请传入 list_local_media 返回的 mediaIds" }) };
+  }
+  if (mediaIds.length > 50) {
+    return { ok: true, result: localMediaToolResult(false, "Too many mediaIds", undefined, { code: "INVALID_PARAMS", message: "一次最多导入 50 个素材" }) };
+  }
+  const host = getLiveEditorHost();
+  if (typeof host.importMediaFromLocalMedia !== "function") {
+    return { ok: true, result: localMediaToolResult(false, "Local media import is unavailable", undefined, { code: "UNSUPPORTED", message: "本地素材导入不可用" }) };
+  }
+  try {
+    const imported = await runExclusive(async () => {
+      const results = [];
+      for (const mediaId of mediaIds) {
+        results.push(await host.importMediaFromLocalMedia!(mediaId));
+      }
+      return results;
+    });
+    return { ok: true, result: localMediaToolResult(true, `Imported ${imported.length} local media file${imported.length === 1 ? "" : "s"}`, imported) };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return { ok: true, result: localMediaToolResult(false, message, undefined, { code: "LOCAL_MEDIA_ERROR", message }) };
+  }
+}
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -176,11 +280,14 @@ export async function handleMcpBridgeRequest(
 ): Promise<McpBridgeResponse> {
   try {
     if (req.kind === "listTools") {
-      return { ok: true, result: toMcpTools() };
+      return { ok: true, result: [...toMcpTools(), ...LOCAL_MEDIA_TOOLS] };
     }
     if (req.kind === "callTool") {
       const name = req.name;
       if (!name) return { ok: false, error: "Missing tool name" };
+
+      const localMediaResult = await handleLocalMediaTool(name, req.args ?? {});
+      if (localMediaResult) return localMediaResult;
 
       const autoAllow = useSettingsStore.getState().mcpAutoAllowTrustedLocal;
       if (!autoAllow && (isDestructive(name) || isExpensive(name))) {

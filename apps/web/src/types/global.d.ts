@@ -301,6 +301,36 @@ declare global {
       };
       lunaMedia?: {
         readFileBytes(sourcePath: string): Promise<ArrayBuffer>;
+        listLocalMedia(query?: {
+          limit?: number;
+          from?: string;
+          to?: string;
+          kind?: "image" | "video";
+        }): Promise<Array<{
+          mediaId: string;
+          name: string;
+          kind: "image" | "video";
+          bytes: number;
+          capturedAt: string | null;
+          modifiedAt: string;
+          groupDay: string;
+          sourceDeviceName?: string;
+          sourceDeviceId?: string;
+          duration?: number;
+        }>>;
+        getLocalMedia(mediaId: string): Promise<{
+          mediaId: string;
+          name: string;
+          kind: "image" | "video";
+          bytes: number;
+          capturedAt: string | null;
+          modifiedAt: string;
+          groupDay: string;
+          sourceDeviceName?: string;
+          sourceDeviceId?: string;
+          duration?: number;
+        }>;
+        readLocalMediaBytes(mediaId: string): Promise<ArrayBuffer>;
         resolveThumbnail(sourcePath: string, kind?: "image" | "video"): Promise<string | null>;
         matchImportAsset?(name: string, size: number): (OpenReelLunaAsset & { size?: number }) | null;
       };

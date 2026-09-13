@@ -279,6 +279,38 @@ export class LiveEditorHost implements EditingHost {
     };
   }
 
+  async importMediaFromLocalMedia(mediaId: string): Promise<ImportedMediaRef> {
+    this.requireOpenProject();
+    const bridge = window.openreel?.lunaMedia;
+    if (
+      typeof bridge?.getLocalMedia !== "function" ||
+      typeof bridge.readLocalMediaBytes !== "function"
+    ) {
+      throw new Error("Local media import is only available in Luna AI Cut");
+    }
+    const media = await bridge.getLocalMedia(mediaId);
+    const bytes = await bridge.readLocalMediaBytes(mediaId);
+    const mime = MIME_BY_EXT[media.name.split(".").pop()?.toLowerCase() ?? ""]
+      ?? (media.kind === "image" ? "image/jpeg" : "video/mp4");
+    const file = new File([bytes], media.name, { type: mime });
+    const result = await useProjectStore.getState().importMedia(file);
+    if (!result.success || !result.actionId) {
+      throw new Error(result.error?.message ?? "Media import failed");
+    }
+    const importedMediaId = result.actionId;
+    const item = useProjectStore
+      .getState()
+      .project.mediaLibrary.items.find((candidate) => candidate.id === importedMediaId);
+    return {
+      mediaId: importedMediaId,
+      name: media.name,
+      type: item?.type ?? media.kind,
+      durationSec: item?.metadata?.duration ?? media.duration ?? 0,
+      width: item?.metadata?.width,
+      height: item?.metadata?.height,
+    };
+  }
+
   async exportMotionScene(
     options: ExportMotionSceneOptions,
   ): Promise<ExportMotionSceneResult> {

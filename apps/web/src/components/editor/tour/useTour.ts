@@ -42,6 +42,8 @@ export function stopTour() {
 export function useTour() {
   const state = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null);
+  const isLunaEmbedded =
+    typeof window !== "undefined" && Boolean(window.openreel?.lunaProject);
 
   const step = TOUR_STEPS[state.currentStep];
   const isFirstStep = state.currentStep === 0;
@@ -108,6 +110,8 @@ export function useTour() {
   }, []);
 
   useEffect(() => {
+    if (isLunaEmbedded) return;
+
     const completed = localStorage.getItem(ONBOARDING_KEY);
     if (!completed) {
       const timer = setTimeout(() => {
@@ -115,7 +119,7 @@ export function useTour() {
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [start]);
+  }, [isLunaEmbedded, start]);
 
   useEffect(() => {
     if (!state.isActive) return;

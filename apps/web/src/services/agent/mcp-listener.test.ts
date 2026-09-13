@@ -71,7 +71,12 @@ describe("handleMcpBridgeRequest", () => {
   it("returns the registry for listTools", async () => {
     const res = await handleMcpBridgeRequest({ callId: "c1", kind: "listTools" });
     expect(res.ok).toBe(true);
-    expect(res.result).toHaveLength(1);
+    expect(res.result).toHaveLength(3);
+    expect((res.result as Array<{ name: string }>).map((tool) => tool.name)).toEqual([
+      "list_clips",
+      "list_local_media",
+      "import_local_media",
+    ]);
     expect(h.executeTool).not.toHaveBeenCalled();
   });
 

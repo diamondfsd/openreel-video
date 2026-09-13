@@ -254,6 +254,7 @@ export interface EditingHost {
   listProjects?(): Promise<readonly ProjectRef[]>;
   saveProject?(): Promise<ProjectRef>;
   importMediaFromUrl?(url: string, options?: { name?: string }): Promise<ImportedMediaRef>;
+  importMediaFromLocalMedia?(mediaId: string): Promise<ImportedMediaRef>;
   /**
    * Render a motion composition to a finished video file (mp4 / transparent
    * WebM / ProRes 4444 MOV). Optional because it needs the renderer-side motion
