@@ -72,6 +72,7 @@ describe("LiveEditorHost", () => {
     expect(ref.id).toBe("luna-project-from-agent");
     expect(useProjectStore.getState().project.id).toBe(ref.id);
     expect(projectManager.getCurrentLunaProjectId()).toBe(ref.id);
+    expect(window.location.hash).toBe("#/editor");
   });
 
   it("rolls a transaction back as one unit", async () => {

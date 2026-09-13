@@ -1,8 +1,9 @@
 import { useCallback, useState } from "react";
-import { Plus } from "@/icons/lucide-compat";
+import { Copy, Plus } from "@/icons/lucide-compat";
 import { ToolcraftButton as Button } from "@openreel/ui";
 import { ToolcraftText as Text } from "@openreel/ui";
 import { useRouter } from "../../hooks/use-router";
+import { requestAgentPromptCopy } from "../../utils/luna-bridge";
 import { RecentProjects } from "../welcome/RecentProjects";
 import { StartFromScratch } from "../welcome/StartFromScratch";
 
@@ -48,13 +49,22 @@ export const ProjectListScreen: React.FC = () => {
                     选择一个项目继续编辑
                   </Text>
                 </div>
-                <Button
-                  label="新建项目"
-                  variant="secondary"
-                  size="sm"
-                  icon={<Plus size={16} aria-hidden />}
-                  onClick={() => setShowCreateForm(true)}
-                />
+                <div className="flex items-center gap-2">
+                  <Button
+                    label="复制提示词"
+                    variant="secondary"
+                    size="sm"
+                    icon={<Copy size={16} aria-hidden />}
+                    onClick={requestAgentPromptCopy}
+                  />
+                  <Button
+                    label="新建项目"
+                    variant="secondary"
+                    size="sm"
+                    icon={<Plus size={16} aria-hidden />}
+                    onClick={() => setShowCreateForm(true)}
+                  />
+                </div>
               </div>
               <RecentProjects onProjectSelected={handleProjectSelected} />
             </section>

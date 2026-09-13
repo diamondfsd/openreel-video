@@ -35,6 +35,7 @@ import {
 import { Icon } from "@/icons/Icon";
 import { toast } from "../../stores/notification-store";
 import { useAnalytics, AnalyticsEvents } from "../../hooks/useAnalytics";
+import { requestAgentPromptCopy } from "../../utils/luna-bridge";
 import {
   ToolcraftButton as Button,
   ToolcraftDropdownMenu as DropdownMenu,
@@ -43,14 +44,6 @@ import {
   ToolcraftText as Text,
   ToolcraftTextInputControl,
 } from "@openreel/ui";
-
-function requestAgentPromptCopy(): void {
-  if (window.parent === window) return;
-  window.parent.postMessage(
-    { source: "luna-openreel", type: "copy-agent-prompt" },
-    "*",
-  );
-}
 
 type ExportType =
   | "mp4"

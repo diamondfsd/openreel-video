@@ -106,6 +106,12 @@ function projectRef(project: Project): ProjectRef {
   };
 }
 
+function navigateToEditor(): void {
+  if (typeof window !== "undefined") {
+    window.location.hash = "#/editor";
+  }
+}
+
 export interface LiveEditorHostOptions {
   readonly jobRunner?: JobRunner;
 }
@@ -224,14 +230,28 @@ export class LiveEditorHost implements EditingHost {
         settings,
       );
       useProjectStore.getState().loadProject(project);
+      navigateToEditor();
       return projectRef(project);
     }
 
     useProjectStore.getState().createNewProject(options.name, settings);
+    navigateToEditor();
     return projectRef(useProjectStore.getState().project);
   }
 
   async listProjects(): Promise<readonly ProjectRef[]> {
+    const lunaBridge = typeof window !== "undefined" ? window.openreel?.lunaProject : undefined;
+    if (lunaBridge) {
+      const projects = await lunaBridge.list();
+      return projects
+        .map((project) => ({
+          id: project.projectId,
+          name: project.projectName,
+          modifiedAt: Date.parse(project.updatedAt) || Date.parse(project.createdAt) || 0,
+        }))
+        .sort((a, b) => (b.modifiedAt ?? 0) - (a.modifiedAt ?? 0));
+    }
+
     const saves = await checkForRecovery();
     const latest = new Map<string, ProjectRef>();
     for (const s of saves) {
@@ -244,8 +264,16 @@ export class LiveEditorHost implements EditingHost {
   }
 
   async openProject(id: string): Promise<ProjectRef> {
+    if (typeof window !== "undefined" && window.openreel?.lunaProject) {
+      const project = await projectManager.loadLunaProject(id);
+      useProjectStore.getState().loadProject(project);
+      navigateToEditor();
+      return projectRef(project);
+    }
+
     const ok = await useProjectStore.getState().recoverFromAutoSave(id);
     if (!ok) throw new Error(`Could not open project (save id "${id}")`);
+    navigateToEditor();
     return projectRef(useProjectStore.getState().project);
   }
 
