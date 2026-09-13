@@ -48,4 +48,15 @@ export const LUNA_EDITING_SKILL = `# Luna AI Cut 剪辑 Skill
 - 工具返回的图片按素材名称、mediaId 和时间对应；先确认对应关系，再调用剪辑工具。
 - 编辑工具返回错误时停止后续修改，先读取当前状态并修正参数，不重复盲目调用。
 - 除删除素材外，其他项目编辑直接执行并依靠自动保存。
+
+## 外部 Agent 任务协作
+
+- 通过 Luna AI Cut 聊天页提交的任务，先调用 wait_for_edit_request 领取；返回的 sessionId 和 revision 是本次任务的唯一标识。
+- 领取任务后先调用 get_editing_skill（如果尚未调用），然后调用 report_edit_progress 上报开始阶段，再执行素材分析和编辑。
+- 在分析素材、创建项目、导入素材、剪辑、字幕、保存和导出等主要阶段开始或结束时调用 report_edit_progress；不要用普通文字回复代替进度工具。
+- 每次工具结果中的 lunaAgent.requestRevision 和 requestChanged 都要检查。requestChanged 为 true，或修改工具返回 REQUEST_UPDATED 时，先调用 get_edit_request，再按最新要求继续；不需要用户二次确认。
+- 用户可以在 Luna 聊天页直接修改正在执行的要求。不要继续执行已经过时的计划，也不要要求用户重新复制提示词。
+- 任务结束时必须调用 report_edit_result，传入 completed、failed 或 cancelled，以及项目和导出结果；普通自然语言不是任务完成凭据。
+- 任务开始或需要用户查看结果时调用 activate_luna_window，把 Luna 显示到前台并打开外部 Agent 进度面板。
+- 除删除素材外，所有项目操作自动执行；删除素材仍遵守现有确认令牌规则。
 `

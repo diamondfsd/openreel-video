@@ -202,6 +202,69 @@ export interface OpenReelLunaAsset {
   fileSize?: number;
 }
 
+export type OpenReelAgentSessionStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
+export type OpenReelAgentPhase =
+  | "waiting"
+  | "analyzing_media"
+  | "creating_project"
+  | "importing_media"
+  | "editing"
+  | "captioning"
+  | "saving"
+  | "exporting"
+  | "completed"
+  | "failed"
+  | "cancelled";
+
+export interface OpenReelAgentSession {
+  sessionId: string;
+  request: string;
+  revision: number;
+  projectId: string | null;
+  status: OpenReelAgentSessionStatus;
+  phase: OpenReelAgentPhase;
+  progress: number;
+  message: string;
+  createdAt: string;
+  updatedAt: string;
+  cancelRequested: boolean;
+  agentId: string | null;
+  result?: {
+    projectId?: string;
+    projectName?: string;
+    exportPath?: string;
+    summary?: string;
+  };
+}
+
+export interface OpenReelAgentEvent {
+  type: "session-created" | "session-claimed" | "request-updated" | "progress" | "result" | "error" | "cancel-requested" | "cancelled" | "tool-start" | "tool-finished";
+  sequence: number;
+  timestamp: string;
+  session: OpenReelAgentSession;
+  message?: string;
+  callId?: string;
+  toolName?: string;
+  args?: Record<string, unknown>;
+  ok?: boolean;
+  summary?: string;
+  durationMs?: number;
+}
+
+export interface OpenReelAgentSnapshot {
+  session: OpenReelAgentSession | null;
+  events: OpenReelAgentEvent[];
+}
+
+export interface OpenReelAgentApi {
+  createRequest(request: string, projectId?: string | null): Promise<OpenReelAgentSession>;
+  updateRequest(sessionId: string, request: string): Promise<OpenReelAgentSession>;
+  cancelRequest(sessionId: string): Promise<OpenReelAgentSession>;
+  getSnapshot(): Promise<OpenReelAgentSnapshot>;
+  onEvent(handler: (event: OpenReelAgentEvent) => void): () => void;
+  onActivate(handler: () => void): () => void;
+}
+
 declare global {
   interface Window {
     openreel?: {
@@ -408,6 +471,7 @@ declare global {
         rotateToken(): Promise<OpenReelMcpStatus>;
         testConnection(): Promise<{ ok: boolean; message?: string; toolCount?: number }>;
       };
+      lunaAgent?: OpenReelAgentApi;
       media: {
         generateProxy(args: { srcPath: string; preset: "low" | "medium" | "high" }): Promise<{ outPath: string }>;
         transcode(args: {

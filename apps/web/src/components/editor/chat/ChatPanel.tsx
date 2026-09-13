@@ -5,6 +5,7 @@ import { ToolcraftIconButton as IconButton } from "@openreel/ui";
 import { ToolcraftText as Text } from "@openreel/ui";
 import { Bot, X, Undo2, Plus, History, Sparkles, FlaskConical } from "@/icons/lucide-compat";
 import { useChatStore } from "../../../stores/chat-store";
+import { useExternalAgentStore } from "../../../stores/external-agent-store";
 import { useProjectStore } from "../../../stores/project-store";
 import { useSettingsStore } from "../../../stores/settings-store";
 import { ProviderModelPicker } from "./ProviderModelPicker";
@@ -13,6 +14,7 @@ import { ChatComposer } from "./ChatComposer";
 import { InlineConfirmCard } from "./InlineConfirmCard";
 import { ChatErrorCard } from "./ChatErrorCard";
 import { ChatHistoryPanel } from "./ChatHistoryPanel";
+import { ExternalAgentActivity } from "./ExternalAgentActivity";
 import {
   hasSecret,
   isMasterPasswordSet,
@@ -32,6 +34,9 @@ function EmptyState({
   hasOpenProject: boolean;
 }): JSX.Element {
   const send = useChatStore((s) => s.send);
+  const submitExternalRequest = useExternalAgentStore((s) => s.submit);
+  const projectId = useProjectStore((s) => (s.hasOpenProject ? s.project.id : null));
+  const externalAvailable = typeof window !== "undefined" && Boolean(window.openreel?.lunaAgent);
   const provider = useSettingsStore((s) => s.defaultLlmProvider);
   const openSettings = useSettingsStore((s) => s.openSettings);
   const settingsOpen = useSettingsStore((s) => s.settingsOpen);
@@ -71,6 +76,32 @@ function EmptyState({
       active = false;
     };
   }, [baseUrl, configuredServices, model, provider, settingsOpen]);
+
+  if (externalAvailable) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center px-2 text-center">
+        <div className="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-accent-soft text-accent">
+          <Sparkles size={18} />
+        </div>
+        <div className="text-[13px] font-medium text-fg">外部 Agent</div>
+        <Text type="supporting" color="secondary" className="mt-1 max-w-[14rem] text-[11px] leading-relaxed text-fg-muted">
+          输入剪辑要求，外部 Agent 会直接在项目中执行。
+        </Text>
+        <div className="mt-4 w-full space-y-1.5">
+          {SUGGESTIONS.map((suggestion) => (
+            <Button
+              key={suggestion}
+              label={suggestion}
+              variant="ghost"
+              size="sm"
+              onClick={() => void submitExternalRequest(suggestion, projectId)}
+              className="w-full rounded-md border border-border bg-bg-1/60 px-2.5 py-1.5 text-left text-[11px] text-fg-2 transition-colors hover:border-accent/50 hover:bg-hover hover:text-fg"
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   const setupMessage =
     setup === "endpoint"
@@ -151,6 +182,8 @@ export function ChatPanel({
   const dryRun = useSettingsStore((s) => s.agentDryRun);
   const setDryRun = useSettingsStore((s) => s.setAgentDryRun);
   const openSettings = useSettingsStore((s) => s.openSettings);
+  const externalAvailable = typeof window !== "undefined" && Boolean(window.openreel?.lunaAgent);
+  const externalSession = useExternalAgentStore((s) => s.session);
 
   const totalTokens = usage.inputTokens + usage.outputTokens;
   const tokenLabel =
@@ -158,7 +191,10 @@ export function ChatPanel({
       ? `${(totalTokens / 1000).toFixed(1)}k`
       : `${totalTokens}`;
 
-  const busy = status === "running" || status === "awaiting_confirm";
+  const externalBusy = externalSession?.status === "queued" || externalSession?.status === "running";
+  const busy = externalAvailable
+    ? externalBusy
+    : status === "running" || status === "awaiting_confirm";
   const scrollRef = useRef<HTMLDivElement>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
 
@@ -198,7 +234,7 @@ export function ChatPanel({
               dryRun ? "bg-accent-soft text-accent" : "text-fg-2 hover:bg-hover hover:text-fg"
             }`}
           />
-          <ProviderModelPicker disabled={busy} />
+          {!externalAvailable && <ProviderModelPicker disabled={busy} />}
           {lastTurnCommitted && (
             <IconButton
               label="撤销上一次 AI 操作"
@@ -256,6 +292,7 @@ export function ChatPanel({
         ref={scrollRef}
         className="min-h-0 flex-1 space-y-4 overflow-y-auto p-3"
       >
+        {externalAvailable && <ExternalAgentActivity />}
         {messages.length === 0 ? (
           <EmptyState hasOpenProject={hasOpenProject} />
         ) : (

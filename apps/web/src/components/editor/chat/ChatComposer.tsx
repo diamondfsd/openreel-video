@@ -1,23 +1,40 @@
 import type { JSX } from "react";
-import { useState, useCallback, type KeyboardEvent } from "react";
+import { useState, useCallback, useEffect, type KeyboardEvent } from "react";
 import { ToolcraftIconButton as IconButton } from "@openreel/ui";
 import { ToolcraftTextAreaControl } from "@openreel/ui";
 import { Send, Square } from "@/icons/lucide-compat";
 import { useChatStore } from "../../../stores/chat-store";
+import { useProjectStore } from "../../../stores/project-store";
+import { useExternalAgentStore } from "../../../stores/external-agent-store";
 
 export function ChatComposer(): JSX.Element {
   const status = useChatStore((s) => s.status);
   const send = useChatStore((s) => s.send);
   const stop = useChatStore((s) => s.stop);
+  const initializeExternalAgent = useExternalAgentStore((s) => s.initialize);
+  const submitExternalRequest = useExternalAgentStore((s) => s.submit);
+  const cancelExternalRequest = useExternalAgentStore((s) => s.cancel);
+  const externalSession = useExternalAgentStore((s) => s.session);
+  const projectId = useProjectStore((s) => (s.hasOpenProject ? s.project.id : null));
   const [text, setText] = useState("");
-  const busy = status === "running" || status === "awaiting_confirm";
+  const externalAvailable = typeof window !== "undefined" && Boolean(window.openreel?.lunaAgent);
+  const externalBusy = externalSession?.status === "queued" || externalSession?.status === "running";
+  const busy = externalAvailable ? false : status === "running" || status === "awaiting_confirm";
+
+  useEffect(() => {
+    if (externalAvailable) void initializeExternalAgent();
+  }, [externalAvailable, initializeExternalAgent]);
 
   const submit = useCallback(() => {
     const value = text.trim();
     if (!value || busy) return;
     setText("");
-    void send(value);
-  }, [text, busy, send]);
+    if (externalAvailable) {
+      void submitExternalRequest(value, projectId);
+    } else {
+      void send(value);
+    }
+  }, [text, busy, externalAvailable, projectId, send, submitExternalRequest]);
 
   const onKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -43,7 +60,29 @@ export function ChatComposer(): JSX.Element {
           inputClassName="block w-full resize-none bg-transparent px-3 py-2 pr-11 text-[13px] text-fg outline-none placeholder:text-fg-muted"
         />
         <div className="absolute bottom-1.5 right-1.5">
-          {busy ? (
+          {externalAvailable ? (
+            <div className="flex items-center gap-1">
+              {externalBusy && (
+                <IconButton
+                  label="停止外部 Agent"
+                  icon={<Square size={12} className="fill-current" aria-hidden />}
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => void cancelExternalRequest()}
+                  className="grid h-7 w-7 place-items-center rounded-md bg-status-error/15 text-status-error transition-colors hover:bg-status-error/25"
+                />
+              )}
+              <IconButton
+                label={externalBusy ? "更新剪辑要求" : "发送给外部 Agent"}
+                icon={<Send size={12} aria-hidden />}
+                size="sm"
+                variant="primary"
+                onClick={submit}
+                isDisabled={!text.trim()}
+                className="grid h-7 w-7 place-items-center rounded-md bg-accent text-accent-fg transition-colors hover:bg-accent/90 disabled:opacity-40"
+              />
+            </div>
+          ) : busy ? (
             <IconButton
               label="停止"
               icon={<Square size={12} className="fill-current" aria-hidden />}

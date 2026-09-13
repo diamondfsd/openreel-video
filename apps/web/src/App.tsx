@@ -80,6 +80,14 @@ function App() {
   useEffect(() => installMcpListener(), []);
 
   useEffect(() => {
+    const agent = window.openreel?.lunaAgent;
+    if (!agent) return;
+    return agent.onActivate(() => {
+      useUIStore.getState().setPanelVisible("agentChat", true);
+    });
+  }, []);
+
+  useEffect(() => {
     if (!isLunaEditor) {
       setLunaProjectReady(false);
       setLunaProjectError(false);

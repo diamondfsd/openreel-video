@@ -6,6 +6,8 @@ import { useRouter } from "../../hooks/use-router";
 import { requestAgentPromptCopy } from "../../utils/luna-bridge";
 import { RecentProjects } from "../welcome/RecentProjects";
 import { StartFromScratch } from "../welcome/StartFromScratch";
+import { ChatComposer } from "../editor/chat/ChatComposer";
+import { ExternalAgentActivity } from "../editor/chat/ExternalAgentActivity";
 
 export const ProjectListScreen: React.FC = () => {
   const { navigate } = useRouter();
@@ -66,6 +68,17 @@ export const ProjectListScreen: React.FC = () => {
                   />
                 </div>
               </div>
+              {window.openreel?.lunaAgent && (
+                <section className="mb-6 rounded-xl border border-border bg-background-secondary p-4">
+                  <Text type="body" color="primary" weight="semibold" className="text-sm text-text-primary">
+                    AI 剪辑
+                  </Text>
+                  <div className="mt-3 space-y-3">
+                    <ExternalAgentActivity />
+                    <ChatComposer />
+                  </div>
+                </section>
+              )}
               <RecentProjects onProjectSelected={handleProjectSelected} />
             </section>
           )}
