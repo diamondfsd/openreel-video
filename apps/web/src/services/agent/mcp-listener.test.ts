@@ -60,14 +60,129 @@ describe("handleMcpBridgeRequest", () => {
   it("returns the registry for listTools", async () => {
     const res = await handleMcpBridgeRequest({ callId: "c1", kind: "listTools" });
     expect(res.ok).toBe(true);
-    expect(res.result).toHaveLength(4);
+    expect(res.result).toHaveLength(7);
     expect((res.result as Array<{ name: string }>).map((tool) => tool.name)).toEqual([
+      "get_editing_skill",
       "list_clips",
       "confirm_media_deletion",
       "list_local_media",
       "import_local_media",
+      "inspect_local_media",
+      "transcribe_local_media",
     ]);
     expect(h.executeTool).not.toHaveBeenCalled();
+  });
+
+  it("returns the built-in editing skill", async () => {
+    const res = await handleMcpBridgeRequest({
+      callId: "skill",
+      kind: "callTool",
+      name: "get_editing_skill",
+      args: {},
+    });
+    expect(res.ok).toBe(true);
+    expect((res.result as { data?: { skill?: string } }).data?.skill).toContain(
+      "没有画面证据时禁止盲剪",
+    );
+  });
+
+  it("returns image content for local media inspection", async () => {
+    const inspectLocalMedia = vi.fn(async () => ({
+      mode: "overview" as const,
+      maxWidth: 480,
+      items: [{
+        mediaId: "local-media:test.jpg",
+        name: "test.jpg",
+        kind: "image" as const,
+        capturedAt: null,
+        frames: [{ timeSec: 0, mimeType: "image/jpeg" as const, base64: "dGVzdA==" }],
+      }],
+    }));
+    (window as unknown as { openreel?: unknown }).openreel = {
+      lunaMedia: { inspectLocalMedia },
+    };
+
+    const res = await handleMcpBridgeRequest({
+      callId: "inspect",
+      kind: "callTool",
+      name: "inspect_local_media",
+      args: { mediaIds: ["local-media:test.jpg"] },
+    });
+
+    expect(res.ok).toBe(true);
+    expect(inspectLocalMedia).toHaveBeenCalledWith(
+      ["local-media:test.jpg"],
+      { mode: "overview" },
+    );
+    expect(res.content).toEqual([
+      expect.objectContaining({ type: "text" }),
+      { type: "text", text: "素材 test.jpg (local-media:test.jpg)，时间 0s" },
+      { type: "image", data: "dGVzdA==", mimeType: "image/jpeg" },
+    ]);
+    delete (window as Window & { openreel?: unknown }).openreel;
+  });
+
+  it("passes time chunking options to local speech transcription", async () => {
+    const transcribeLocalMedia = vi.fn(async () => ({
+      mediaId: "local-media:talk.mp4",
+      name: "talk.mp4",
+      durationSec: 245,
+      requestId: "request-1",
+      language: "zh",
+      requestedRange: { startSec: 0, endSec: 245 },
+      chunkDurationSec: 90,
+      overlapSec: 2,
+      chunks: [{
+        index: 0,
+        startSec: 0,
+        endSec: 90,
+        recognitionStartSec: 0,
+        recognitionEndSec: 92,
+        cueCount: 1,
+      }],
+      cues: [{
+        id: "cue-1",
+        startMs: 1_000,
+        endMs: 2_000,
+        text: "测试",
+        source: "generated" as const,
+      }],
+      model: { id: "model", version: "1", sha256: "hash" },
+      sourceFingerprint: { size: 1, modifiedAtMs: 1 },
+      performance: { modelLoadMs: 1, inferenceMs: 2, audioMs: 3, totalMs: 4 },
+    }));
+    (window as unknown as { openreel?: unknown }).openreel = {
+      lunaMedia: { transcribeLocalMedia },
+    };
+
+    const res = await handleMcpBridgeRequest({
+      callId: "transcribe",
+      kind: "callTool",
+      name: "transcribe_local_media",
+      args: {
+        mediaId: "local-media:talk.mp4",
+        startSec: 3,
+        endSec: 240,
+        chunkDurationSec: 90,
+        overlapSec: 2,
+      },
+    });
+
+    expect(res.ok).toBe(true);
+    expect(transcribeLocalMedia).toHaveBeenCalledWith("local-media:talk.mp4", {
+      startSec: 3,
+      endSec: 240,
+      chunkDurationSec: 90,
+      overlapSec: 2,
+    });
+    expect((res.result as { data?: { cues?: Array<{ startSec: number }>; chunks?: unknown[] } }).data).toEqual(
+      expect.objectContaining({
+        cues: [expect.objectContaining({ startSec: 1, endSec: 2 })],
+        chunks: [expect.objectContaining({ recognitionEndSec: 92 })],
+        overlapSec: 2,
+      }),
+    );
+    delete (window as Window & { openreel?: unknown }).openreel;
   });
 
   it("executes a safe tool against the shared host", async () => {

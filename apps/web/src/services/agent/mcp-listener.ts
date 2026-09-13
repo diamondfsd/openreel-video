@@ -10,6 +10,7 @@ import { getLiveEditorHost, runExclusive } from "./host-singleton";
 import { useMotionStore } from "../../motion/stores/motion-store";
 import { useUIStore } from "../../stores/ui-store";
 import { resolveMotionCreatorPreviewTime } from "../../motion/composition-selection";
+import { LUNA_EDITING_SKILL } from "./luna-editing-skill";
 
 export interface McpBridgeRequest {
   readonly callId: string;
@@ -22,6 +23,14 @@ export interface McpBridgeResponse {
   readonly ok: boolean;
   readonly result?: unknown;
   readonly error?: string;
+  readonly content?: readonly McpBridgeContent[];
+}
+
+interface McpBridgeContent {
+  readonly type: "text" | "image";
+  readonly text?: string;
+  readonly data?: string;
+  readonly mimeType?: string;
 }
 
 interface PendingMediaDeletion {
@@ -32,6 +41,7 @@ interface PendingMediaDeletion {
 
 const MEDIA_DELETION_CONFIRMATION_TTL_MS = 5 * 60 * 1000;
 const pendingMediaDeletions = new Map<string, PendingMediaDeletion>();
+let editingSkillRead = false;
 
 const CONFIRM_MEDIA_DELETION_TOOL = {
   name: "confirm_media_deletion",
@@ -46,6 +56,17 @@ const CONFIRM_MEDIA_DELETION_TOOL = {
       },
     },
     required: ["confirmationToken"],
+    additionalProperties: false,
+  },
+} as const;
+
+const GET_EDITING_SKILL_TOOL = {
+  name: "get_editing_skill",
+  description:
+    "Read Luna AI Cut's built-in editing skill. Call this before selecting media or making any edit.",
+  inputSchema: {
+    type: "object",
+    properties: {},
     additionalProperties: false,
   },
 } as const;
@@ -85,6 +106,74 @@ const LOCAL_MEDIA_TOOLS = [
       additionalProperties: false,
     },
   },
+  {
+    name: "inspect_local_media",
+    description:
+      "Inspect local images and videos with built-in low-cost representative frames. Use overview first, then detail for selected videos. The result includes MCP image content; no external dependencies are required.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        mediaIds: {
+          type: "array",
+          items: { type: "string" },
+          minItems: 1,
+          maxItems: 50,
+          description: "Media IDs returned by list_local_media.",
+        },
+        mode: {
+          type: "string",
+          enum: ["overview", "detail"],
+          description: "Overview returns one representative frame; detail returns three video frames.",
+        },
+        maxWidth: {
+          type: "integer",
+          minimum: 160,
+          maximum: 800,
+          description: "Maximum preview width in pixels. Defaults to 480.",
+        },
+      },
+      required: ["mediaIds"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "transcribe_local_media",
+    description:
+      "Transcribe Chinese speech from a local video with Luna's built-in speech model and return timestamped cues. Long videos are automatically processed in time chunks with overlap context so the editor stays responsive. Use this first for talking-head, interview, narration, tutorial, and dialogue edits; no external dependencies are required.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        mediaId: {
+          type: "string",
+          description: "A video mediaId returned by list_local_media.",
+        },
+        startSec: {
+          type: "number",
+          minimum: 0,
+          description: "Optional start time in the original video's timeline. Defaults to 0.",
+        },
+        endSec: {
+          type: "number",
+          exclusiveMinimum: 0,
+          description: "Optional end time in the original video's timeline. Defaults to the video end.",
+        },
+        chunkDurationSec: {
+          type: "number",
+          minimum: 10,
+          maximum: 900,
+          description: "Logical recognition chunk length in seconds. Defaults to 120; use 60-120 for very long videos.",
+        },
+        overlapSec: {
+          type: "number",
+          minimum: 0,
+          maximum: 30,
+          description: "Extra recognition context before and after each chunk. Defaults to 1.5 seconds; do not cut this context twice.",
+        },
+      },
+      required: ["mediaId"],
+      additionalProperties: false,
+    },
+  },
 ] as const;
 
 function localMediaToolResult(
@@ -119,6 +208,106 @@ async function handleLocalMediaTool(
     try {
       const media = await bridge.listLocalMedia(query);
       return { ok: true, result: localMediaToolResult(true, `Found ${media.length} local media file${media.length === 1 ? "" : "s"}`, media) };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { ok: true, result: localMediaToolResult(false, message, undefined, { code: "LOCAL_MEDIA_ERROR", message }) };
+    }
+  }
+
+  if (name === "inspect_local_media") {
+    const bridge = window.openreel?.lunaMedia;
+    if (typeof bridge?.inspectLocalMedia !== "function") {
+      return { ok: true, result: localMediaToolResult(false, "Local media inspection is unavailable", undefined, { code: "UNSUPPORTED", message: "本地素材画面分析不可用" }) };
+    }
+    const mediaIds = Array.isArray(args.mediaIds)
+      ? args.mediaIds.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+      : [];
+    if (mediaIds.length === 0) {
+      return { ok: true, result: localMediaToolResult(false, "mediaIds is required", undefined, { code: "INVALID_PARAMS", message: "请传入 list_local_media 返回的 mediaIds" }) };
+    }
+    const mode = args.mode === "detail" ? "detail" : "overview";
+    const maxWidth = typeof args.maxWidth === "number" ? args.maxWidth : undefined;
+    try {
+      const inspection = await bridge.inspectLocalMedia(mediaIds, { mode, ...(maxWidth === undefined ? {} : { maxWidth }) });
+      const publicItems = inspection.items.map((item) => ({
+        mediaId: item.mediaId,
+        name: item.name,
+        kind: item.kind,
+        ...(item.duration === undefined ? {} : { duration: item.duration }),
+        capturedAt: item.capturedAt,
+        frames: item.frames.map((frame) => ({ timeSec: frame.timeSec })),
+        ...(item.error ? { error: item.error } : {}),
+      }));
+      const content: McpBridgeContent[] = [{
+        type: "text",
+        text: JSON.stringify({ mode: inspection.mode, maxWidth: inspection.maxWidth, items: publicItems }),
+      }];
+      for (const item of inspection.items) {
+        for (const frame of item.frames) {
+          content.push({
+            type: "text",
+            text: `素材 ${item.name} (${item.mediaId})，时间 ${frame.timeSec}s`,
+          });
+          content.push({ type: "image", data: frame.base64, mimeType: frame.mimeType });
+        }
+      }
+      return {
+        ok: true,
+        result: localMediaToolResult(true, `Inspected ${inspection.items.length} local media file${inspection.items.length === 1 ? "" : "s"}`, {
+          mode: inspection.mode,
+          maxWidth: inspection.maxWidth,
+          items: publicItems,
+        }),
+        content,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { ok: true, result: localMediaToolResult(false, message, undefined, { code: "LOCAL_MEDIA_ERROR", message }) };
+    }
+  }
+
+  if (name === "transcribe_local_media") {
+    const bridge = window.openreel?.lunaMedia;
+    if (typeof bridge?.transcribeLocalMedia !== "function") {
+      return { ok: true, result: localMediaToolResult(false, "Local speech transcription is unavailable", undefined, { code: "UNSUPPORTED", message: "本地语音识别不可用" }) };
+    }
+    const mediaId = typeof args.mediaId === "string" ? args.mediaId.trim() : "";
+    if (!mediaId) {
+      return { ok: true, result: localMediaToolResult(false, "mediaId is required", undefined, { code: "INVALID_PARAMS", message: "请传入 list_local_media 返回的视频 mediaId" }) };
+    }
+    const transcriptionOptions = {
+      ...(typeof args.startSec === "number" ? { startSec: args.startSec } : {}),
+      ...(typeof args.endSec === "number" ? { endSec: args.endSec } : {}),
+      ...(typeof args.chunkDurationSec === "number" ? { chunkDurationSec: args.chunkDurationSec } : {}),
+      ...(typeof args.overlapSec === "number" ? { overlapSec: args.overlapSec } : {}),
+    };
+    try {
+      const transcript = await bridge.transcribeLocalMedia(mediaId, transcriptionOptions);
+      const cues = transcript.cues.map((cue) => ({
+        id: cue.id,
+        startMs: cue.startMs,
+        endMs: cue.endMs,
+        startSec: Number((cue.startMs / 1_000).toFixed(3)),
+        endSec: Number((cue.endMs / 1_000).toFixed(3)),
+        text: cue.text,
+        source: cue.source,
+      }));
+      return {
+        ok: true,
+        result: localMediaToolResult(true, `Transcribed ${cues.length} speech cue${cues.length === 1 ? "" : "s"} in ${transcript.chunks.length} chunk${transcript.chunks.length === 1 ? "" : "s"}`, {
+          mediaId: transcript.mediaId,
+          name: transcript.name,
+          durationSec: transcript.durationSec,
+          requestedRange: transcript.requestedRange,
+          chunkDurationSec: transcript.chunkDurationSec,
+          overlapSec: transcript.overlapSec,
+          chunks: transcript.chunks,
+          language: transcript.language,
+          cues,
+          model: transcript.model,
+          sourceFingerprint: transcript.sourceFingerprint,
+        }),
+      };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       return { ok: true, result: localMediaToolResult(false, message, undefined, { code: "LOCAL_MEDIA_ERROR", message }) };
@@ -313,14 +502,44 @@ export async function handleMcpBridgeRequest(
 ): Promise<McpBridgeResponse> {
   try {
     if (req.kind === "listTools") {
+      editingSkillRead = false;
       return {
         ok: true,
-        result: [...toMcpTools(), CONFIRM_MEDIA_DELETION_TOOL, ...LOCAL_MEDIA_TOOLS],
+        result: [GET_EDITING_SKILL_TOOL, ...toMcpTools(), CONFIRM_MEDIA_DELETION_TOOL, ...LOCAL_MEDIA_TOOLS],
       };
     }
     if (req.kind === "callTool") {
       const name = req.name;
       if (!name) return { ok: false, error: "Missing tool name" };
+
+      if (name === "get_editing_skill") {
+        editingSkillRead = true;
+        return {
+          ok: true,
+          result: localMediaToolResult(true, "Luna editing skill loaded", {
+            name: "luna-ai-cut-editing",
+            version: "1.0",
+            skill: LUNA_EDITING_SKILL,
+          }),
+        };
+      }
+
+      const registeredTool = getTool(name);
+      const requiresEditingSkill = name === "import_local_media"
+        || registeredTool?.readOnly === false;
+      if (requiresEditingSkill && !editingSkillRead) {
+        return {
+          ok: true,
+          result: {
+            ok: false,
+            summary: "请先读取 Luna 剪辑 skill",
+            error: {
+              code: "SKILL_REQUIRED",
+              message: "调用 get_editing_skill 后才能创建项目或修改项目",
+            },
+          } satisfies ToolResult,
+        };
+      }
 
       const localMediaResult = await handleLocalMediaTool(name, req.args ?? {});
       if (localMediaResult) return localMediaResult;

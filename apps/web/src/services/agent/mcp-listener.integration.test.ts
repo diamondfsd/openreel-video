@@ -21,6 +21,12 @@ describe("handleMcpBridgeRequest (real registry)", () => {
   });
 
   it("requires confirmation before deleting media", async () => {
+    await handleMcpBridgeRequest({
+      callId: "skill",
+      kind: "callTool",
+      name: "get_editing_skill",
+      args: {},
+    });
     const res = await handleMcpBridgeRequest({
       callId: "c",
       kind: "callTool",
