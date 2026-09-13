@@ -7,7 +7,7 @@ import type {
   LoopToolResult,
   LoopToolResultBlock,
 } from "./llm";
-import { executeTool, isDestructive, isExpensive } from "./executor";
+import { executeTool, requiresUserConfirmation } from "./executor";
 import { getTool } from "./registry";
 
 export interface RunTurnInput {
@@ -198,12 +198,30 @@ export async function runTurn(input: RunTurnInput): Promise<RunTurnResult> {
         };
         emit({ type: "tool_call", call });
 
+        // Deleting a media-library item is the only operation that remains
+        // behind a user confirmation. All other AI tools are authorized by
+        // the user's request and execute immediately.
         const needsConfirm =
-          !dryRun &&
-          !approveAll &&
-          (isDestructive(call.name) || isExpensive(call.name));
-        if (needsConfirm && confirmGate) {
+          !dryRun && !approveAll && requiresUserConfirmation(call.name, call.args);
+        if (needsConfirm) {
           emit({ type: "awaiting_confirmation", call });
+          if (!confirmGate) {
+            const blocked = {
+              ok: false as const,
+              summary: "需要确认删除素材",
+              error: {
+                code: "CONFIRMATION_REQUIRED",
+                message: "删除素材前需要用户确认",
+              },
+            };
+            emit({ type: "tool_result", call, result: blocked });
+            results.push({
+              toolUseId: call.id,
+              content: JSON.stringify(blocked),
+              isError: true,
+            });
+            continue;
+          }
           const decision = await confirmGate(call);
           if (decision === "approve_for_turn") approveAll = true;
           if (decision === "reject") {

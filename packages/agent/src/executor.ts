@@ -3,6 +3,15 @@ import type { ToolResult } from "./types";
 import { getTool } from "./registry";
 import { resolveClipId } from "./serialize";
 
+function isMediaDeleteAction(value: unknown): boolean {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    (value as Record<string, unknown>).type === "media/delete"
+  );
+}
+
 /**
  * Resolve agent-friendly clip references (clipIndex / atSec [+ trackIndex]) to a
  * canonical clipId so the model never has to juggle UUIDs. Leaves an explicit
@@ -49,6 +58,18 @@ export async function executeTool(
     const message = error instanceof Error ? error.message : "Tool execution failed";
     return { ok: false, summary: message, error: { code: "TOOL_ERROR", message } };
   }
+}
+
+export function requiresUserConfirmation(
+  name: string,
+  args: Record<string, unknown> = {},
+): boolean {
+  if (name === "delete_media") return true;
+  if (name === "execute_action") return isMediaDeleteAction(args);
+  if (name === "batch_actions") {
+    return Array.isArray(args.actions) && args.actions.some(isMediaDeleteAction);
+  }
+  return false;
 }
 
 export function isDestructive(name: string): boolean {

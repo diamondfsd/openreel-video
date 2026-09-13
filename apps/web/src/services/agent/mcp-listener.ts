@@ -1,14 +1,12 @@
 import {
   executeTool,
   getTool,
-  isDestructive,
-  isExpensive,
+  requiresUserConfirmation,
   toMcpTools,
   type ToolResult,
 } from "@openreel/agent";
 import type { MotionComposition } from "@openreel/core";
 import { getLiveEditorHost, runExclusive } from "./host-singleton";
-import { useSettingsStore } from "../../stores/settings-store";
 import { useMotionStore } from "../../motion/stores/motion-store";
 import { useUIStore } from "../../stores/ui-store";
 import { resolveMotionCreatorPreviewTime } from "../../motion/composition-selection";
@@ -25,6 +23,32 @@ export interface McpBridgeResponse {
   readonly result?: unknown;
   readonly error?: string;
 }
+
+interface PendingMediaDeletion {
+  readonly toolName: string;
+  readonly args: Record<string, unknown>;
+  readonly expiresAt: number;
+}
+
+const MEDIA_DELETION_CONFIRMATION_TTL_MS = 5 * 60 * 1000;
+const pendingMediaDeletions = new Map<string, PendingMediaDeletion>();
+
+const CONFIRM_MEDIA_DELETION_TOOL = {
+  name: "confirm_media_deletion",
+  description:
+    "Confirm a pending media-library deletion after the user explicitly approves it. Pass the confirmationToken returned by delete_media or a raw media/delete action.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      confirmationToken: {
+        type: "string",
+        description: "Token returned by the pending deletion request.",
+      },
+    },
+    required: ["confirmationToken"],
+    additionalProperties: false,
+  },
+} as const;
 
 const LOCAL_MEDIA_TOOLS = [
   {
@@ -127,6 +151,16 @@ async function handleLocalMediaTool(
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return { ok: true, result: localMediaToolResult(false, message, undefined, { code: "LOCAL_MEDIA_ERROR", message }) };
+  }
+}
+
+function newConfirmationToken(): string {
+  return globalThis.crypto?.randomUUID?.() ?? `media-delete-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function prunePendingMediaDeletions(now = Date.now()): void {
+  for (const [token, pending] of pendingMediaDeletions) {
+    if (pending.expiresAt <= now) pendingMediaDeletions.delete(token);
   }
 }
 
@@ -271,16 +305,18 @@ function followMcpMotionResult(
 }
 
 /**
- * Runs a main-process MCP request against the live editor. listTools returns the
- * registry; callTool gates destructive/expensive tools behind the trusted-local
- * auto-allow setting, then executes against the shared LiveEditorHost.
+ * Runs a main-process MCP request against the live editor. Every MCP client
+ * uses the same live host and can execute the complete editor tool catalog.
  */
 export async function handleMcpBridgeRequest(
   req: McpBridgeRequest,
 ): Promise<McpBridgeResponse> {
   try {
     if (req.kind === "listTools") {
-      return { ok: true, result: [...toMcpTools(), ...LOCAL_MEDIA_TOOLS] };
+      return {
+        ok: true,
+        result: [...toMcpTools(), CONFIRM_MEDIA_DELETION_TOOL, ...LOCAL_MEDIA_TOOLS],
+      };
     }
     if (req.kind === "callTool") {
       const name = req.name;
@@ -289,20 +325,54 @@ export async function handleMcpBridgeRequest(
       const localMediaResult = await handleLocalMediaTool(name, req.args ?? {});
       if (localMediaResult) return localMediaResult;
 
-      const autoAllow = useSettingsStore.getState().mcpAutoAllowTrustedLocal;
-      if (!autoAllow && (isDestructive(name) || isExpensive(name))) {
+      const args = req.args ?? {};
+      if (name === "confirm_media_deletion") {
+        prunePendingMediaDeletions();
+        const token = typeof args.confirmationToken === "string"
+          ? args.confirmationToken
+          : "";
+        const pending = token ? pendingMediaDeletions.get(token) : undefined;
+        if (!pending) {
+          return {
+            ok: true,
+            result: {
+              ok: false,
+              summary: "删除确认已失效",
+              error: {
+                code: "CONFIRMATION_NOT_FOUND",
+                message: "删除确认不存在或已过期，请重新发起删除请求",
+              },
+            } satisfies ToolResult,
+          };
+        }
+        pendingMediaDeletions.delete(token);
+        const result = await runExclusive(() =>
+          Promise.resolve(executeTool(pending.toolName, pending.args, getLiveEditorHost())),
+        );
+        followMcpMotionResult(pending.toolName, pending.args, result);
+        return { ok: true, result };
+      }
+
+      if (requiresUserConfirmation(name, args)) {
+        prunePendingMediaDeletions();
+        const confirmationToken = newConfirmationToken();
+        pendingMediaDeletions.set(confirmationToken, {
+          toolName: name,
+          args: { ...args },
+          expiresAt: Date.now() + MEDIA_DELETION_CONFIRMATION_TTL_MS,
+        });
         const blocked: ToolResult = {
           ok: false,
-          summary: "Confirmation required",
+          summary: "需要确认删除素材",
+          data: { confirmationToken },
           error: {
             code: "CONFIRMATION_REQUIRED",
-            message: `'${name}' is destructive or expensive. Enable "Trusted local — auto-allow" in Settings → MCP to permit it.`,
+            message: "请先取得用户确认，再调用 confirm_media_deletion 完成删除",
           },
         };
         return { ok: true, result: blocked };
       }
 
-      const args = req.args ?? {};
       const result = await runExclusive(() =>
         Promise.resolve(executeTool(name, args, getLiveEditorHost())),
       );

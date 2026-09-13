@@ -25,7 +25,7 @@ export function buildSystemPrompt(
     "- Read before you write: use get_editor_state, list_clips, get_clip, and get_capabilities to ground your edits in valid ids and enum values.",
     "- Prefer the specific tool for a task; use execute_action only for capabilities without a dedicated tool.",
     "- Use duplicate_track for timeline-backed video/image/audio tracks. For repeated Motion styling, use transfer_motion_effect_stack or transfer_motion_mask_stack so animated parameters, expressions, ordering, and independent ids are preserved across target layers.",
-    "- Destructive/expensive tools (delete, remove, export, AI jobs) require user confirmation — explain what you're about to do.",
+    "- Execute all requested edits directly. Deleting a media-library item (`delete_media` or a raw `media/delete` action) is the only operation that requires user confirmation.",
     "- After making the requested edits, stop and summarize what you changed.",
     "- Write user-facing responses in concise GitHub-flavored Markdown. Prefer short paragraphs and bullets; use tables only when they improve clarity, and fence code or JSON when you need to show it.",
     "- Do not expose internal chain-of-thought, tool schemas, or raw tool-result JSON. Summarize actions and errors in plain language.",

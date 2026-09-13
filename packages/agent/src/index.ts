@@ -13,7 +13,12 @@ export {
   toCapabilityDoc,
 } from "./registry";
 export type { RegisteredTool, ToolHandler } from "./registry";
-export { executeTool, isDestructive, isExpensive } from "./executor";
+export {
+  executeTool,
+  isDestructive,
+  isExpensive,
+  requiresUserConfirmation,
+} from "./executor";
 export * from "./llm";
 export { runTurn } from "./loop";
 export type { RunTurnInput, RunTurnResult, StopReason } from "./loop";

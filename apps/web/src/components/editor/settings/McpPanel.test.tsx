@@ -31,10 +31,10 @@ describe("McpPanel", () => {
 
     render(<McpPanel />);
 
-    await waitFor(() => expect(screen.getByText("214 available")).toBeTruthy());
-    expect(screen.getByText("Video Editor")).toBeTruthy();
-    expect(screen.getByText("Motion Creator")).toBeTruthy();
-    expect(screen.getByText("Creation & 3D")).toBeTruthy();
-    expect(screen.getByText("Project Operations")).toBeTruthy();
+    await waitFor(() => expect(screen.getByText("214 个可用")).toBeTruthy());
+    expect(screen.getByText("视频编辑")).toBeTruthy();
+    expect(screen.getByText("动效设计")).toBeTruthy();
+    expect(screen.getByText("创作与 3D")).toBeTruthy();
+    expect(screen.getByText("项目操作")).toBeTruthy();
   });
 });

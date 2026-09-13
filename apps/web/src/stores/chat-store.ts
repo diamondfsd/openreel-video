@@ -309,7 +309,6 @@ export const useChatStore = create<ChatState>((set, get) => ({
       provider === "anthropic-compatible"
         ? toAnthropicTools(selectedToolNames)
         : toOpenAITools(selectedToolNames);
-    const autoConfirm = useSettingsStore.getState().agentAutoConfirm;
     const dryRun = useSettingsStore.getState().agentDryRun;
 
     let result;
@@ -322,12 +321,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
           system: buildSystemPrompt(host, selectedToolNames),
           messages: get().conversation,
           dryRun,
-          confirmGate: autoConfirm
-            ? () => "approve_for_turn"
-            : (call) =>
-                new Promise<ConfirmDecision>((resolve) => {
-                  set({ status: "awaiting_confirm", pendingConfirm: { call, resolve } });
-                }),
+          confirmGate: (call) =>
+            new Promise<ConfirmDecision>((resolve) => {
+              set({ status: "awaiting_confirm", pendingConfirm: { call, resolve } });
+            }),
           onEvent,
           turnLabel: "AI edit",
         }),

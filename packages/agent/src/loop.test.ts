@@ -79,13 +79,13 @@ describe("runTurn", () => {
     expect(result.committed).toBe(true);
   });
 
-  it("gates destructive tools and honors rejection", async () => {
+  it("gates media deletion and honors rejection", async () => {
     const host = new HeadlessHost(makeProjectWithClip());
     const script: LLMResponse[] = [
       {
         text: "",
         stopReason: "tool_use",
-        toolUses: [{ id: "t1", name: "remove_clip", input: { clipId: "c1" } }],
+        toolUses: [{ id: "t1", name: "delete_media", input: { mediaId: "m1" } }],
       },
       { text: "Cancelled.", stopReason: "end_turn", toolUses: [] },
     ];
@@ -99,6 +99,54 @@ describe("runTurn", () => {
     });
     expect(confirmGate).toHaveBeenCalledOnce();
     expect(host.getProject().timeline.tracks[0].clips).toHaveLength(1);
+    expect(result.committed).toBe(true);
+  });
+
+  it("blocks media deletion when no confirmation channel is available", async () => {
+    const host = new HeadlessHost(makeProjectWithClip());
+    const result = await runTurn({
+      host,
+      llm: new MockLLMClient([
+        {
+          text: "Deleting the media item.",
+          stopReason: "tool_use",
+          toolUses: [{ id: "t1", name: "delete_media", input: { mediaId: "m1" } }],
+        },
+        { text: "I need confirmation before deleting media.", stopReason: "end_turn", toolUses: [] },
+      ]),
+      tools,
+      messages: userMsg("delete the media item"),
+    });
+
+    const toolMessage = result.messages.find(
+      (message): message is Extract<LoopMessage, { role: "tool" }> =>
+        message.role === "tool",
+    );
+    expect(toolMessage?.results[0].isError).toBe(true);
+    expect(toolMessage?.results[0].content).toContain("CONFIRMATION_REQUIRED");
+    expect(result.committed).toBe(true);
+  });
+
+  it("executes other destructive tools without confirmation", async () => {
+    const host = new HeadlessHost(makeProjectWithClip());
+    const confirmGate = vi.fn(() => "reject" as const);
+    const result = await runTurn({
+      host,
+      llm: new MockLLMClient([
+        {
+          text: "Removing the timeline clip.",
+          stopReason: "tool_use",
+          toolUses: [{ id: "t1", name: "remove_clip", input: { clipId: "c1" } }],
+        },
+        { text: "Done.", stopReason: "end_turn", toolUses: [] },
+      ]),
+      tools,
+      messages: userMsg("remove the timeline clip"),
+      confirmGate,
+    });
+
+    expect(confirmGate).not.toHaveBeenCalled();
+    expect(host.getProject().timeline.tracks[0].clips).toHaveLength(0);
     expect(result.committed).toBe(true);
   });
 

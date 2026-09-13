@@ -60,11 +60,6 @@ export interface SettingsState {
   favoriteModels: Array<{ modelId: string; name: string }>;
   configuredServices: string[]; // IDs of services with stored API keys
 
-  /** Desktop MCP server: auto-allow destructive/expensive tools from trusted local clients. */
-  mcpAutoAllowTrustedLocal: boolean;
-
-  /** Agent chat: auto-approve destructive/expensive tools instead of prompting. */
-  agentAutoConfirm: boolean;
   /** Agent chat: plan tools without applying mutations. */
   agentDryRun: boolean;
 
@@ -84,8 +79,6 @@ export interface SettingsState {
   setDefaultLlmProvider: (provider: LlmProvider | null) => void;
   setLlmBaseUrl: (url: string) => void;
   setLlmModel: (model: string) => void;
-  setMcpAutoAllowTrustedLocal: (enabled: boolean) => void;
-  setAgentAutoConfirm: (enabled: boolean) => void;
   setAgentDryRun: (enabled: boolean) => void;
   setElevenLabsModel: (model: string) => void;
   addFavoriteVoice: (voice: { voiceId: string; name: string; previewUrl?: string }) => void;
@@ -118,8 +111,6 @@ export const useSettingsStore = create<SettingsState>()(
         favoriteModels: [],
         configuredServices: [],
 
-        mcpAutoAllowTrustedLocal: true,
-        agentAutoConfirm: false,
         agentDryRun: false,
 
         cachedElevenLabsVoices: null,
@@ -144,11 +135,6 @@ export const useSettingsStore = create<SettingsState>()(
         setLlmBaseUrl: (url: string) => set({ llmBaseUrl: url }),
 
         setLlmModel: (model: string) => set({ llmModel: model }),
-
-        setMcpAutoAllowTrustedLocal: (enabled: boolean) =>
-          set({ mcpAutoAllowTrustedLocal: enabled }),
-
-        setAgentAutoConfirm: (enabled: boolean) => set({ agentAutoConfirm: enabled }),
 
         setAgentDryRun: (enabled: boolean) => set({ agentDryRun: enabled }),
 
@@ -212,10 +198,9 @@ export const useSettingsStore = create<SettingsState>()(
       }),
       {
         name: "openreel-settings",
-        version: 7,
+        version: 8,
         migrate: (persisted, version) => {
           const next = (persisted ?? {}) as Record<string, unknown>;
-          if (version < 2) next.mcpAutoAllowTrustedLocal = true;
           if (version < 3 && (!next.llmModel || next.llmModel === "gpt-4o")) {
             next.llmModel = "gpt-5.6-sol";
           }
@@ -243,6 +228,10 @@ export const useSettingsStore = create<SettingsState>()(
                   ? next.llmModel
                   : "";
           }
+          if (version < 8) {
+            delete next.mcpAutoAllowTrustedLocal;
+            delete next.agentAutoConfirm;
+          }
           return next as unknown as SettingsState;
         },
         partialize: (state) => ({
@@ -257,8 +246,6 @@ export const useSettingsStore = create<SettingsState>()(
           favoriteVoices: state.favoriteVoices,
           favoriteModels: state.favoriteModels,
           configuredServices: state.configuredServices,
-          mcpAutoAllowTrustedLocal: state.mcpAutoAllowTrustedLocal,
-          agentAutoConfirm: state.agentAutoConfirm,
           agentDryRun: state.agentDryRun,
         }),
       },

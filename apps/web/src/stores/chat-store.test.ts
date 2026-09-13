@@ -14,7 +14,6 @@ const h = vi.hoisted(() => ({
     llmBaseUrl: "https://gateway.example/v1",
     llmModel: "account-tool-model",
     configuredServices: ["openai-compatible"] as string[],
-    agentAutoConfirm: false,
     agentDryRun: false,
   },
 }));
@@ -90,7 +89,6 @@ describe("chat-store", () => {
     h.settings.llmBaseUrl = "https://gateway.example/v1";
     h.settings.llmModel = "account-tool-model";
     h.settings.configuredServices = ["openai-compatible"];
-    h.settings.agentAutoConfirm = false;
     h.settings.agentDryRun = false;
     h.undoStackSize = 0;
   });
@@ -448,11 +446,11 @@ describe("chat-store", () => {
     expect(assistant?.toolCalls[0].status).toBe("rejected");
   });
 
-  it("gates destructive calls through pendingConfirm", async () => {
+  it("gates media deletion through the confirmation state", async () => {
     let decision: string | undefined;
     h.runTurn.mockImplementation(
       impl(async ({ onEvent, confirmGate }) => {
-        const call = { id: "t1", name: "deleteClip", args: {} };
+        const call = { id: "t1", name: "delete_media", args: { mediaId: "m1" } };
         onEvent?.({ type: "tool_call", call });
         decision = await confirmGate!(call);
         onEvent?.({
@@ -473,7 +471,7 @@ describe("chat-store", () => {
     const pending = store().send("delete clip");
     await flush();
     expect(store().status).toBe("awaiting_confirm");
-    expect(store().pendingConfirm?.call.name).toBe("deleteClip");
+    expect(store().pendingConfirm?.call.name).toBe("delete_media");
 
     store().resolveConfirm("approve");
     await pending;
@@ -483,14 +481,14 @@ describe("chat-store", () => {
     expect(store().pendingConfirm).toBeNull();
   });
 
-  it("stop() rejects a pending confirmation", async () => {
+  it("stop() rejects a pending media deletion", async () => {
     let decision: string | undefined;
     h.runTurn.mockImplementation(
       impl(async ({ confirmGate }) => {
         decision = await confirmGate!({
           id: "t1",
-          name: "deleteClip",
-          args: {},
+          name: "delete_media",
+          args: { mediaId: "m1" },
         });
         return {
           text: "",
@@ -502,7 +500,7 @@ describe("chat-store", () => {
       }),
     );
 
-    const pending = store().send("delete");
+    const pending = store().send("delete media");
     await flush();
     expect(store().status).toBe("awaiting_confirm");
 
@@ -558,28 +556,6 @@ describe("chat-store", () => {
     expect(store().lastTurnCommitted).toBe(false);
   });
 
-  it("auto-approves destructive calls when the policy is on (no confirm UI)", async () => {
-    h.settings.agentAutoConfirm = true;
-    let decision: string | undefined;
-    h.runTurn.mockImplementation(
-      impl(async ({ confirmGate }) => {
-        decision = await confirmGate!({ id: "t1", name: "deleteClip", args: {} });
-        return {
-          text: "ok",
-          messages: [],
-          toolCalls: 1,
-          stoppedReason: "end_turn",
-          committed: true,
-        };
-      }),
-    );
-
-    await store().send("delete it");
-    expect(decision).toBe("approve_for_turn");
-    expect(store().pendingConfirm).toBeNull();
-    expect(store().status).toBe("idle");
-  });
-
   it("passes dryRun to runTurn when the dry-run policy is on", async () => {
     h.settings.agentDryRun = true;
     let sawDryRun: boolean | undefined;
@@ -598,30 +574,6 @@ describe("chat-store", () => {
 
     await store().send("plan an edit");
     expect(sawDryRun).toBe(true);
-  });
-
-  it("treats Stop as a clean stop, not an error", async () => {
-    h.runTurn.mockImplementation(
-      impl(async ({ confirmGate }) => {
-        await confirmGate!({ id: "t1", name: "deleteClip", args: {} });
-        return {
-          text: "",
-          messages: [],
-          toolCalls: 1,
-          stoppedReason: "error",
-          committed: false,
-        };
-      }),
-    );
-    const pending = store().send("delete it");
-    await flush();
-    expect(store().status).toBe("awaiting_confirm");
-    const controller = store().abortController;
-    store().stop();
-    expect(controller?.signal.aborted).toBe(true);
-    await pending;
-    expect(store().status).toBe("idle");
-    expect(store().error).toBeNull();
   });
 
   it("discards an in-flight completion after reset()", async () => {

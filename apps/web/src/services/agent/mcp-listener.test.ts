@@ -3,12 +3,10 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 const h = vi.hoisted(() => ({
   executeTool: vi.fn(),
   getTool: vi.fn(),
-  isDestructive: vi.fn(() => false),
-  isExpensive: vi.fn(() => false),
+  requiresUserConfirmation: vi.fn((name: string) => name === "delete_media"),
   toMcpTools: vi.fn(() => [
     { name: "list_clips", description: "List", inputSchema: { type: "object" } },
   ]),
-  autoAllow: false,
   motionState: {
     activeCompositionId: "starter",
     setActiveCompositionId: vi.fn(),
@@ -21,20 +19,13 @@ const h = vi.hoisted(() => ({
 vi.mock("@openreel/agent", () => ({
   executeTool: h.executeTool,
   getTool: h.getTool,
-  isDestructive: h.isDestructive,
-  isExpensive: h.isExpensive,
+  requiresUserConfirmation: h.requiresUserConfirmation,
   toMcpTools: h.toMcpTools,
 }));
 
 vi.mock("./host-singleton", () => ({
   getLiveEditorHost: () => ({ id: "host" }),
   runExclusive: (fn: () => Promise<unknown>) => fn(),
-}));
-
-vi.mock("../../stores/settings-store", () => ({
-  useSettingsStore: {
-    getState: () => ({ mcpAutoAllowTrustedLocal: h.autoAllow }),
-  },
 }));
 
 vi.mock("../../motion/stores/motion-store", () => ({
@@ -54,13 +45,11 @@ import { handleMcpBridgeRequest } from "./mcp-listener";
 describe("handleMcpBridgeRequest", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    h.isDestructive.mockReturnValue(false);
-    h.isExpensive.mockReturnValue(false);
+    h.requiresUserConfirmation.mockImplementation((name) => name === "delete_media");
     h.getTool.mockReturnValue({ domain: "read" });
     h.toMcpTools.mockReturnValue([
       { name: "list_clips", description: "List", inputSchema: { type: "object" } },
     ]);
-    h.autoAllow = false;
     h.motionState.activeCompositionId = "starter";
     h.motionState.setActiveCompositionId.mockClear();
     h.motionState.setPlayhead.mockClear();
@@ -71,9 +60,10 @@ describe("handleMcpBridgeRequest", () => {
   it("returns the registry for listTools", async () => {
     const res = await handleMcpBridgeRequest({ callId: "c1", kind: "listTools" });
     expect(res.ok).toBe(true);
-    expect(res.result).toHaveLength(3);
+    expect(res.result).toHaveLength(4);
     expect((res.result as Array<{ name: string }>).map((tool) => tool.name)).toEqual([
       "list_clips",
+      "confirm_media_deletion",
       "list_local_media",
       "import_local_media",
     ]);
@@ -93,8 +83,8 @@ describe("handleMcpBridgeRequest", () => {
     expect(h.executeTool).toHaveBeenCalledWith("list_clips", { trackId: "t1" }, { id: "host" });
   });
 
-  it("gates destructive tools when auto-allow is off", async () => {
-    h.isDestructive.mockReturnValue(true);
+  it("requires confirmation before deleting media", async () => {
+    h.getTool.mockReturnValue({ domain: "project", destructive: true });
     const res = await handleMcpBridgeRequest({
       callId: "c3",
       kind: "callTool",
@@ -102,20 +92,35 @@ describe("handleMcpBridgeRequest", () => {
     });
     expect(res.ok).toBe(true);
     expect(h.executeTool).not.toHaveBeenCalled();
-    expect((res.result as { error?: { code: string } }).error?.code).toBe(
+    const pending = res.result as {
+      data?: { confirmationToken?: string };
+      error?: { code: string };
+    };
+    expect(pending.error?.code).toBe(
       "CONFIRMATION_REQUIRED",
     );
+    expect(pending.data?.confirmationToken).toEqual(expect.any(String));
+
+    h.executeTool.mockResolvedValue({ ok: true, summary: "Deleted" });
+    const confirmed = await handleMcpBridgeRequest({
+      callId: "c3-confirm",
+      kind: "callTool",
+      name: "confirm_media_deletion",
+      args: { confirmationToken: pending.data?.confirmationToken },
+    });
+    expect(confirmed.result).toEqual({ ok: true, summary: "Deleted" });
+    expect(h.executeTool).toHaveBeenCalledWith("delete_media", {}, { id: "host" });
   });
 
-  it("permits destructive tools when auto-allow is on", async () => {
-    h.isDestructive.mockReturnValue(true);
-    h.autoAllow = true;
+  it("executes other destructive tools without a confirmation gate", async () => {
+    h.getTool.mockReturnValue({ domain: "project", destructive: true });
     h.executeTool.mockResolvedValue({ ok: true, summary: "Deleted" });
     const res = await handleMcpBridgeRequest({
       callId: "c4",
       kind: "callTool",
-      name: "delete_media",
+      name: "remove_clip",
     });
+    expect(res.ok).toBe(true);
     expect(h.executeTool).toHaveBeenCalled();
     expect(res.result).toEqual({ ok: true, summary: "Deleted" });
   });

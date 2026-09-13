@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 
-// No @openreel/agent mock here: exercises the real registry classification
-// (isDestructive/toMcpTools) so arg/host wiring drift is actually caught.
+// No @openreel/agent mock here: exercises the real registry and host wiring.
 
 vi.mock("./host-singleton", () => ({
   getLiveEditorHost: () => ({
@@ -10,11 +9,6 @@ vi.mock("./host-singleton", () => ({
     },
   }),
   runExclusive: (fn: () => Promise<unknown>) => fn(),
-}));
-
-let autoAllow = false;
-vi.mock("../../stores/settings-store", () => ({
-  useSettingsStore: { getState: () => ({ mcpAutoAllowTrustedLocal: autoAllow }) },
 }));
 
 import { handleMcpBridgeRequest } from "./mcp-listener";
@@ -26,8 +20,7 @@ describe("handleMcpBridgeRequest (real registry)", () => {
     expect((res.result as unknown[]).length).toBeGreaterThan(10);
   });
 
-  it("gates a genuinely destructive tool (delete_media) via real classification", async () => {
-    autoAllow = false;
+  it("requires confirmation before deleting media", async () => {
     const res = await handleMcpBridgeRequest({
       callId: "c",
       kind: "callTool",

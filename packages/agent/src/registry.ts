@@ -15511,7 +15511,7 @@ const TOOLS: RegisteredTool[] = [
       return ok(`Imported ${ref.type} "${ref.name}" (${ref.durationSec.toFixed(2)}s)`, ref);
     },
   },
-  actionTool({ name: "delete_media", domain: "media", actionType: "media/delete", title: "Delete media", description: "Delete a media library item.", inputSchema: obj({ mediaId: str }, ["mediaId"]), destructive: true }),
+  actionTool({ name: "delete_media", domain: "media", actionType: "media/delete", title: "Delete media", description: "Delete a media library item. This is the only operation that requires user confirmation.", inputSchema: obj({ mediaId: str }, ["mediaId"]), destructive: true }),
   actionTool({ name: "rename_media", domain: "media", actionType: "media/rename", title: "Rename media", description: "Rename a media item.", inputSchema: obj({ mediaId: str, name: str }, ["mediaId", "name"]) }),
 
   // clip
@@ -23745,7 +23745,7 @@ const TOOLS: RegisteredTool[] = [
     domain: "motion",
     title: "Render motion frame",
     description:
-      "Render a Motion Creator composition to a still image at a given time so YOU can SEE the current result and self-correct (layout, z-order, color, text wrap). Inputs: compositionId (required), timeSeconds (default 0), scale (1-2 supersample), quality ('draft' = 1x fast, 'final' = 2x supersampled). An explicit scale overrides quality. Returns the image attached to the result. Expensive — requires confirmation.",
+      "Render a Motion Creator composition to a still image at a given time so YOU can SEE the current result and self-correct (layout, z-order, color, text wrap). Inputs: compositionId (required), timeSeconds (default 0), scale (1-2 supersample), quality ('draft' = 1x fast, 'final' = 2x supersampled). An explicit scale overrides quality. Returns the image attached to the result.",
     inputSchema: obj({
       compositionId: str,
       timeSeconds: num,
@@ -31570,7 +31570,7 @@ const TOOLS: RegisteredTool[] = [
     domain: "export",
     title: "Export motion video",
     description:
-      "Render a motion composition to a finished video file and return the filename plus width/height/duration/framesRendered and the format actually encoded. format: 'mp4' (H.264, opaque), 'webm-alpha' (VP9 with transparency), or 'mov-prores4444' (ProRes 4444 with transparency); default 'mp4'. On the web build only the desktop app can produce transparent WebM or ProRes — for those formats on web the export normalizes to opaque H.264, so you MUST pass acknowledgeH264Fallback:true to consent (otherwise the export fails with a warning telling you to acknowledge or use desktop). Optional filename overrides the auto-generated name. Inspect data.normalizedToH264 / data.encodedFormat to see what was really written. Expensive — requires confirmation.",
+      "Render a motion composition to a finished video file and return the filename plus width/height/duration/framesRendered and the format actually encoded. format: 'mp4' (H.264, opaque), 'webm-alpha' (VP9 with transparency), or 'mov-prores4444' (ProRes 4444 with transparency); default 'mp4'. On the web build only the desktop app can produce transparent WebM or ProRes — for those formats on web the export normalizes to opaque H.264, so you MUST pass acknowledgeH264Fallback:true to consent (otherwise the export fails with a warning telling you to acknowledge or use desktop). Optional filename overrides the auto-generated name. Inspect data.normalizedToH264 / data.encodedFormat to see what was really written.",
     inputSchema: obj(
       {
         compositionId: str,
@@ -31749,7 +31749,7 @@ const TOOLS: RegisteredTool[] = [
     domain: "export",
     title: "Run motion render queue",
     description:
-      "Render every queued (or previously failed) item in the motion render queue sequentially and return per-item outcomes (data.outcomes: itemId, status, encodedFormat, filename, error). Items whose cancel was requested are skipped as 'canceled'. Expensive — requires confirmation.",
+      "Render every queued (or previously failed) item in the motion render queue sequentially and return per-item outcomes (data.outcomes: itemId, status, encodedFormat, filename, error). Items whose cancel was requested are skipped as 'canceled'.",
     inputSchema: obj({}),
     readOnly: false,
     destructive: false,
@@ -32054,12 +32054,12 @@ const TOOLS: RegisteredTool[] = [
     },
   },
 
-  // Local render jobs delegated to the app host and gated as expensive.
+  // Local render jobs delegated to the app host.
   jobTool(
     "export_video",
     "export",
     "Export video",
-    "Render the whole project to a local video file (format: mp4|webm|mov, default mp4) and return its local result metadata. Expensive — requires confirmation.",
+    "Render the whole project to a local video file (format: mp4|webm|mov, default mp4) and return its local result metadata.",
     "exportVideo",
     obj({ format: str }),
   ),
@@ -32067,7 +32067,7 @@ const TOOLS: RegisteredTool[] = [
     "export_audio",
     "export",
     "Export audio",
-    "Render the project audio to a local file (format: mp3|wav|aac|flac|ogg, default wav) and return its local result metadata. Expensive — requires confirmation.",
+    "Render the project audio to a local file (format: mp3|wav|aac|flac|ogg, default wav) and return its local result metadata.",
     "exportAudio",
     obj({ format: str }),
   ),

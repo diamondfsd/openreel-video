@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { inflateSync } from "node:zlib";
 import { HeadlessHost } from "./headless-host";
-import { executeTool, isDestructive } from "./executor";
+import { executeTool, isDestructive, requiresUserConfirmation } from "./executor";
 import { makeEmptyProject, makeProjectWithClip } from "./test-fixtures";
 import type { EditorStateView, ClipView } from "./serialize";
 import { getMotionLayerPropertyValueAtTime } from "@openreel/core/motion/motion-keyframes";
@@ -116,6 +116,22 @@ describe("executeTool", () => {
     expect(isDestructive("remove_clip")).toBe(true);
     expect(isDestructive("get_editor_state")).toBe(false);
     expect(isDestructive("execute_action")).toBe(true);
+  });
+
+  it("only requires confirmation for media-library deletion", () => {
+    expect(requiresUserConfirmation("delete_media", { mediaId: "m1" })).toBe(true);
+    expect(
+      requiresUserConfirmation("execute_action", {
+        type: "media/delete",
+        params: { mediaId: "m1" },
+      }),
+    ).toBe(true);
+    expect(
+      requiresUserConfirmation("batch_actions", {
+        actions: [{ type: "clip/remove", params: { clipId: "c1" } }],
+      }),
+    ).toBe(false);
+    expect(requiresUserConfirmation("remove_clip", { clipId: "c1" })).toBe(false);
   });
 
   it("get_capabilities returns the manifest", async () => {

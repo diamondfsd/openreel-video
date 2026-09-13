@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { ToolcraftButton as Button } from "@openreel/ui";
 import { ToolcraftIconButton as IconButton } from "@openreel/ui";
 import { ToolcraftText as Text } from "@openreel/ui";
-import { Bot, X, Undo2, Plus, History, Sparkles, ShieldCheck, FlaskConical } from "@/icons/lucide-compat";
+import { Bot, X, Undo2, Plus, History, Sparkles, FlaskConical } from "@/icons/lucide-compat";
 import { useChatStore } from "../../../stores/chat-store";
 import { useProjectStore } from "../../../stores/project-store";
 import { useSettingsStore } from "../../../stores/settings-store";
@@ -148,8 +148,6 @@ export function ChatPanel({
   const setProjectContext = useChatStore((s) => s.setProjectContext);
   const hasOpenProject = useProjectStore((s) => s.hasOpenProject);
   const projectId = useProjectStore((s) => (s.hasOpenProject ? s.project.id : null));
-  const autoConfirm = useSettingsStore((s) => s.agentAutoConfirm);
-  const setAutoConfirm = useSettingsStore((s) => s.setAgentAutoConfirm);
   const dryRun = useSettingsStore((s) => s.agentDryRun);
   const setDryRun = useSettingsStore((s) => s.setAgentDryRun);
   const openSettings = useSettingsStore((s) => s.openSettings);
@@ -198,21 +196,6 @@ export function ChatPanel({
             aria-pressed={dryRun}
             className={`grid h-7 w-7 place-items-center rounded-md transition-colors ${
               dryRun ? "bg-accent-soft text-accent" : "text-fg-2 hover:bg-hover hover:text-fg"
-            }`}
-          />
-          <IconButton
-            label={
-              autoConfirm
-                ? "自动批准已开启：破坏性操作无需确认"
-                : "自动批准已关闭：破坏性操作会先请求确认"
-            }
-            icon={<ShieldCheck size={14} aria-hidden />}
-            size="sm"
-            variant={autoConfirm ? "secondary" : "ghost"}
-            onClick={() => setAutoConfirm(!autoConfirm)}
-            aria-pressed={autoConfirm}
-            className={`grid h-7 w-7 place-items-center rounded-md transition-colors ${
-              autoConfirm ? "bg-accent-soft text-accent" : "text-fg-2 hover:bg-hover hover:text-fg"
             }`}
           />
           <ProviderModelPicker disabled={busy} />

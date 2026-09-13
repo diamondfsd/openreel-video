@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Plug, Eye, EyeOff, Copy, RefreshCw, Wifi } from "@/icons/lucide-compat";
-import { ToolcraftSwitchControl } from "@openreel/ui";
 import { ToolcraftButton as Button } from "@openreel/ui";
 import { ToolcraftIconButton as IconButton } from "@openreel/ui";
 import { ToolcraftText as Text } from "@openreel/ui";
-import { useSettingsStore } from "../../../stores/settings-store";
 import { toast } from "../../../stores/notification-store";
 import type { OpenReelMcpStatus } from "../../../types/global";
 
@@ -36,9 +34,6 @@ async function copy(value: string, label: string): Promise<void> {
 }
 
 export const McpPanel: React.FC = () => {
-  const mcpAutoAllow = useSettingsStore((s) => s.mcpAutoAllowTrustedLocal);
-  const setMcpAutoAllow = useSettingsStore((s) => s.setMcpAutoAllowTrustedLocal);
-
   const [status, setStatus] = useState<OpenReelMcpStatus | null>(null);
   const [toolCount, setToolCount] = useState<number | null>(null);
   const [revealToken, setRevealToken] = useState(false);
@@ -286,30 +281,6 @@ export const McpPanel: React.FC = () => {
         </div>
       </div>
 
-      <div className="h-px bg-border" />
-
-      <div className="space-y-4">
-        <Text type="body" color="primary" className="text-sm font-medium">
-          本地信任
-        </Text>
-        <div className="flex items-center justify-between">
-          <div>
-            <Text type="supporting" color="secondary" className="text-sm">
-              自动允许高风险操作
-            </Text>
-            <Text type="supporting" color="secondary" className="mt-0.5 max-w-md text-xs">
-              关闭后，通过 MCP 发起的高风险或高消耗操作会被拒绝，并提示需要确认。
-              仅在信任所有已连接的本地客户端时开启。
-            </Text>
-          </div>
-          <ToolcraftSwitchControl
-            ariaLabel="自动允许高风险操作"
-            checked={mcpAutoAllow}
-            onCheckedChange={setMcpAutoAllow}
-            showLabel={false}
-          />
-        </div>
-      </div>
     </div>
   );
 };
