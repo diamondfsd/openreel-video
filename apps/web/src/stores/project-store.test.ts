@@ -2082,7 +2082,7 @@ describe("ProjectStore", () => {
       const stackedTrack = useProjectStore
         .getState()
         .project.timeline.tracks.find((track) => track.id === pastedShape?.trackId);
-      expect(stackedTrack?.mode).toBe("standard");
+      expect(stackedTrack?.type).toBe("graphics");
       expect(
         useProjectStore.getState().project.timeline.tracks.indexOf(stackedTrack!),
       ).toBeLessThan(

@@ -10,7 +10,7 @@ export const LUNA_EDITING_SKILL = `# Luna AI Cut 剪辑 Skill
 
 ## 任务会话与工具契约
 
-1. 通过当前连接调用工具清单接口。若返回的 editorToolsReady 为 false，说明编辑器页面尚未就绪：先领取或创建任务、调用 activate_luna_window，再重新获取工具清单；不要在编辑工具列表不完整时猜工具。
+1. 通过当前连接调用工具清单接口。若返回的 editorToolsReady 为 false，说明编辑器页面尚未就绪：先领取或创建任务、调用 activate_luna_window，再重新获取工具清单；不要在编辑工具列表不完整时猜工具。tools/list 和 openapi.json 只是只读发现，不会使已读取的 Skill 失效；只有工具明确返回 SKILL_REQUIRED 时才需要重新读取。
 2. 先准备稳定 agentId、agentType 和实际使用的 agentModel。Luna 聊天页提交的任务调用 wait_for_edit_request 并携带这三项身份；若任务来自外部 Agent 对话，调用 start_edit_session，传入当前对话中的用户原始要求和同一身份。两条入口都会在领取时登记身份。
 3. 绝不凭空填写 sessionId，也不要用 agent 名称代替 sessionId。领取或创建成功后保存返回的 sessionId 和 revision，并在本次任务中一直使用它们。
 4. 领取后再次调用 get_editing_skill。工具调用本身会同步到 Luna，report_edit_progress 只需在开始、素材分析完成、时间线初稿完成、包装或字幕完成、阻塞/等待确认和最终状态等关键节点调用。所有创建项目、导入素材、时间线修改、字幕、保存和导出都必须在有效 session 中执行。
@@ -52,11 +52,15 @@ export const LUNA_EDITING_SKILL = `# Luna AI Cut 剪辑 Skill
 6. 可选地对一个高潮镜头使用 1.1-1.25 倍轻微变速，并重新检查 duration；片尾用视频 \`opacity\` 关键帧和音频 \`set_clip_fade\` 分别收束，不能混用两者语义。
 7. 每个包装写操作后立即读取对应 clip/transition 状态；若没有普通时间线预览能力，只能完成结构校验，必须在结果中说明未做视觉验收。
 
+普通旅行短片的最低完成门槛不是“拼好片段再加一条文字”：画面合适时至少纳入 1 张照片作为定场或节奏停顿，给 2-4 个关键视频/照片用 \`add_keyframe\` 或 \`set_clip_keyframes\` 做轻微推拉，场景边界保留 1-2 个有目的的转场，并分别设置片尾视频透明度和音频淡出。若素材不适合加入照片或某类效果不可用，应保留其余包装并在结果中明确说明，不要用重复特效填空。
+
 ## 写入、裁剪与写后校验
 
 - import_local_media 会返回 data.status、requestedMediaIds、importedMediaIds、failedMediaIds 和逐条 results。PARTIAL_SUCCESS 时不要重复导入已成功的素材；先 list_media 核对项目内实际 mediaId，只对失败项重新 list_local_media 后再处理。全部失败时停止并上报失败。
-- add_clip 默认加入完整源素材，之后才 trim。trim 的 inPoint 和 outPoint 是素材内时间，duration 必须等于 outPoint - inPoint，startTime 是时间线位置且不会因 trim 自动改变。
+- 新增片段优先在一次 add_clip 中传入素材内的 inPoint/outPoint，让落位和裁剪原子完成，duration 自动等于 outPoint - inPoint；未传入时才加入完整源素材再 trim。trim 的 inPoint/outPoint 是素材内时间，startTime 是时间线位置且不会因 trim 自动改变。
 - 每次 add_clip、trim、split、删除、文字、转场或效果写入后，都要重新调用 list_clips/get_clip 或对应状态查询核对 id、startTime、inPoint、outPoint、duration、轨道归属和是否重叠。trim 要逐条串行执行并逐条校验，不要把一次批量调用成功当作写入生效。
+- 文字、图形、标题和 scrim 必须位于视频/图片前景层。优先使用不带 trackId 的 create_text_clip/create_shape_clip，让 Luna 自动创建最上方轨道；手动建轨道时使用 position=0，或立即 reorder_track 到所有视频/图片轨道上方。用 list_tracks + list_overlays 核对 layer=overlay、trackIndex、时间和内容；list_clips 不包含这些 overlay。
+- add_transition 后调用 list_transitions 核对实际保存的类型、时长和两端 clipId。
 - 发现写入结果与预期不一致时停止继续写，先读取当前状态；不要靠重复调用碰运气。除删除素材外，其他项目编辑直接执行并依靠自动保存。
 
 ## 预览与导出

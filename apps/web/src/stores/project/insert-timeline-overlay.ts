@@ -1,6 +1,8 @@
 import { v4 as uuidv4 } from "uuid";
-import { resolveTimelinePlacement } from "@openreel/core";
+import { isOverlayTrack, resolveTimelinePlacement } from "@openreel/core";
 import { useProjectStore } from "../project-store";
+
+type OverlayTrackType = "text" | "graphics";
 
 /**
  * Put a newly-authored visual item on an available timeline row. Occupied
@@ -12,6 +14,7 @@ export async function insertTimelineOverlay<T>(
   duration: number,
   create: (trackId: string) => T | null,
   preferredTrackId?: string,
+  overlayTrackType: OverlayTrackType = "graphics",
 ): Promise<T | null> {
   const initialState = useProjectStore.getState();
   const initialProject = initialState.project;
@@ -23,9 +26,13 @@ export async function insertTimelineOverlay<T>(
   if (preferredTrackId && (!preferredTrack || preferredTrack.locked)) {
     return null;
   }
-  const targetTrack =
-    preferredTrack ??
-    initialProject.timeline.tracks.find((track) => !track.locked);
+  const targetTrack = preferredTrack ?? initialProject.timeline.tracks.find(
+    (track) => !track.locked && (
+      overlayTrackType === "text"
+        ? track.type === "text" || track.role === "captions"
+        : track.type === "graphics"
+    ),
+  );
   const newTrackId = `track-${uuidv4()}`;
   const placement = targetTrack
     ? resolveTimelinePlacement(initialProject, {
@@ -44,20 +51,35 @@ export async function insertTimelineOverlay<T>(
 
   if (!placement.ok) return null;
 
+  // A legacy overlay track can sit below media rows. If placement falls back
+  // to such a row, create a dedicated foreground row instead of relying on a
+  // mixed track's historical painter order.
+  const placedTrack = initialProject.timeline.tracks.find(
+    (track) => track.id === placement.trackId,
+  );
+  const safePlacement = !preferredTrackId && placedTrack && !isOverlayTrack(placedTrack)
+    ? {
+        ok: true as const,
+        trackId: newTrackId,
+        startTime: placement.startTime,
+        createdTrack: { id: newTrackId, position: 0 },
+      }
+    : placement;
+
   initialState.beginHistoryGroup("Place timeline item");
   try {
-    if (placement.createdTrack) {
+    if (safePlacement.createdTrack) {
       const result = await useProjectStore.getState().addTrack(
-        "video",
-        placement.createdTrack.position,
+        overlayTrackType,
+        safePlacement.createdTrack.position,
         {
           mode: "standard",
-          trackId: placement.createdTrack.id,
+          trackId: safePlacement.createdTrack.id,
         },
       );
       if (!result.success) return null;
     }
-    return create(placement.trackId);
+    return create(safePlacement.trackId);
   } finally {
     useProjectStore.getState().endHistoryGroup();
   }

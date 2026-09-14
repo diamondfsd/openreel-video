@@ -147,6 +147,126 @@ describe("ActionExecutor grouped generated IDs", () => {
     expect(undo.success).toBe(true);
     expect(project.timeline.tracks).toHaveLength(0);
   });
+
+  it("places text and graphics tracks above media when position is omitted", async () => {
+    const executor = new ActionExecutor();
+    const project = makeProjectWithClip();
+
+    await executor.execute(
+      {
+        id: "add-text-track",
+        type: "track/add",
+        params: { trackType: "text" },
+        timestamp: Date.now(),
+      } as Action,
+      project,
+    );
+    await executor.execute(
+      {
+        id: "add-graphics-track",
+        type: "track/add",
+        params: { trackType: "graphics" },
+        timestamp: Date.now(),
+      } as Action,
+      project,
+    );
+
+    expect(project.timeline.tracks.map((track) => track.type)).toEqual([
+      "graphics",
+      "text",
+      "video",
+    ]);
+  });
+
+  it("places caption tracks above media when position is omitted", async () => {
+    const executor = new ActionExecutor();
+    const project = makeProjectWithClip();
+
+    await executor.execute(
+      {
+        id: "add-caption-track",
+        type: "track/add",
+        params: { trackType: "video", role: "captions" },
+        timestamp: Date.now(),
+      } as Action,
+      project,
+    );
+
+    expect(project.timeline.tracks.map((track) => track.role ?? track.type)).toEqual([
+      "captions",
+      "video",
+    ]);
+  });
+
+  it("derives clip duration from source in/out points when adding a clip", async () => {
+    const executor = new ActionExecutor();
+    const project = makeProject();
+    project.mediaLibrary.items.push({
+      id: "m1",
+      type: "video",
+      metadata: { duration: 30 },
+    } as never);
+    project.timeline.tracks.push({
+      id: "t1",
+      type: "video",
+      name: "V1",
+      clips: [],
+      transitions: [],
+      locked: false,
+      hidden: false,
+      muted: false,
+      solo: false,
+    });
+
+    const result = await executor.execute(
+      {
+        id: "add-trimmed-clip",
+        type: "clip/add",
+        params: {
+          trackId: "t1",
+          mediaId: "m1",
+          startTime: 4,
+          inPoint: 12,
+          outPoint: 15.5,
+        },
+        timestamp: Date.now(),
+      } as Action,
+      project,
+    );
+
+    expect(result.success).toBe(true);
+    expect(project.timeline.tracks[0]?.clips[0]).toMatchObject({
+      startTime: 4,
+      inPoint: 12,
+      outPoint: 15.5,
+      duration: 3.5,
+    });
+  });
+
+  it("rejects an invalid source range before creating a clip", async () => {
+    const executor = new ActionExecutor();
+    const project = makeProjectWithClip();
+
+    const result = await executor.execute(
+      {
+        id: "add-invalid-range",
+        type: "clip/add",
+        params: {
+          trackId: "t1",
+          mediaId: "m1",
+          startTime: 0,
+          inPoint: 5,
+          outPoint: 2,
+        },
+        timestamp: Date.now(),
+      } as Action,
+      project,
+    );
+
+    expect(result.success).toBe(false);
+    expect(result.error?.message).toContain("Out point must be greater than in point");
+    expect(project.timeline.tracks[0]?.clips).toHaveLength(1);
+  });
 });
 
 describe("ActionExecutor transform/update", () => {

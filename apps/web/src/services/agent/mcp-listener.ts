@@ -711,7 +711,6 @@ export async function handleMcpBridgeRequest(
 ): Promise<McpBridgeResponse> {
   try {
     if (req.kind === "listTools") {
-      editingSkillRead = false;
       return {
         ok: true,
         result: [GET_EDITING_SKILL_TOOL, ...toMcpTools(), CONFIRM_MEDIA_DELETION_TOOL, ...LOCAL_MEDIA_TOOLS],

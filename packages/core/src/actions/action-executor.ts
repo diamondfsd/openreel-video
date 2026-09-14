@@ -545,7 +545,11 @@ export class ActionExecutor {
         const position =
           params.position !== undefined
             ? params.position
-            : timeline.tracks.length;
+            : params.trackType === "text"
+              || params.trackType === "graphics"
+              || params.role === "captions"
+              ? 0
+              : timeline.tracks.length;
 
         timeline.tracks = [
           ...timeline.tracks.slice(0, position),
@@ -831,6 +835,10 @@ export class ActionExecutor {
             (mediaItem?.metadata.duration && mediaItem.metadata.duration > 0
               ? mediaItem.metadata.duration
               : 5);
+          const inPoint = params.inPoint ?? 0;
+          const outPoint = params.outPoint ?? clipDuration;
+          const hasSourceRange =
+            params.inPoint !== undefined || params.outPoint !== undefined;
           const defaultTransform = {
             position: { x: 0, y: 0 },
             scale: { x: 1, y: 1 },
@@ -851,9 +859,9 @@ export class ActionExecutor {
                 mediaId: params.mediaId,
                 trackId: params.trackId,
                 startTime: params.startTime,
-                duration: clipDuration,
-                inPoint: params.inPoint ?? 0,
-                outPoint: params.outPoint ?? clipDuration,
+                duration: hasSourceRange ? outPoint - inPoint : clipDuration,
+                inPoint,
+                outPoint,
                 effects: (params.effects as never[]) ?? [],
                 audioEffects: (params.audioEffects as never[]) ?? [],
                 transform: params.transform

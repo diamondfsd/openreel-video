@@ -324,6 +324,8 @@ import {
   serializeEditorState,
   listMedia,
   listTracks,
+  listOverlays,
+  listTransitions,
   listClips,
   getClipDetail,
   type ClipFilter,
@@ -10672,6 +10674,12 @@ const TOOLS: RegisteredTool[] = [
   readTool("list_tracks", "List tracks", "All timeline tracks.", obj({}), (_a, h) =>
     listTracks(h.getProject()),
   ),
+  readTool("list_overlays", "List overlays", "Text and graphic overlays with their track order and timing.", obj({}), (_a, h) =>
+    listOverlays(h.getProject()),
+  ),
+  readTool("list_transitions", "List transitions", "Transitions stored on timeline tracks.", obj({}), (_a, h) =>
+    listTransitions(h.getProject()),
+  ),
   readTool(
     "list_clips",
     "List clips",
@@ -15515,7 +15523,7 @@ const TOOLS: RegisteredTool[] = [
   actionTool({ name: "rename_media", domain: "media", actionType: "media/rename", title: "Rename media", description: "Rename a media item.", inputSchema: obj({ mediaId: str, name: str }, ["mediaId", "name"]) }),
 
   // clip
-  actionTool({ name: "add_clip", domain: "clip", actionType: "clip/add", title: "Add clip", description: "Add a media clip to a track at a time.", inputSchema: obj({ trackId: str, mediaId: str, startTime: num }, ["trackId", "mediaId", "startTime"]) }),
+  actionTool({ name: "add_clip", domain: "clip", actionType: "clip/add", title: "Add clip", description: "Add a media clip at a timeline time. Optional inPoint/outPoint are source-media seconds; when supplied, the clip is placed and trimmed atomically with duration = outPoint - inPoint.", inputSchema: obj({ trackId: str, mediaId: str, startTime: num, inPoint: num, outPoint: num, duration: num }, ["trackId", "mediaId", "startTime"]) }),
   actionTool({ name: "remove_clip", domain: "clip", actionType: "clip/remove", title: "Remove clip", description: "Remove a clip.", inputSchema: obj({ clipId: str }, ["clipId"]), destructive: true }),
   actionTool({ name: "move_clip", domain: "clip", actionType: "clip/move", title: "Move clip", description: "Move a clip to a new start time / track.", inputSchema: obj({ clipId: str, startTime: num, trackId: str }, ["clipId", "startTime"]) }),
   actionTool({ name: "trim_clip", domain: "clip", actionType: "clip/trim", title: "Trim clip", description: "Set a clip's in/out points (seconds).", inputSchema: obj({ clipId: str, inPoint: num, outPoint: num }, ["clipId"]) }),

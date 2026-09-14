@@ -548,6 +548,41 @@ export class ActionValidator {
             path: "params.startTime",
           });
         }
+        if (
+          action.params.inPoint !== undefined &&
+          (typeof action.params.inPoint !== "number" ||
+            !Number.isFinite(action.params.inPoint) ||
+            action.params.inPoint < 0)
+        ) {
+          errors.push({
+            code: "INVALID_PARAMS",
+            message: "In point must be a non-negative number",
+            path: "params.inPoint",
+          });
+        }
+        if (
+          action.params.outPoint !== undefined &&
+          (typeof action.params.outPoint !== "number" ||
+            !Number.isFinite(action.params.outPoint) ||
+            action.params.outPoint <= 0)
+        ) {
+          errors.push({
+            code: "INVALID_PARAMS",
+            message: "Out point must be a positive number",
+            path: "params.outPoint",
+          });
+        }
+        if (
+          typeof action.params.inPoint === "number" &&
+          typeof action.params.outPoint === "number" &&
+          action.params.outPoint <= action.params.inPoint
+        ) {
+          errors.push({
+            code: "INVALID_TIME_RANGE",
+            message: "Out point must be greater than in point",
+            path: "params.outPoint",
+          });
+        }
         break;
 
       case "clip/remove":

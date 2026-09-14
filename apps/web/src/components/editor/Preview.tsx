@@ -62,6 +62,7 @@ import {
   resolveCanvasFitDimensions,
   getMediaItemCapabilities,
   getVisibleTrackRenderOrder,
+  isOverlayTrack,
   trackHasAudioItems,
 } from "@openreel/core";
 import { useEngineStore } from "../../stores/engine-store";
@@ -1944,14 +1945,29 @@ export const Preview: React.FC = () => {
           ? Math.max(...videoImageTrackIndices)
           : -1;
 
-      const overlayTracksWithIndex = getVisibleTrackRenderOrder(tracks);
+      const foregroundTrackIds = new Set([
+        ...shapeClips.map((clip) => clip.trackId),
+        ...textClips.map((clip) => clip.trackId),
+      ]);
+      const overlayTracksWithIndex = getVisibleTrackRenderOrder(
+        tracks,
+        foregroundTrackIds,
+      );
 
       const tracksToRender = overlayTracksWithIndex.filter(
         ({ originalIndex }) => {
+          const track = tracks[originalIndex];
+          const hasOverlayClip = track
+            ? shapeClips.some((clip) => clip.trackId === track.id)
+              || textClips.some((clip) => clip.trackId === track.id)
+            : false;
+          const foregroundTrack = track
+            ? isOverlayTrack(track) || hasOverlayClip
+            : false;
           if (mode === "below-video") {
-            return originalIndex > highestVideoIndex;
+            return !foregroundTrack && originalIndex > highestVideoIndex;
           } else if (mode === "above-video") {
-            return originalIndex < lowestVideoIndex;
+            return foregroundTrack || originalIndex < lowestVideoIndex;
           }
           return true;
         },
@@ -2931,7 +2947,14 @@ export const Preview: React.FC = () => {
 
         // Render ALL tracks in layer order using painter's algorithm
         // Higher index = rendered first (appears behind), Lower index = rendered last (appears on top)
-        const allRenderableTracks = getVisibleTrackRenderOrder(timelineTracks);
+        const foregroundTrackIds = new Set([
+          ...allShapeClips.map((clip) => clip.trackId),
+          ...allTextClips.map((clip) => clip.trackId),
+        ]);
+        const allRenderableTracks = getVisibleTrackRenderOrder(
+          timelineTracks,
+          foregroundTrackIds,
+        );
 
         let subjectFrame: ImageBitmap | null = null;
         const shouldCompositeSubject = hasBehindSubjectText(activeTextClips);
@@ -3273,7 +3296,14 @@ export const Preview: React.FC = () => {
 
       let hasRenderedContent = false;
 
-      const allRenderableTracks = getVisibleTrackRenderOrder(timelineTracks);
+      const foregroundTrackIds = new Set([
+        ...allShapeClips.map((clip) => clip.trackId),
+        ...allTextClips.map((clip) => clip.trackId),
+      ]);
+      const allRenderableTracks = getVisibleTrackRenderOrder(
+        timelineTracks,
+        foregroundTrackIds,
+      );
 
       for (const { track } of allRenderableTracks) {
         {
@@ -5645,7 +5675,14 @@ export const Preview: React.FC = () => {
               }
             });
 
-            const allRenderableTracks = getVisibleTrackRenderOrder(tracks);
+            const foregroundTrackIds = new Set([
+              ...currentShapeClips.map((clip) => clip.trackId),
+              ...currentTextClips.map((clip) => clip.trackId),
+            ]);
+            const allRenderableTracks = getVisibleTrackRenderOrder(
+              tracks,
+              foregroundTrackIds,
+            );
 
             if (canvasFillModeRef.current === "blur") {
               for (const { originalIndex } of allRenderableTracks) {

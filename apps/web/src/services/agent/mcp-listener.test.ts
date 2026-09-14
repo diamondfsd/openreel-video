@@ -88,6 +88,32 @@ describe("handleMcpBridgeRequest", () => {
     );
   });
 
+  it("does not invalidate the skill when the client refreshes the tool list", async () => {
+    await handleMcpBridgeRequest({
+      callId: "skill-before-discovery",
+      kind: "callTool",
+      name: "get_editing_skill",
+      args: {},
+    });
+    await handleMcpBridgeRequest({ callId: "tools-refresh", kind: "listTools" });
+    h.getTool.mockReturnValue({ readOnly: false });
+    h.executeTool.mockResolvedValue({ ok: true, summary: "Changed" });
+
+    const res = await handleMcpBridgeRequest({
+      callId: "write-after-discovery",
+      kind: "callTool",
+      name: "update_project_settings",
+      args: {},
+    });
+
+    expect(h.executeTool).toHaveBeenCalledWith(
+      "update_project_settings",
+      {},
+      { id: "host" },
+    );
+    expect(res.result).toEqual({ ok: true, summary: "Changed" });
+  });
+
   it("returns image content for local media inspection", async () => {
     const inspectLocalMedia = vi.fn(async () => ({
       mode: "overview" as const,

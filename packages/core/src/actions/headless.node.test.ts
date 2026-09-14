@@ -110,7 +110,7 @@ describe("headless core editing (Node environment)", () => {
     }
 
     expect(project.timeline.tracks).toHaveLength(2);
-    expect(project.timeline.tracks[0].clips[0].speed).toBe(2);
+    expect(project.timeline.tracks.find((track) => track.id === "t1")?.clips[0].speed).toBe(2);
 
     const undo1 = await executor.undo(project);
     expect(undo1.success).toBe(true);

@@ -8,6 +8,7 @@ import {
   getTimelineItems,
   getTrackItems,
   getVisibleTrackRenderOrder,
+  isOverlayTrack,
   trackHasAudioItems,
   trackHasVisualItems,
   withUniversalTracksCapability,
@@ -173,6 +174,29 @@ describe("universal timeline item model", () => {
       ["bottom", 2],
       ["top", 0],
     ]);
+  });
+
+  it("keeps legacy text and graphics tracks in front of media tracks", () => {
+    const video = { ...track, id: "video", type: "video" as const };
+    const text = { ...track, id: "text", type: "text" as const };
+    const graphics = { ...track, id: "graphics", type: "graphics" as const };
+
+    expect(isOverlayTrack(video)).toBe(false);
+    expect(isOverlayTrack(text)).toBe(true);
+    expect(
+      getVisibleTrackRenderOrder([video, text, graphics]).map(({ track: item }) => item.id),
+    ).toEqual(["video", "graphics", "text"]);
+  });
+
+  it("keeps overlay items on a legacy mixed track in front", () => {
+    const video = { ...track, id: "video", type: "video" as const };
+    const mixed = { ...track, id: "mixed", type: "video" as const };
+
+    expect(
+      getVisibleTrackRenderOrder([video, mixed], new Set(["mixed"])).map(
+        ({ track: item }) => item.id,
+      ),
+    ).toEqual(["video", "mixed"]);
   });
 
   it("resolves media and overlays from one legacy-typed track", () => {

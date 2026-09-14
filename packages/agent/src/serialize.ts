@@ -1,4 +1,5 @@
 import type { Project } from "@openreel/core/types/project";
+import { isOverlayTrack } from "@openreel/core";
 
 /**
  * Compact, token-efficient, blob-free views of the project for the agent's read
@@ -42,6 +43,9 @@ export interface TrackView {
   readonly index: number;
   readonly id: string;
   readonly type: string;
+  readonly layer: "overlay" | "media";
+  readonly mode?: "standard";
+  readonly role?: string;
   readonly name: string;
   readonly locked: boolean;
   readonly hidden: boolean;
@@ -61,6 +65,33 @@ export interface ClipView {
   readonly speed: number;
   readonly hasEffects: boolean;
   readonly hasColorGrading: boolean;
+}
+
+export interface OverlayView {
+  readonly id: string;
+  readonly kind: "text" | "shape" | "svg" | "sticker";
+  readonly trackId: string;
+  readonly trackIndex: number;
+  readonly trackType: string;
+  readonly startSec: number;
+  readonly endSec: number;
+  readonly durationSec: number;
+  readonly hasEffects: boolean;
+  readonly text?: string;
+  readonly shapeType?: string;
+  readonly animation?: string;
+  readonly behindSubject?: boolean;
+}
+
+export interface TransitionView {
+  readonly id: string;
+  readonly trackId: string;
+  readonly trackIndex: number;
+  readonly clipAId: string;
+  readonly clipBId?: string;
+  readonly edge?: string;
+  readonly type: string;
+  readonly durationSec: number;
 }
 
 export interface ClipFilter {
@@ -85,12 +116,36 @@ interface RawClip {
 interface RawTrack {
   id: string;
   type: string;
+  mode?: "standard";
+  role?: string;
   name: string;
   locked?: boolean;
   hidden?: boolean;
   muted?: boolean;
   solo?: boolean;
   clips: RawClip[];
+  transitions?: RawTransition[];
+}
+
+interface RawTransition {
+  id: string;
+  clipAId: string;
+  clipBId?: string;
+  edge?: string;
+  type: string;
+  duration: number;
+}
+
+interface RawOverlay {
+  id: string;
+  trackId: string;
+  startTime: number;
+  duration: number;
+  text?: string;
+  shapeType?: string;
+  animation?: { preset?: string };
+  behindSubject?: boolean;
+  effects?: unknown[];
 }
 
 function tracks(project: Project): RawTrack[] {
@@ -153,6 +208,9 @@ export function listTracks(project: Project): TrackView[] {
     index,
     id: t.id,
     type: t.type,
+    layer: isOverlayTrack(t) ? "overlay" : "media",
+    ...(t.mode ? { mode: t.mode } : {}),
+    ...(t.role ? { role: t.role } : {}),
     name: t.name,
     locked: t.locked ?? false,
     hidden: t.hidden ?? false,
@@ -160,6 +218,73 @@ export function listTracks(project: Project): TrackView[] {
     solo: t.solo ?? false,
     clipCount: t.clips.length,
   }));
+}
+
+function overlayArray(project: Project, key: string): readonly RawOverlay[] {
+  const value = (project as unknown as Record<string, unknown>)[key];
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (item): item is RawOverlay => item !== null && typeof item === "object",
+  );
+}
+
+export function listOverlays(project: Project): OverlayView[] {
+  const ts = tracks(project);
+  const definitions: ReadonlyArray<readonly [OverlayView["kind"], string]> = [
+    ["text", "textClips"],
+    ["shape", "shapeClips"],
+    ["svg", "svgClips"],
+    ["sticker", "stickerClips"],
+  ];
+  const overlays: OverlayView[] = [];
+
+  for (const [kind, key] of definitions) {
+    for (const clip of overlayArray(project, key)) {
+      const trackIndex = ts.findIndex((track) => track.id === clip.trackId);
+      const startSec = Number.isFinite(clip.startTime) ? clip.startTime : 0;
+      const durationSec = Number.isFinite(clip.duration) ? clip.duration : 0;
+      overlays.push({
+        id: clip.id,
+        kind,
+        trackId: clip.trackId,
+        trackIndex,
+        trackType: ts[trackIndex]?.type ?? "unknown",
+        startSec,
+        endSec: startSec + durationSec,
+        durationSec,
+        hasEffects: Array.isArray(clip.effects) && clip.effects.length > 0,
+        ...(typeof clip.text === "string" ? { text: clip.text } : {}),
+        ...(typeof clip.shapeType === "string" ? { shapeType: clip.shapeType } : {}),
+        ...(typeof clip.animation?.preset === "string"
+          ? { animation: clip.animation.preset }
+          : {}),
+        ...(typeof clip.behindSubject === "boolean"
+          ? { behindSubject: clip.behindSubject }
+          : {}),
+      });
+    }
+  }
+
+  return overlays.sort(
+    (left, right) => left.startSec - right.startSec
+      || left.trackIndex - right.trackIndex
+      || left.id.localeCompare(right.id),
+  );
+}
+
+export function listTransitions(project: Project): TransitionView[] {
+  return tracks(project).flatMap((track, trackIndex) =>
+    (track.transitions ?? []).map((transition) => ({
+      id: transition.id,
+      trackId: track.id,
+      trackIndex,
+      clipAId: transition.clipAId,
+      ...(transition.clipBId ? { clipBId: transition.clipBId } : {}),
+      ...(transition.edge ? { edge: transition.edge } : {}),
+      type: transition.type,
+      durationSec: transition.duration,
+    })),
+  );
 }
 
 export function listClips(project: Project, filter: ClipFilter = {}): ClipView[] {

@@ -1368,6 +1368,8 @@ export const AssetsPanel: React.FC = () => {
                             5,
                             DEFAULT_TITLE_STYLE,
                           ),
+                      undefined,
+                      "text",
                     );
                     if (created) {
                       select({
@@ -1411,6 +1413,8 @@ export const AssetsPanel: React.FC = () => {
                                 5,
                                 preset.style,
                               ),
+                          undefined,
+                          "text",
                         );
                         if (created) {
                           select({

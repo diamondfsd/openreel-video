@@ -161,12 +161,16 @@ export type ClipAction =
         trackId: string;
         mediaId: string;
         startTime: number;
-        sourceClip?: Clip;
-        /** Pre-assigned ID keeps grouped placement deterministic on redo. */
-        clipId?: string;
-        duration?: number;
-      };
-    }
+      sourceClip?: Clip;
+      /** Pre-assigned ID keeps grouped placement deterministic on redo. */
+      clipId?: string;
+      duration?: number;
+      /** Optional source-media in point. When either point is supplied, duration is derived from the range. */
+      inPoint?: number;
+      /** Optional source-media out point. When either point is supplied, duration is derived from the range. */
+      outPoint?: number;
+    };
+  }
   | { type: "clip/remove"; params: { clipId: string } }
   | {
       type: "clip/move";

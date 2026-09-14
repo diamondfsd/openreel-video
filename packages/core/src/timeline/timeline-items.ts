@@ -54,17 +54,36 @@ export interface TimelineTrackRenderEntry {
   readonly originalIndex: number;
 }
 
+/** Text, graphics, and captions are foreground layers regardless of creation order. */
+export function isOverlayTrack(
+  track: { readonly type: string; readonly role?: string },
+): boolean {
+  return track.type === "text" || track.type === "graphics" || track.role === "captions";
+}
+
 /**
  * Returns visible tracks in canvas painter order. The timeline stores the
  * front-most track at index 0, so rendering must walk from the last visible
- * track to the first.
+ * track to the first. Overlay tracks are treated as foreground layers even
+ * in legacy projects that were saved with them below media tracks.
  */
 export function getVisibleTrackRenderOrder(
   tracks: readonly Track[],
+  foregroundTrackIds?: ReadonlySet<string>,
 ): TimelineTrackRenderEntry[] {
   return tracks
     .map((track, originalIndex) => ({ track, originalIndex }))
     .filter(({ track }) => !track.hidden)
+    .sort((left, right) => {
+      const leftIsOverlay = isOverlayTrack(left.track)
+        || foregroundTrackIds?.has(left.track.id) === true;
+      const rightIsOverlay = isOverlayTrack(right.track)
+        || foregroundTrackIds?.has(right.track.id) === true;
+      if (leftIsOverlay !== rightIsOverlay) {
+        return leftIsOverlay ? -1 : 1;
+      }
+      return left.originalIndex - right.originalIndex;
+    })
     .reverse();
 }
 

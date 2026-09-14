@@ -66,7 +66,7 @@ export function ExternalAgentActivity(): JSX.Element | null {
     void initialize();
   }, [initialize]);
 
-  if (error) {
+  if ((!available || !session) && error) {
     return (
       <div className="rounded-md border border-status-error/30 bg-status-error/10 px-2.5 py-2 text-[11px] text-status-error">
         {error}
@@ -101,13 +101,23 @@ export function ExternalAgentActivity(): JSX.Element | null {
 
   const terminal = session.status === "completed" || session.status === "failed" || session.status === "cancelled";
   const progressVariant = session.status === "failed" ? "error" : session.status === "completed" ? "success" : "accent";
-  const lastEvent = events.at(-1);
+  const sessionEvents = events.filter(
+    (event) => event.session.sessionId === session.sessionId,
+  );
+  const lastEvent = sessionEvents.at(-1);
   const activeToolLabel = lastEvent?.type === "tool-start" && lastEvent.toolName
     ? TOOL_PROGRESS_LABELS[lastEvent.toolName] ?? "执行编辑操作"
     : null;
-  const lastToolFailure = [...events].reverse().find(
-    (event) => event.type === "tool-finished" && event.ok === false,
+  const lastToolFinished = [...sessionEvents].reverse().find(
+    (event) => event.type === "tool-finished",
   );
+  const lastToolStart = [...sessionEvents].reverse().find(
+    (event) => event.type === "tool-start",
+  );
+  const lastToolFailure = lastToolFinished?.ok === false
+    && (!lastToolStart || lastToolStart.sequence < lastToolFinished.sequence)
+    ? lastToolFinished
+    : null;
   const decideExport = async (approved: boolean): Promise<void> => {
     if (exportDecisionBusy) return;
     setExportDecisionBusy(true);
@@ -157,6 +167,12 @@ export function ExternalAgentActivity(): JSX.Element | null {
           {lastToolFailure.error?.suggestedAction && (
             <div className="text-status-error/80">{lastToolFailure.error.suggestedAction}</div>
           )}
+        </div>
+      )}
+
+      {error && !lastToolFailure && (
+        <div className="rounded border border-status-error/30 bg-status-error/10 px-2 py-1.5 text-[10px] text-status-error">
+          {error}
         </div>
       )}
 

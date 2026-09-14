@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { listClips } from "./serialize";
+import { listClips, listOverlays, listTracks, listTransitions } from "./serialize";
 import type { Project } from "@openreel/core/types/project";
 
 function projectWithClips(n: number): Project {
@@ -62,5 +62,63 @@ describe("listClips pagination", () => {
 
   it("clamps offset past the end to an empty page", () => {
     expect(listClips(projectWithClips(3), { offset: 10, limit: 5 })).toHaveLength(0);
+  });
+});
+
+describe("timeline readbacks", () => {
+  it("exposes overlay and transition ownership for agent verification", () => {
+    const project = projectWithClips(1);
+    project.timeline.tracks.push({
+      id: "t2",
+      type: "text",
+      name: "Text 1",
+      clips: [],
+      transitions: [{
+        id: "tr1",
+        clipAId: "c0",
+        clipBId: "c1",
+        type: "crossfade",
+        duration: 0.25,
+        params: {},
+      }],
+      locked: false,
+      hidden: false,
+      muted: false,
+      solo: false,
+    });
+    (project as unknown as { textClips: unknown[] }).textClips = [{
+      id: "title-1",
+      trackId: "t2",
+      startTime: 0.5,
+      duration: 1,
+      text: "旅行",
+      style: {},
+      transform: {},
+      keyframes: [],
+      animation: { preset: "fade" },
+      effects: [],
+    }];
+
+    expect(listTracks(project)).toEqual(expect.arrayContaining([
+      expect.objectContaining({ index: 1, id: "t2", layer: "overlay", type: "text" }),
+    ]));
+    expect(listOverlays(project)).toEqual([
+      expect.objectContaining({
+        id: "title-1",
+        trackIndex: 1,
+        startSec: 0.5,
+        endSec: 1.5,
+        animation: "fade",
+      }),
+    ]);
+    expect(listTransitions(project)).toEqual([
+      expect.objectContaining({
+        id: "tr1",
+        trackId: "t2",
+        trackIndex: 1,
+        type: "crossfade",
+        durationSec: 0.25,
+      }),
+    ]);
   });
 });

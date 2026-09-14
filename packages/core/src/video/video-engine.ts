@@ -658,8 +658,16 @@ export class VideoEngine {
     const activeStickerClips = this.getActiveStickerClips(timeline, time);
     const activeSubtitles = this.getActiveSubtitles(timeline, time);
 
-
-    const allRenderableTracks = getVisibleTrackRenderOrder(timeline.tracks);
+    const foregroundTrackIds = new Set([
+      ...(project.textClips ?? []).map((clip) => clip.trackId),
+      ...(project.shapeClips ?? []).map((clip) => clip.trackId),
+      ...(project.svgClips ?? []).map((clip) => clip.trackId),
+      ...(project.stickerClips ?? []).map((clip) => clip.trackId),
+    ]);
+    const allRenderableTracks = getVisibleTrackRenderOrder(
+      timeline.tracks,
+      foregroundTrackIds,
+    );
 
     if (
       !this.compositeCanvas ||

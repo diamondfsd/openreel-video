@@ -579,6 +579,7 @@ export class LiveEditorHost implements EditingHost {
             options.style as Partial<TextStyle> | undefined,
           ),
       options.trackId,
+      "text",
     );
     if (!clip) throw new Error("Failed to create text overlay");
 
@@ -615,6 +616,7 @@ export class LiveEditorHost implements EditingHost {
             style,
           ),
       options.trackId,
+      "graphics",
     );
     if (!clip) throw new Error("Failed to create shape overlay");
 
@@ -749,6 +751,7 @@ export class LiveEditorHost implements EditingHost {
         return useProjectStore.getState().createStickerClip(clip);
       },
       options.trackId,
+      "graphics",
     );
     if (!created) throw new Error("Failed to create sticker overlay");
     return { id: created.id, trackId: created.trackId };
@@ -788,6 +791,7 @@ export class LiveEditorHost implements EditingHost {
             options.durationSec,
           ),
       options.trackId,
+      "graphics",
     );
     if (!clip) throw new Error("Failed to create SVG overlay");
     return { id: clip.id, trackId: clip.trackId };

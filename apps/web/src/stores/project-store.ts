@@ -42,6 +42,7 @@ import {
   getBuiltInEditingTemplates,
   getMotionPreset,
   getTrackItems,
+  isOverlayTrack,
   motionEngine,
   normalizeGeneratedShaders,
   normalizeProjectMotionFields,
@@ -104,6 +105,23 @@ import {
 } from "../motion/creation-camera-editing";
 import { planRecoverMotionScene3DLayer } from "../motion/creation-recovery";
 import type { OpenReelLunaAsset } from "../types/global";
+
+function normalizeOverlayTrackOrder(project: Project): Project {
+  const overlayTracks = project.timeline.tracks.filter((track) => isOverlayTrack(track));
+  if (overlayTracks.length === 0) return project;
+
+  const mediaTracks = project.timeline.tracks.filter((track) => !isOverlayTrack(track));
+  const tracks = [...overlayTracks, ...mediaTracks];
+  const alreadyNormalized = tracks.every(
+    (track, index) => track.id === project.timeline.tracks[index]?.id,
+  );
+  if (alreadyNormalized) return project;
+
+  return {
+    ...project,
+    timeline: { ...project.timeline, tracks },
+  };
+}
 
 /**
  * ProjectState - Complete state interface for project management
@@ -1742,7 +1760,9 @@ export const useProjectStore = create<ProjectState>()(
       },
 
       loadProject: (incomingProject: Project) => {
-        const motionNormalized = normalizeProjectMotionFields(incomingProject);
+        const motionNormalized = normalizeOverlayTrackOrder(
+          normalizeProjectMotionFields(incomingProject),
+        );
         const project: Project = {
           ...motionNormalized,
           generatedShaders: normalizeGeneratedShaders(

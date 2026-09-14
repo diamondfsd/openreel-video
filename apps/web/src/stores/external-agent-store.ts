@@ -38,6 +38,14 @@ function agentBridge(): NonNullable<typeof window.openreel>["lunaAgent"] {
 function applyEvent(event: OpenReelAgentEvent): void {
   useExternalAgentStore.setState((state) => {
     if (event.sequence <= state.lastSequence) return state;
+    const isNewSession = state.session?.sessionId !== event.session.sessionId;
+    const startsSession = event.type === "session-created"
+      || event.type === "session-claimed"
+      || event.type === "request-updated";
+    const clearsError = isNewSession
+      || startsSession
+      || event.type === "tool-start"
+      || (event.type === "tool-finished" && event.ok !== false);
     return {
       session: event.session,
       awaitingAgent: event.type === "session-created" || event.type === "session-claimed"
@@ -45,7 +53,11 @@ function applyEvent(event: OpenReelAgentEvent): void {
         : state.awaitingAgent,
       events: [...state.events, event].slice(-MAX_VISIBLE_EVENTS),
       lastSequence: event.sequence,
-      error: event.type === "error" ? event.message ?? "外部 Agent 执行失败" : state.error,
+      error: event.type === "error"
+        ? event.message ?? "外部 Agent 执行失败"
+        : clearsError
+          ? null
+          : state.error,
     };
   });
 }
