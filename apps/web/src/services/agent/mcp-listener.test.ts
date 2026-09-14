@@ -46,6 +46,8 @@ import { handleMcpBridgeRequest } from "./mcp-listener";
 describe("handleMcpBridgeRequest", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    delete h.liveHost.importMediaFromLocalMedia;
+    delete h.liveHost.requireOpenProject;
     h.requiresUserConfirmation.mockImplementation((name) => name === "delete_media");
     h.getTool.mockReturnValue({ domain: "read" });
     h.toMcpTools.mockReturnValue([
@@ -61,13 +63,14 @@ describe("handleMcpBridgeRequest", () => {
   it("returns the registry for listTools", async () => {
     const res = await handleMcpBridgeRequest({ callId: "c1", kind: "listTools" });
     expect(res.ok).toBe(true);
-    expect(res.result).toHaveLength(8);
+    expect(res.result).toHaveLength(9);
     expect((res.result as Array<{ name: string }>).map((tool) => tool.name)).toEqual([
       "get_editing_skill",
       "list_clips",
       "confirm_media_deletion",
       "list_local_media",
       "import_local_media",
+      "get_local_media_import_status",
       "inspect_local_media",
       "create_media_contact_sheet",
       "transcribe_local_media",
@@ -258,6 +261,7 @@ describe("handleMcpBridgeRequest", () => {
   });
 
   it("returns per-media outcomes for partial local imports", async () => {
+    h.liveHost.requireOpenProject = vi.fn();
     h.liveHost.importMediaFromLocalMedia = vi.fn()
       .mockResolvedValueOnce({ mediaId: "imported-a", name: "a.mp4", type: "video", durationSec: 2 })
       .mockRejectedValueOnce(new Error("本地素材不存在或已被移除，请重新调用 list_local_media"));
@@ -270,10 +274,30 @@ describe("handleMcpBridgeRequest", () => {
     });
 
     expect(res.ok).toBe(true);
+    const initialData = (res.result as {
+      data?: { jobId?: string; status?: string };
+    }).data;
+    expect(initialData?.jobId).toEqual(expect.any(String));
+    expect(["queued", "processing"]).toContain(initialData?.status);
+
+    let statusRes;
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      statusRes = await handleMcpBridgeRequest({
+        callId: `import-status-${attempt}`,
+        kind: "callTool",
+        name: "get_local_media_import_status",
+        args: { jobId: initialData?.jobId },
+      });
+      const status = (statusRes.result as { data?: { status?: string } }).data?.status;
+      if (status === "completed" || status === "partial" || status === "failed") break;
+    }
+
     expect(h.liveHost.importMediaFromLocalMedia).toHaveBeenCalledTimes(2);
-    expect(res.result).toEqual(expect.objectContaining({
+    expect(statusRes).toBeDefined();
+    expect((statusRes?.result as { data?: { status?: string } }).data?.status).toBe("partial");
+    expect(statusRes?.result).toEqual(expect.objectContaining({
       ok: true,
-      error: expect.objectContaining({ code: "PARTIAL_SUCCESS" }),
       data: expect.objectContaining({
         status: "partial",
         importedMediaIds: ["imported-a"],
