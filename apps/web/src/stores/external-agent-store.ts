@@ -22,6 +22,8 @@ export interface ExternalAgentState {
   initialize: () => Promise<void>;
   submit: (request: string, projectId?: string | null) => Promise<void>;
   cancel: () => Promise<void>;
+  confirmExport: () => Promise<void>;
+  denyExport: () => Promise<void>;
   markPromptGenerated: () => void;
   clearError: () => void;
 }
@@ -122,6 +124,30 @@ export const useExternalAgentStore = create<ExternalAgentState>((set, get) => ({
       set({ session: next, error: null });
     } catch (error) {
       set({ error: error instanceof Error ? error.message : "无法停止剪辑任务" });
+    }
+  },
+
+  confirmExport: async () => {
+    const bridge = agentBridge();
+    const session = get().session;
+    if (!bridge || !session || session.exportConfirmation !== "pending") return;
+    try {
+      const next = await bridge.confirmExport(session.sessionId);
+      set({ session: next, error: null });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : "无法确认导出" });
+    }
+  },
+
+  denyExport: async () => {
+    const bridge = agentBridge();
+    const session = get().session;
+    if (!bridge || !session || session.exportConfirmation !== "pending") return;
+    try {
+      const next = await bridge.denyExport(session.sessionId);
+      set({ session: next, error: null });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : "无法取消导出" });
     }
   },
 

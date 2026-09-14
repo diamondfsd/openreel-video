@@ -21,21 +21,11 @@ import {
   isSessionUnlocked,
 } from "../../../services/secure-storage";
 
-const SUGGESTIONS: ReadonlyArray<string> = [
-  "为前 3 秒添加标题‘欢迎’",
-  "裁剪第一个片段末尾的 2 秒",
-  "为开场片段添加淡入效果",
-  "列出当前时间线中的全部内容",
-];
-
 function EmptyState({
   hasOpenProject,
 }: {
   hasOpenProject: boolean;
 }): JSX.Element {
-  const send = useChatStore((s) => s.send);
-  const submitExternalRequest = useExternalAgentStore((s) => s.submit);
-  const projectId = useProjectStore((s) => (s.hasOpenProject ? s.project.id : null));
   const externalAvailable = typeof window !== "undefined" && Boolean(window.openreel?.lunaAgent);
   const provider = useSettingsStore((s) => s.defaultLlmProvider);
   const openSettings = useSettingsStore((s) => s.openSettings);
@@ -85,20 +75,8 @@ function EmptyState({
         </div>
         <div className="text-[13px] font-medium text-fg">外部 Agent</div>
         <Text type="supporting" color="secondary" className="mt-1 max-w-[14rem] text-[11px] leading-relaxed text-fg-muted">
-          输入剪辑要求，外部 Agent 会直接在项目中执行。
+          输入目标，生成提示词并复制到外部 AI 工具。
         </Text>
-        <div className="mt-4 w-full space-y-1.5">
-          {SUGGESTIONS.map((suggestion) => (
-            <Button
-              key={suggestion}
-              label={suggestion}
-              variant="ghost"
-              size="sm"
-              onClick={() => void submitExternalRequest(suggestion, projectId)}
-              className="w-full rounded-md border border-border bg-bg-1/60 px-2.5 py-1.5 text-left text-[11px] text-fg-2 transition-colors hover:border-accent/50 hover:bg-hover hover:text-fg"
-            />
-          ))}
-        </div>
       </div>
     );
   }
@@ -142,20 +120,6 @@ function EmptyState({
             onClick={() => openSettings(setup === "endpoint" ? "general" : "api-keys")}
             className="mt-2 w-full"
           />
-        </div>
-      )}
-      {hasOpenProject && setup === "ready" && (
-        <div className="mt-4 w-full space-y-1.5">
-          {SUGGESTIONS.map((s) => (
-            <Button
-              key={s}
-              label={s}
-              variant="ghost"
-              size="sm"
-              onClick={() => void send(s)}
-              className="w-full rounded-md border border-border bg-bg-1/60 px-2.5 py-1.5 text-left text-[11px] text-fg-2 transition-colors hover:border-accent/50 hover:bg-hover hover:text-fg"
-            />
-          ))}
         </div>
       )}
     </div>
@@ -320,7 +284,7 @@ export function ChatPanel({
         )}
       </div>
 
-      <ChatComposer />
+      <ChatComposer promptOnly={externalAvailable} />
     </div>
   );
 }

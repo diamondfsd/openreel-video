@@ -34,6 +34,7 @@ export function ChatComposer({ promptOnly = false }: ChatComposerProps): JSX.Ele
     : externalAvailable
       ? false
       : status === "running" || status === "awaiting_confirm";
+  const promptGenerationMode = promptOnly && !externalBusy;
 
   useEffect(() => {
     if (externalAvailable) void initializeExternalAgent();
@@ -43,7 +44,13 @@ export function ChatComposer({ promptOnly = false }: ChatComposerProps): JSX.Ele
     const value = text.trim();
     if (!value || busy) return;
 
-    if (promptOnly) {
+    if (externalBusy) {
+      setText("");
+      void submitExternalRequest(value, projectId);
+      return;
+    }
+
+    if (promptGenerationMode) {
       const bridge = window.openreel?.lunaAgent;
       if (!bridge) {
         setGenerationError("外部 AI 工具尚未准备好");
@@ -71,7 +78,7 @@ export function ChatComposer({ promptOnly = false }: ChatComposerProps): JSX.Ele
     } else {
       void send(value);
     }
-  }, [text, busy, externalAvailable, projectId, markPromptGenerated, promptOnly, send, submitExternalRequest]);
+  }, [text, busy, externalAvailable, externalBusy, projectId, markPromptGenerated, promptGenerationMode, send, submitExternalRequest]);
 
   const onKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -87,17 +94,17 @@ export function ChatComposer({ promptOnly = false }: ChatComposerProps): JSX.Ele
     <div className="border-t border-border p-2">
       <div className="relative rounded-lg border border-border bg-bg-2 transition-colors focus-within:border-accent">
         <ToolcraftTextAreaControl
-          label={promptOnly ? "剪辑目标" : "AI 编辑请求"}
+          label={promptGenerationMode ? "剪辑目标" : "AI 编辑请求"}
           isLabelHidden
           value={text}
           onChange={setText}
           onKeyDown={onKeyDown}
           rows={2}
-          placeholder={promptOnly ? "描述剪辑目标，生成提示词…" : "告诉 AI 如何编辑视频…"}
+          placeholder={promptGenerationMode ? "描述剪辑目标，生成提示词…" : externalBusy ? "输入对当前剪辑的修改要求…" : "告诉 AI 如何编辑视频…"}
           inputClassName="block w-full resize-none bg-transparent px-3 py-2 pr-11 text-[13px] text-fg outline-none placeholder:text-fg-muted"
         />
         <div className="absolute bottom-1.5 right-1.5">
-          {promptOnly ? (
+          {promptGenerationMode ? (
             <IconButton
               label={generatingPrompt ? "正在生成提示词" : "生成剪辑提示词"}
               icon={<Send size={12} aria-hidden />}
@@ -152,7 +159,7 @@ export function ChatComposer({ promptOnly = false }: ChatComposerProps): JSX.Ele
         </div>
       </div>
       <div className="mt-1 px-1 text-[10px] text-fg-muted">
-        按 Enter {promptOnly ? "生成提示词" : "发送"}，按 Shift+Enter 换行
+        按 Enter {promptGenerationMode ? "生成提示词" : externalBusy ? "更新要求" : "发送"}，按 Shift+Enter 换行
       </div>
       {generationError && (
         <div className="mt-2 px-1 text-[10px] text-status-error" role="alert">

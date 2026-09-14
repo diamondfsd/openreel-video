@@ -229,6 +229,9 @@ export interface OpenReelAgentSession {
   updatedAt: string;
   cancelRequested: boolean;
   agentId: string | null;
+  agentType: string | null;
+  agentModel: string | null;
+  exportConfirmation: "idle" | "pending";
   result?: {
     projectId?: string;
     projectName?: string;
@@ -238,7 +241,7 @@ export interface OpenReelAgentSession {
 }
 
 export interface OpenReelAgentEvent {
-  type: "session-created" | "session-claimed" | "request-updated" | "progress" | "result" | "error" | "cancel-requested" | "cancelled" | "tool-start" | "tool-finished";
+  type: "session-created" | "session-claimed" | "request-updated" | "progress" | "result" | "error" | "cancel-requested" | "cancelled" | "export-confirmation-required" | "export-confirmed" | "export-denied" | "tool-start" | "tool-finished";
   sequence: number;
   timestamp: string;
   session: OpenReelAgentSession;
@@ -248,6 +251,12 @@ export interface OpenReelAgentEvent {
   args?: Record<string, unknown>;
   ok?: boolean;
   summary?: string;
+  error?: {
+    code: string;
+    message: string;
+    retryable?: boolean;
+    suggestedAction?: string;
+  };
   durationMs?: number;
 }
 
@@ -261,6 +270,8 @@ export interface OpenReelAgentApi {
   createRequest(request: string, projectId?: string | null): Promise<OpenReelAgentSession>;
   updateRequest(sessionId: string, request: string): Promise<OpenReelAgentSession>;
   cancelRequest(sessionId: string): Promise<OpenReelAgentSession>;
+  confirmExport(sessionId: string): Promise<OpenReelAgentSession>;
+  denyExport(sessionId: string): Promise<OpenReelAgentSession>;
   getSnapshot(): Promise<OpenReelAgentSnapshot>;
   onEvent(handler: (event: OpenReelAgentEvent) => void): () => void;
   onActivate(handler: () => void): () => void;
@@ -414,6 +425,49 @@ declare global {
             }>;
             error?: string;
           }>;
+        }>;
+        createMediaContactSheet(mediaIds: string[], options?: {
+          mode?: "overview" | "detail";
+          maxWidth?: number;
+          columns?: number;
+        }): Promise<{
+          mode: "overview" | "detail";
+          maxWidth: number;
+          items: Array<{
+            mediaId: string;
+            name: string;
+            kind: "image" | "video";
+            duration?: number;
+            capturedAt: string | null;
+            frames: Array<{
+              timeSec: number;
+              mimeType: "image/jpeg";
+              base64: string;
+            }>;
+            error?: string;
+          }>;
+          contactSheet: {
+            mimeType: "image/jpeg";
+            base64: string;
+            width: number;
+            height: number;
+            columns: number;
+            rows: number;
+            cellWidth: number;
+            cellHeight: number;
+            gap: number;
+            cells: Array<{
+              mediaId: string;
+              frameIndex: number;
+              frameId: string;
+              timeSec: number;
+              sheetIndex: number;
+              x: number;
+              y: number;
+              width: number;
+              height: number;
+            }>;
+          };
         }>;
         transcribeLocalMedia(mediaId: string, options?: {
           startSec?: number;

@@ -11,6 +11,14 @@ import { useMotionStore } from "../../motion/stores/motion-store";
 import { useUIStore } from "../../stores/ui-store";
 import { resolveMotionCreatorPreviewTime } from "../../motion/composition-selection";
 import { LUNA_EDITING_SKILL } from "./luna-editing-skill";
+import {
+  annotateContactSheet,
+  buildContactSheetIndexText,
+  contactSheetFrameLabel,
+  formatContactSheetCaptureTime,
+  formatContactSheetFrameTime,
+  type ContactSheetAnnotationFrame,
+} from "./contact-sheet-annotation";
 
 export interface McpBridgeRequest {
   readonly callId: string;
@@ -137,6 +145,42 @@ const LOCAL_MEDIA_TOOLS = [
     },
   },
   {
+    name: "create_media_contact_sheet",
+    description:
+      "Create one labeled JPEG contact sheet from built-in representative frames for fast visual review of many local media files. Each cell shows a stable number, short media name, media type, and video time or photo capture time. The result also keeps explicit mediaId, frameId, frameIndex, timecode, and cell coordinates in data.items[].frames[].",
+    inputSchema: {
+      type: "object",
+      properties: {
+        mediaIds: {
+          type: "array",
+          items: { type: "string" },
+          minItems: 1,
+          maxItems: 50,
+          description: "Media IDs returned by list_local_media.",
+        },
+        mode: {
+          type: "string",
+          enum: ["overview", "detail"],
+          description: "Overview returns one frame per media; detail returns three video frames per media.",
+        },
+        maxWidth: {
+          type: "integer",
+          minimum: 160,
+          maximum: 480,
+          description: "Maximum width of each contact-sheet cell in pixels. Defaults to 320.",
+        },
+        columns: {
+          type: "integer",
+          minimum: 1,
+          maximum: 6,
+          description: "Number of columns in the contact sheet. Defaults to 4.",
+        },
+      },
+      required: ["mediaIds"],
+      additionalProperties: false,
+    },
+  },
+  {
     name: "transcribe_local_media",
     description:
       "Transcribe Chinese speech from a local video with Luna's built-in speech model and return timestamped cues. Long videos are automatically processed in time chunks with overlap context so the editor stays responsive. Use this first for talking-head, interview, narration, tutorial, and dialogue edits; no external dependencies are required.",
@@ -176,13 +220,45 @@ const LOCAL_MEDIA_TOOLS = [
   },
 ] as const;
 
+interface LocalMediaToolError {
+  code: string;
+  message: string;
+  retryable?: boolean;
+  suggestedAction?: string;
+}
+
 function localMediaToolResult(
   ok: boolean,
   summary: string,
   data?: unknown,
-  error?: { code: string; message: string },
-): { ok: boolean; summary: string; data?: unknown; error?: { code: string; message: string } } {
+  error?: LocalMediaToolError,
+): { ok: boolean; summary: string; data?: unknown; error?: LocalMediaToolError } {
   return { ok, summary, ...(data === undefined ? {} : { data }), ...(error ? { error } : {}) };
+}
+
+function contactSheetToolError(message: string): LocalMediaToolError {
+  if (/宽度|列数|参数|width|columns/i.test(message)) {
+    return {
+      code: "INVALID_PARAMS",
+      message,
+      retryable: true,
+      suggestedAction: "调整 maxWidth 或 columns 后最多重试一次；仍失败时停止当前步骤并上报失败",
+    };
+  }
+  if (/没有可用于生成联络表的预览帧|没有可用/i.test(message)) {
+    return {
+      code: "CONTACT_SHEET_NO_FRAMES",
+      message,
+      retryable: false,
+      suggestedAction: "改用 inspect_local_media 检查可用素材，或缩小 mediaIds 范围",
+    };
+  }
+  return {
+    code: "CONTACT_SHEET_RENDER_FAILED",
+    message,
+    retryable: true,
+    suggestedAction: "调整 maxWidth 或 columns 后最多重试一次；再次失败时停止当前步骤并上报失败",
+  };
 }
 
 function localMediaImportErrorCode(message: string): string {
@@ -274,6 +350,82 @@ async function handleLocalMediaTool(
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       return { ok: true, result: localMediaToolResult(false, message, undefined, { code: "LOCAL_MEDIA_ERROR", message }) };
+    }
+  }
+
+  if (name === "create_media_contact_sheet") {
+    const bridge = window.openreel?.lunaMedia;
+    if (typeof bridge?.createMediaContactSheet !== "function") {
+      return { ok: true, result: localMediaToolResult(false, "Contact-sheet generation is unavailable", undefined, { code: "UNSUPPORTED", message: "素材联络表不可用" }) };
+    }
+    const mediaIds = Array.isArray(args.mediaIds)
+      ? args.mediaIds.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+      : [];
+    if (mediaIds.length === 0) {
+      return { ok: true, result: localMediaToolResult(false, "mediaIds is required", undefined, { code: "INVALID_PARAMS", message: "请传入 list_local_media 返回的 mediaIds" }) };
+    }
+    const mode = args.mode === "detail" ? "detail" : "overview";
+    const maxWidth = typeof args.maxWidth === "number" ? args.maxWidth : undefined;
+    const columns = typeof args.columns === "number" ? args.columns : undefined;
+    try {
+      const sheet = await bridge.createMediaContactSheet(mediaIds, {
+        mode,
+        ...(maxWidth === undefined ? {} : { maxWidth }),
+        ...(columns === undefined ? {} : { columns }),
+      });
+      const annotationFrames: ContactSheetAnnotationFrame[] = sheet.items.flatMap((item) => item.frames.map((frame, frameIndex) => ({
+        mediaId: item.mediaId,
+        frameIndex,
+        frameId: `${item.mediaId}#${frameIndex}`,
+        timeSec: frame.timeSec,
+        name: item.name,
+        kind: item.kind,
+        capturedAt: item.capturedAt,
+        base64: frame.base64,
+      })));
+      const annotatedSheet = await annotateContactSheet(sheet.contactSheet, annotationFrames);
+      const cellsByFrameId = new Map(sheet.contactSheet.cells.map((cell) => [cell.frameId, cell]));
+      const publicItems = sheet.items.map((item) => ({
+        mediaId: item.mediaId,
+        name: item.name,
+        kind: item.kind,
+        ...(item.duration === undefined ? {} : { duration: item.duration }),
+        capturedAt: item.capturedAt,
+        frames: item.frames.map((frame, frameIndex) => {
+          const frameId = `${item.mediaId}#${frameIndex}`;
+          const cell = cellsByFrameId.get(frameId);
+          return {
+            frameIndex,
+            frameId,
+            mediaId: item.mediaId,
+            timeSec: frame.timeSec,
+            timecode: formatContactSheetFrameTime(frame.timeSec),
+            ...(cell ? { label: contactSheetFrameLabel(cell.sheetIndex), sheetNumber: cell.sheetIndex + 1 } : {}),
+            ...(item.kind === "image" && item.capturedAt ? { captureTime: formatContactSheetCaptureTime(item.capturedAt) } : {}),
+            ...(cell ? { cell: { sheetIndex: cell.sheetIndex, x: cell.x, y: cell.y, width: cell.width, height: cell.height } } : {}),
+          };
+        }),
+        ...(item.error ? { error: item.error } : {}),
+      }));
+      const { base64: _base64, ...contactSheetMetadata } = sheet.contactSheet;
+      const data = {
+        mode: sheet.mode,
+        maxWidth: sheet.maxWidth,
+        items: publicItems,
+        contactSheet: { ...contactSheetMetadata, labeled: annotatedSheet.labeled },
+      };
+      return {
+        ok: true,
+        result: localMediaToolResult(true, `Created a labeled contact sheet for ${sheet.items.length} local media file${sheet.items.length === 1 ? "" : "s"}`, data),
+        content: [
+          { type: "text", text: JSON.stringify(data) },
+          { type: "text", text: buildContactSheetIndexText(annotationFrames, sheet.contactSheet.cells) },
+          { type: "image", data: annotatedSheet.base64, mimeType: sheet.contactSheet.mimeType },
+        ],
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { ok: true, result: localMediaToolResult(false, message, undefined, contactSheetToolError(message)) };
     }
   }
 

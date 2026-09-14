@@ -61,7 +61,7 @@ describe("handleMcpBridgeRequest", () => {
   it("returns the registry for listTools", async () => {
     const res = await handleMcpBridgeRequest({ callId: "c1", kind: "listTools" });
     expect(res.ok).toBe(true);
-    expect(res.result).toHaveLength(7);
+    expect(res.result).toHaveLength(8);
     expect((res.result as Array<{ name: string }>).map((tool) => tool.name)).toEqual([
       "get_editing_skill",
       "list_clips",
@@ -69,6 +69,7 @@ describe("handleMcpBridgeRequest", () => {
       "list_local_media",
       "import_local_media",
       "inspect_local_media",
+      "create_media_contact_sheet",
       "transcribe_local_media",
     ]);
     expect(h.executeTool).not.toHaveBeenCalled();
@@ -126,6 +127,107 @@ describe("handleMcpBridgeRequest", () => {
       mediaId: "local-media:test.jpg",
       timeSec: 0,
     });
+    delete (window as Window & { openreel?: unknown }).openreel;
+  });
+
+  it("returns one contact-sheet image with explicit cell metadata", async () => {
+    const createMediaContactSheet = vi.fn(async () => ({
+      mode: "overview" as const,
+      maxWidth: 320,
+      items: [{
+        mediaId: "local-media:a.jpg",
+        name: "a.jpg",
+        kind: "image" as const,
+        capturedAt: null,
+        frames: [{ timeSec: 0, mimeType: "image/jpeg" as const, base64: "ignored-frame" }],
+      }],
+      contactSheet: {
+        mimeType: "image/jpeg" as const,
+        base64: "c2hlZXQ=",
+        width: 332,
+        height: 194,
+        columns: 1,
+        rows: 1,
+        cellWidth: 320,
+        cellHeight: 180,
+        gap: 6,
+        cells: [{
+          mediaId: "local-media:a.jpg",
+          frameIndex: 0,
+          frameId: "local-media:a.jpg#0",
+          timeSec: 0,
+          sheetIndex: 0,
+          x: 6,
+          y: 6,
+          width: 320,
+          height: 180,
+        }],
+      },
+    }));
+    (window as unknown as { openreel?: unknown }).openreel = {
+      lunaMedia: { createMediaContactSheet },
+    };
+
+    const originalImage = globalThis.Image;
+    vi.stubGlobal("Image", undefined);
+    const res = await handleMcpBridgeRequest({
+      callId: "contact-sheet",
+      kind: "callTool",
+      name: "create_media_contact_sheet",
+      args: { mediaIds: ["local-media:a.jpg"], columns: 1 },
+    });
+    vi.stubGlobal("Image", originalImage);
+
+    expect(res.ok).toBe(true);
+    expect(createMediaContactSheet).toHaveBeenCalledWith(
+      ["local-media:a.jpg"],
+      { mode: "overview", columns: 1 },
+    );
+    expect(res.content).toHaveLength(3);
+    expect(res.content?.[0]).toEqual(expect.objectContaining({ type: "text" }));
+    expect(res.content?.[1]).toEqual(expect.objectContaining({
+      type: "text",
+      text: expect.stringContaining("#01 | a.jpg | PHOTO | 拍摄 未知 | mediaId=local-media:a.jpg | frameId=local-media:a.jpg#0"),
+    }));
+    expect(res.content?.[2]).toEqual({ type: "image", data: "c2hlZXQ=", mimeType: "image/jpeg" });
+    expect((res.result as { data?: { items?: Array<{ frames: Array<Record<string, unknown>> }> } }).data?.items?.[0]?.frames?.[0]).toEqual({
+      frameIndex: 0,
+      frameId: "local-media:a.jpg#0",
+      mediaId: "local-media:a.jpg",
+      timeSec: 0,
+      timecode: "00:00.0",
+      label: "#01",
+      sheetNumber: 1,
+      cell: { sheetIndex: 0, x: 6, y: 6, width: 320, height: 180 },
+    });
+    delete (window as Window & { openreel?: unknown }).openreel;
+  });
+
+  it("returns structured retry guidance when contact-sheet rendering fails", async () => {
+    const createMediaContactSheet = vi.fn(async () => {
+      throw new Error("[Parsed_pad_1] Padded dimensions cannot be smaller than input dimensions.");
+    });
+    (window as unknown as { openreel?: unknown }).openreel = {
+      lunaMedia: { createMediaContactSheet },
+    };
+
+    const res = await handleMcpBridgeRequest({
+      callId: "contact-sheet-failure",
+      kind: "callTool",
+      name: "create_media_contact_sheet",
+      args: { mediaIds: ["local-media:a.jpg"], maxWidth: 240, columns: 5 },
+    });
+
+    expect(res.ok).toBe(true);
+    expect(res.result).toEqual(expect.objectContaining({
+      ok: false,
+      error: {
+        code: "CONTACT_SHEET_RENDER_FAILED",
+        message: "[Parsed_pad_1] Padded dimensions cannot be smaller than input dimensions.",
+        retryable: true,
+        suggestedAction: expect.stringContaining("最多重试一次"),
+      },
+    }));
     delete (window as Window & { openreel?: unknown }).openreel;
   });
 

@@ -10,19 +10,19 @@ export const LUNA_EDITING_SKILL = `# Luna AI Cut 剪辑 Skill
 
 ## 任务会话与工具契约
 
-1. 完成 MCP initialize 后调用 tools/list。若返回的 _meta.luna.editorToolsReady 为 false，说明编辑器页面尚未就绪：先领取或创建任务、调用 activate_luna_window，再重新调用 tools/list；不要在编辑工具列表不完整时猜工具。
-2. Luna 聊天页提交的任务先调用 wait_for_edit_request。若返回 state=idle，这不是失败；如果当前用户要求来自外部 Agent 对话，调用 start_edit_session，传入当前对话中的用户原始要求和稳定 agentId。该工具会创建并立即领取任务。
+1. 通过当前连接调用工具清单接口。若返回的 editorToolsReady 为 false，说明编辑器页面尚未就绪：先领取或创建任务、调用 activate_luna_window，再重新获取工具清单；不要在编辑工具列表不完整时猜工具。
+2. 先准备稳定 agentId、agentType 和实际使用的 agentModel。Luna 聊天页提交的任务调用 wait_for_edit_request 并携带这三项身份；若任务来自外部 Agent 对话，调用 start_edit_session，传入当前对话中的用户原始要求和同一身份。两条入口都会在领取时登记身份。
 3. 绝不凭空填写 sessionId，也不要用 agent 名称代替 sessionId。领取或创建成功后保存返回的 sessionId 和 revision，并在本次任务中一直使用它们。
-4. 领取后再次调用 get_editing_skill，然后调用 report_edit_progress 上报开始阶段。所有创建项目、导入素材、时间线修改、字幕、保存和导出都必须在有效 session 中执行。
+4. 领取后再次调用 get_editing_skill。工具调用本身会同步到 Luna，report_edit_progress 只需在开始、素材分析完成、时间线初稿完成、包装或字幕完成、阻塞/等待确认和最终状态等关键节点调用。所有创建项目、导入素材、时间线修改、字幕、保存和导出都必须在有效 session 中执行。
 5. 每次工具结果中的 data.lunaAgent.requestRevision 和 requestChanged 都要检查。requestChanged=true 或错误码 REQUEST_UPDATED 时，立即调用 get_edit_request，按新 revision 重新规划；不得继续执行旧计划。
-6. 常见可判定错误：SESSION_REQUIRED 表示先 start_edit_session 或 wait；SESSION_NOT_FOUND 表示重新领取，不要猜旧 id；SESSION_NOT_ACTIVE 表示任务已结束；CANCEL_REQUESTED 表示立即停止；SKILL_REQUIRED 表示先读 skill；PARTIAL_SUCCESS 表示按逐条结果恢复。其他编辑错误也要停止写操作、读取状态并只修正一次。
-7. 失败、取消或完成都必须调用 report_edit_result。导出失败时必须上报 failed，不能把“时间线已保存”说成已有视频文件；只有 export_video 返回真实本地结果 metadata/path 时才能填写 exportPath。
+6. 常见可判定错误：SESSION_REQUIRED 表示先 start_edit_session 或 wait；SESSION_NOT_FOUND 表示重新领取，不要猜旧 id；SESSION_NOT_ACTIVE 表示任务已结束；CANCEL_REQUESTED 表示立即停止；SKILL_REQUIRED 表示先读 skill；PARTIAL_SUCCESS 表示按逐条结果恢复。其他工具错误必须读取 error.code、error.message、error.retryable 和 error.suggestedAction：只有 retryable=true 且建议动作明确时才允许调整参数重试一次；同一工具再次失败、retryable=false 或没有可执行的修复动作时，立即停止当前步骤并调用 report_edit_result(status="failed")，不得继续盲目重试。
+7. 失败、取消或完成都必须调用 report_edit_result。导出失败、拒绝或超时都不能把“时间线已保存”说成已有视频文件；只有用户确认后 export_video 返回 ok=true 的真实本地结果 data.path 时才能填写 exportPath。
 
 ## 素材分析流程
 
 1. 先调用 list_local_media，按日期、capturedAt、groupDay 和素材类型得到候选集；用返回的完整 mediaId，不要手抄文件名或用脆弱正则拼接/过滤 ID。
-2. 按时间段或叙事场景分组后调用 inspect_local_media，默认使用 overview；视频先看中间代表帧，图片看缩略图。
-3. 批量 inspect 的 data.items[].frames[] 和每个图片 content 都带有 mediaId、frameIndex、frameId、timeSec。只能按这些显式字段对应图片，不能按图片在响应中的位置推断。若当前多模态客户端无法稳定保留该对应关系，退化为每次只检查一个 mediaId。
+2. 按时间段或叙事场景分组后调用 inspect_local_media，默认使用 overview；素材较多时调用 create_media_contact_sheet，让 Luna 直接把代表帧拼成一张带标签的 JPEG 联络表；视频先看中间代表帧，图片看缩略图。
+3. 联络表图片每格显示稳定编号、素材短名、VIDEO/PHOTO 类型和视频时间码或照片拍摄时间；返回内容还会提供同编号文本索引。批量 inspect 或联络表的 data.items[].frames[] 和图片 content 都带有 mediaId、frameIndex、frameId、timeSec；联络表还带有 label、timecode 和 cell 坐标。只能按这些显式字段对应图片，不能按图片在响应中的位置推断，也不要自己写脚本拼图。若当前多模态客户端无法稳定保留该对应关系，退化为每次只检查一个 mediaId。
 4. 根据画面内容筛掉模糊、黑屏、严重过曝、误拍、重复和主体不完整的素材。
 5. 对准备使用的素材调用 inspect_local_media 的 detail 模式，视频检查开头、中间和结尾三帧，确认准确入点和出点。只有完成画面检查后，才创建项目、导入素材并开始编辑。
 
@@ -63,7 +63,7 @@ export const LUNA_EDITING_SKILL = `# Luna AI Cut 剪辑 Skill
 
 - 导出前必须做结构自检：用 list_clips/get_editor_state 确认时间线连续、没有不需要的重叠、总时长符合要求，片头标题和效果在正确轨道。
 - tools/list 中若存在适用于当前项目的预览工具，抽查片头、主要切点和片尾。当前的 preview_frame 可能是要求 groupId/timeMs 的多机位预览工具；schema 不匹配普通时间线时不要强行调用，也不要把不存在的预览结果当作已检查。
-- 自检通过后再调用 export_video。按返回的 job 状态等待完成；遇到 JOB_FAILED、UNSUPPORTED 或宿主未接线，立即停止、report_edit_progress(exporting/failed) 并 report_edit_result(status=failed)，不要声称已导出。
+- 自检通过后调用 export_video 请求导出。该调用会等待 Luna 用户在界面确认，外部 Agent 不可自行确认；确认前、拒绝、超时或遇到 JOB_FAILED、UNSUPPORTED、宿主未接线时都不能声称已导出。确认后按返回的 job 状态等待完成，只有 ok=true 且 data.path 存在时才填写 exportPath；失败或拒绝时报告相应的 failed/cancelled 结果。
 
 ## 口播剪辑专用流程
 
@@ -83,6 +83,6 @@ export const LUNA_EDITING_SKILL = `# Luna AI Cut 剪辑 Skill
 - 使用 inspect_local_media 返回的 mediaId 和 timeSec，不猜文件路径，不要求外部 AI 安装依赖。
 - 使用 transcribe_local_media 返回的 cue 时间，不猜发音、不猜时间轴；口播剪辑应以字幕/语音时间轴为主要依据。
 - 长视频识别优先使用分片和 overlap 补偿；根据返回的 chunks 了解每片范围，但最终只使用合并后的 cues。
-- 每次写工具都等待结果并检查 ok、error.code、结构化 data 和 lunaAgent；不要只看自然语言 summary。
-- 除删除素材外，所有项目操作自动执行；删除素材仍遵守现有确认令牌规则。
+- 每次写工具都等待结果并检查 ok、error.code、error.retryable、error.suggestedAction、结构化 data 和 lunaAgent；不要只看自然语言 summary。工具失败会同步到 Luna 的 Agent 面板，失败不等于已完成，也不要用普通文字掩盖失败。
+- 除导出和删除素材外，所有项目操作自动执行；导出由 Luna 用户在进度面板确认后才会真正执行，删除素材仍遵守现有确认令牌规则。
 `
