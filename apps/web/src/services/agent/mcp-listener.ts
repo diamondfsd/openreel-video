@@ -98,7 +98,7 @@ const LOCAL_MEDIA_TOOLS = [
   {
     name: "import_local_media",
     description:
-      "Import selected files from Luna AI Cut's local media library into the currently open project. Pass mediaIds returned by list_local_media.",
+      "Start importing selected files from Luna AI Cut's local media library into the currently open project. The operation is asynchronous; poll get_local_media_import_status with the returned jobId before editing. Pass no more than 4 mediaIds per batch.",
     inputSchema: {
       type: "object",
       properties: {
@@ -106,11 +106,28 @@ const LOCAL_MEDIA_TOOLS = [
           type: "array",
           items: { type: "string" },
           minItems: 1,
-          maxItems: 50,
+          maxItems: 4,
           description: "One or more mediaIds returned by list_local_media.",
         },
       },
       required: ["mediaIds"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "get_local_media_import_status",
+    description:
+      "Read the status and per-file results of an asynchronous import_local_media job. Poll while status is processing; only continue editing after completed or partial.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        jobId: {
+          type: "string",
+          minLength: 1,
+          description: "The jobId returned by import_local_media.",
+        },
+      },
+      required: ["jobId"],
       additionalProperties: false,
     },
   },
@@ -225,6 +242,128 @@ interface LocalMediaToolError {
   message: string;
   retryable?: boolean;
   suggestedAction?: string;
+}
+
+type LocalMediaImportOutcome =
+  | {
+      mediaId: string;
+      ok: true;
+      imported: Awaited<ReturnType<NonNullable<ReturnType<typeof getLiveEditorHost>["importMediaFromLocalMedia"]>>>;
+    }
+  | {
+      mediaId: string;
+      ok: false;
+      error: LocalMediaToolError;
+    };
+
+type LocalMediaImportJobStatus = "queued" | "processing" | "completed" | "partial" | "failed";
+
+interface LocalMediaImportJob {
+  jobId: string;
+  requestedMediaIds: string[];
+  status: LocalMediaImportJobStatus;
+  results: LocalMediaImportOutcome[];
+  createdAt: string;
+  updatedAt: string;
+  error?: LocalMediaToolError;
+}
+
+const MAX_IMPORT_BATCH_SIZE = 4;
+const IMPORT_JOB_TTL_MS = 30 * 60 * 1000;
+const localMediaImportJobs = new Map<string, LocalMediaImportJob>();
+const localMediaImportJobsByKey = new Map<string, string>();
+
+function importJobKey(mediaIds: readonly string[]): string {
+  return [...mediaIds].sort().join("\u0000");
+}
+
+function pruneLocalMediaImportJobs(now = Date.now()): void {
+  for (const [jobId, job] of localMediaImportJobs) {
+    if (Date.parse(job.updatedAt) + IMPORT_JOB_TTL_MS > now) continue;
+    localMediaImportJobs.delete(jobId);
+    if (localMediaImportJobsByKey.get(importJobKey(job.requestedMediaIds)) === jobId) {
+      localMediaImportJobsByKey.delete(importJobKey(job.requestedMediaIds));
+    }
+  }
+}
+
+function importJobData(job: LocalMediaImportJob): Record<string, unknown> {
+  const completedMediaIds = job.results.filter((result) => result.ok).map((result) => result.mediaId);
+  const failedMediaIds = job.results.filter((result) => !result.ok).map((result) => result.mediaId);
+  const finishedMediaIds = new Set(job.results.map((result) => result.mediaId));
+  return {
+    jobId: job.jobId,
+    status: job.status,
+    requestedMediaIds: job.requestedMediaIds,
+    completedMediaIds,
+    pendingMediaIds: job.requestedMediaIds.filter((mediaId) => !finishedMediaIds.has(mediaId)),
+    importedMediaIds: job.results.flatMap((result) => result.ok ? [result.imported.mediaId] : []),
+    failedMediaIds,
+    results: job.results,
+    createdAt: job.createdAt,
+    updatedAt: job.updatedAt,
+    ...(job.error ? { error: job.error } : {}),
+  };
+}
+
+function updateLocalMediaImportJob(job: LocalMediaImportJob, patch: Partial<LocalMediaImportJob>): void {
+  Object.assign(job, patch, { updatedAt: new Date().toISOString() });
+}
+
+function startLocalMediaImportJob(
+  mediaIds: string[],
+  host: ReturnType<typeof getLiveEditorHost>,
+): LocalMediaImportJob {
+  const existingJobId = localMediaImportJobsByKey.get(importJobKey(mediaIds));
+  const existingJob = existingJobId ? localMediaImportJobs.get(existingJobId) : undefined;
+  if (existingJob) return existingJob;
+
+  const timestamp = new Date().toISOString();
+  const job: LocalMediaImportJob = {
+    jobId: globalThis.crypto?.randomUUID?.() ?? `import-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    requestedMediaIds: [...mediaIds],
+    status: "queued",
+    results: [],
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+  localMediaImportJobs.set(job.jobId, job);
+  localMediaImportJobsByKey.set(importJobKey(mediaIds), job.jobId);
+
+  void runExclusive(async () => {
+    updateLocalMediaImportJob(job, { status: "processing" });
+    for (const mediaId of job.requestedMediaIds) {
+      try {
+        const imported = await host.importMediaFromLocalMedia!(mediaId);
+        job.results.push({ mediaId, ok: true, imported });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        job.results.push({
+          mediaId,
+          ok: false,
+          error: { code: localMediaImportErrorCode(message), message },
+        });
+      }
+      updateLocalMediaImportJob(job, {});
+    }
+    const succeeded = job.results.some((result) => result.ok);
+    const failed = job.results.some((result) => !result.ok);
+    updateLocalMediaImportJob(job, {
+      status: failed ? (succeeded ? "partial" : "failed") : "completed",
+    });
+  }).catch((error) => {
+    const message = error instanceof Error ? error.message : String(error);
+    updateLocalMediaImportJob(job, {
+      status: "failed",
+      error: {
+        code: "LOCAL_MEDIA_IMPORT_FAILED",
+        message,
+        retryable: false,
+        suggestedAction: "读取 get_local_media_import_status 的结果；不要重复导入同一批素材",
+      },
+    });
+  });
+  return job;
 }
 
 function localMediaToolResult(
@@ -477,6 +616,38 @@ async function handleLocalMediaTool(
     }
   }
 
+  if (name === "get_local_media_import_status") {
+    pruneLocalMediaImportJobs();
+    const jobId = typeof args.jobId === "string" ? args.jobId.trim() : "";
+    const job = jobId ? localMediaImportJobs.get(jobId) : undefined;
+    if (!job) {
+      return {
+        ok: true,
+        result: localMediaToolResult(false, "Import job not found", undefined, {
+          code: "IMPORT_JOB_NOT_FOUND",
+          message: "导入任务不存在或已过期，请重新调用 import_local_media",
+          retryable: false,
+          suggestedAction: "不要重复提交同一批素材；重新 list_local_media 后再发起导入",
+        }),
+      };
+    }
+    return {
+      ok: true,
+      result: localMediaToolResult(
+        job.status !== "failed",
+        job.status === "processing" || job.status === "queued"
+          ? "素材仍在导入"
+          : job.status === "completed"
+            ? "素材导入完成"
+            : job.status === "partial"
+              ? "部分素材导入完成"
+              : "素材导入失败",
+        importJobData(job),
+        job.status === "failed" ? job.error : undefined,
+      ),
+    };
+  }
+
   if (name !== "import_local_media") return null;
   const mediaIds = Array.isArray(args.mediaIds)
     ? args.mediaIds.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
@@ -484,67 +655,32 @@ async function handleLocalMediaTool(
   if (mediaIds.length === 0) {
     return { ok: true, result: localMediaToolResult(false, "mediaIds is required", undefined, { code: "INVALID_PARAMS", message: "请传入 list_local_media 返回的 mediaIds" }) };
   }
-  if (mediaIds.length > 50) {
-    return { ok: true, result: localMediaToolResult(false, "Too many mediaIds", undefined, { code: "INVALID_PARAMS", message: "一次最多导入 50 个素材" }) };
+  if (mediaIds.length > MAX_IMPORT_BATCH_SIZE) {
+    return {
+      ok: true,
+      result: localMediaToolResult(false, "Too many mediaIds", undefined, {
+        code: "INVALID_PARAMS",
+        message: `一次最多导入 ${MAX_IMPORT_BATCH_SIZE} 个素材，请拆成多个批次`,
+        retryable: true,
+        suggestedAction: `拆成每批不超过 ${MAX_IMPORT_BATCH_SIZE} 个素材后重试；每批先轮询 get_local_media_import_status，再提交下一批`,
+      }),
+    };
   }
   const host = getLiveEditorHost();
   if (typeof host.importMediaFromLocalMedia !== "function") {
     return { ok: true, result: localMediaToolResult(false, "Local media import is unavailable", undefined, { code: "UNSUPPORTED", message: "本地素材导入不可用" }) };
   }
   try {
-    const outcomes = await runExclusive(async () => {
-      const results: Array<{
-        mediaId: string;
-        ok: true;
-        imported: Awaited<ReturnType<NonNullable<typeof host.importMediaFromLocalMedia>>>;
-      } | {
-        mediaId: string;
-        ok: false;
-        error: { code: string; message: string };
-      }> = [];
-      for (const mediaId of mediaIds) {
-        try {
-          const imported = await host.importMediaFromLocalMedia!(mediaId);
-          results.push({ mediaId, ok: true, imported });
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error);
-          results.push({
-            mediaId,
-            ok: false,
-            error: { code: localMediaImportErrorCode(message), message },
-          });
-        }
-      }
-      return results;
-    });
-
-    const succeeded = outcomes.filter((outcome): outcome is Extract<typeof outcome, { ok: true }> => outcome.ok);
-    const failed = outcomes.filter((outcome): outcome is Extract<typeof outcome, { ok: false }> => !outcome.ok);
-    const status = failed.length === 0 ? "completed" : succeeded.length > 0 ? "partial" : "failed";
-    const summary = status === "completed"
-      ? `Imported ${succeeded.length} local media file${succeeded.length === 1 ? "" : "s"}`
-      : `Imported ${succeeded.length} of ${outcomes.length} local media files`;
+    host.requireOpenProject();
+    pruneLocalMediaImportJobs();
+    const job = startLocalMediaImportJob(mediaIds, host);
     return {
       ok: true,
-      result: localMediaToolResult(
-        status !== "failed",
-        summary,
-        {
-          status,
-          requestedMediaIds: mediaIds,
-          importedMediaIds: succeeded.map((outcome) => outcome.imported.mediaId),
-          failedMediaIds: failed.map((outcome) => outcome.mediaId),
-          results: outcomes,
-        },
-        failed.length > 0
-          ? {
-            code: status === "partial" ? "PARTIAL_SUCCESS" : failed[0]?.error.code ?? "LOCAL_MEDIA_IMPORT_FAILED",
-            message: status === "partial"
-              ? "部分素材导入成功，请根据 results 和 importedMediaIds 继续，不要重复导入已成功素材"
-              : failed[0]?.error.message ?? "本地素材导入失败",
-          }
-          : undefined,
-      ),
+      result: localMediaToolResult(true, "已开始导入素材，请轮询导入状态", {
+        ...importJobData(job),
+        pollTool: "get_local_media_import_status",
+        pollAfterMs: 500,
+      }),
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
