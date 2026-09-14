@@ -257,6 +257,7 @@ export interface OpenReelAgentSnapshot {
 }
 
 export interface OpenReelAgentApi {
+  generatePrompt(request: string): Promise<string>;
   createRequest(request: string, projectId?: string | null): Promise<OpenReelAgentSession>;
   updateRequest(sessionId: string, request: string): Promise<OpenReelAgentSession>;
   cancelRequest(sessionId: string): Promise<OpenReelAgentSession>;

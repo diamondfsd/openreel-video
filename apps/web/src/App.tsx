@@ -13,6 +13,8 @@ import { useRouter } from "./hooks/use-router";
 import { useProjectRecovery } from "./hooks/useProjectRecovery";
 import { projectManager } from "./services/project-manager";
 import { installMcpListener } from "./services/agent/mcp-listener";
+import { getLiveEditorHost } from "./services/agent/host-singleton";
+import { createExportJobRunner } from "./services/agent/export-job-runner";
 import { SOCIAL_MEDIA_PRESETS, type SocialMediaCategory } from "@openreel/core";
 import { ToolcraftText as Text } from "@openreel/ui";
 
@@ -77,7 +79,12 @@ function App() {
   const isMotionSurface = isMotionHost || route === "motion";
   const isLunaEditor = route === "luna-editor";
 
-  useEffect(() => installMcpListener(), []);
+  useEffect(() => {
+    // The Luna iframe uses App rather than DesktopApp, so initialize the same
+    // local job runner here for MCP export tools.
+    getLiveEditorHost().setJobRunner(createExportJobRunner());
+    return installMcpListener();
+  }, []);
 
   useEffect(() => {
     const agent = window.openreel?.lunaAgent;

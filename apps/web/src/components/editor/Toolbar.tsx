@@ -5,7 +5,6 @@ import {
   Settings,
   MoreHorizontal,
   Video,
-  Copy,
 } from "@/icons/lucide-compat";
 import { useProjectStore } from "../../stores/project-store";
 import { useUIStore } from "../../stores/ui-store";
@@ -35,9 +34,7 @@ import {
 import { Icon } from "@/icons/Icon";
 import { toast } from "../../stores/notification-store";
 import { useAnalytics, AnalyticsEvents } from "../../hooks/useAnalytics";
-import { requestAgentPromptCopy } from "../../utils/luna-bridge";
 import {
-  ToolcraftButton as Button,
   ToolcraftDropdownMenu as DropdownMenu,
   ToolcraftDropdownMenuItem as DropdownMenuItem,
   ToolcraftIconButton,
@@ -441,14 +438,6 @@ export const Toolbar: React.FC = () => {
           activeMode="video"
           onSelectMode={handleWorkspaceModeSelect}
           className="shrink-0"
-        />
-        <Button
-          label="复制 Agent 提示词"
-          icon={<Copy size={14} aria-hidden />}
-          size="md"
-          variant="secondary"
-          className="shrink-0"
-          onClick={requestAgentPromptCopy}
         />
       </div>
 

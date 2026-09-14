@@ -6,20 +6,34 @@ import { Send, Square } from "@/icons/lucide-compat";
 import { useChatStore } from "../../../stores/chat-store";
 import { useProjectStore } from "../../../stores/project-store";
 import { useExternalAgentStore } from "../../../stores/external-agent-store";
+import { ExternalAgentPromptDialog } from "./ExternalAgentPromptDialog";
 
-export function ChatComposer(): JSX.Element {
+interface ChatComposerProps {
+  promptOnly?: boolean;
+}
+
+export function ChatComposer({ promptOnly = false }: ChatComposerProps): JSX.Element {
   const status = useChatStore((s) => s.status);
   const send = useChatStore((s) => s.send);
   const stop = useChatStore((s) => s.stop);
   const initializeExternalAgent = useExternalAgentStore((s) => s.initialize);
   const submitExternalRequest = useExternalAgentStore((s) => s.submit);
   const cancelExternalRequest = useExternalAgentStore((s) => s.cancel);
+  const markPromptGenerated = useExternalAgentStore((s) => s.markPromptGenerated);
   const externalSession = useExternalAgentStore((s) => s.session);
   const projectId = useProjectStore((s) => (s.hasOpenProject ? s.project.id : null));
   const [text, setText] = useState("");
+  const [prompt, setPrompt] = useState("");
+  const [promptDialogOpen, setPromptDialogOpen] = useState(false);
+  const [generatingPrompt, setGeneratingPrompt] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   const externalAvailable = typeof window !== "undefined" && Boolean(window.openreel?.lunaAgent);
   const externalBusy = externalSession?.status === "queued" || externalSession?.status === "running";
-  const busy = externalAvailable ? false : status === "running" || status === "awaiting_confirm";
+  const busy = promptOnly
+    ? generatingPrompt
+    : externalAvailable
+      ? false
+      : status === "running" || status === "awaiting_confirm";
 
   useEffect(() => {
     if (externalAvailable) void initializeExternalAgent();
@@ -28,13 +42,36 @@ export function ChatComposer(): JSX.Element {
   const submit = useCallback(() => {
     const value = text.trim();
     if (!value || busy) return;
+
+    if (promptOnly) {
+      const bridge = window.openreel?.lunaAgent;
+      if (!bridge) {
+        setGenerationError("外部 AI 工具尚未准备好");
+        return;
+      }
+      setGeneratingPrompt(true);
+      setGenerationError(null);
+      void bridge.generatePrompt(value)
+        .then((generatedPrompt) => {
+          setText("");
+          setPrompt(generatedPrompt);
+          setPromptDialogOpen(true);
+          markPromptGenerated();
+        })
+        .catch((error: unknown) => {
+          setGenerationError(error instanceof Error ? error.message : "无法生成剪辑提示词");
+        })
+        .finally(() => setGeneratingPrompt(false));
+      return;
+    }
+
     setText("");
     if (externalAvailable) {
       void submitExternalRequest(value, projectId);
     } else {
       void send(value);
     }
-  }, [text, busy, externalAvailable, projectId, send, submitExternalRequest]);
+  }, [text, busy, externalAvailable, projectId, markPromptGenerated, promptOnly, send, submitExternalRequest]);
 
   const onKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -50,17 +87,27 @@ export function ChatComposer(): JSX.Element {
     <div className="border-t border-border p-2">
       <div className="relative rounded-lg border border-border bg-bg-2 transition-colors focus-within:border-accent">
         <ToolcraftTextAreaControl
-          label="AI 编辑请求"
+          label={promptOnly ? "剪辑目标" : "AI 编辑请求"}
           isLabelHidden
           value={text}
           onChange={setText}
           onKeyDown={onKeyDown}
           rows={2}
-          placeholder="告诉 AI 如何编辑视频…"
+          placeholder={promptOnly ? "描述剪辑目标，生成提示词…" : "告诉 AI 如何编辑视频…"}
           inputClassName="block w-full resize-none bg-transparent px-3 py-2 pr-11 text-[13px] text-fg outline-none placeholder:text-fg-muted"
         />
         <div className="absolute bottom-1.5 right-1.5">
-          {externalAvailable ? (
+          {promptOnly ? (
+            <IconButton
+              label={generatingPrompt ? "正在生成提示词" : "生成剪辑提示词"}
+              icon={<Send size={12} aria-hidden />}
+              size="sm"
+              variant="primary"
+              onClick={submit}
+              isDisabled={!text.trim() || generatingPrompt}
+              className="grid h-7 w-7 place-items-center rounded-md bg-accent text-accent-fg transition-colors hover:bg-accent/90 disabled:opacity-40"
+            />
+          ) : externalAvailable ? (
             <div className="flex items-center gap-1">
               {externalBusy && (
                 <IconButton
@@ -105,8 +152,18 @@ export function ChatComposer(): JSX.Element {
         </div>
       </div>
       <div className="mt-1 px-1 text-[10px] text-fg-muted">
-        按 Enter 发送，按 Shift+Enter 换行
+        按 Enter {promptOnly ? "生成提示词" : "发送"}，按 Shift+Enter 换行
       </div>
+      {generationError && (
+        <div className="mt-2 px-1 text-[10px] text-status-error" role="alert">
+          {generationError}
+        </div>
+      )}
+      <ExternalAgentPromptDialog
+        isOpen={promptDialogOpen}
+        prompt={prompt}
+        onClose={() => setPromptDialogOpen(false)}
+      />
     </div>
   );
 }

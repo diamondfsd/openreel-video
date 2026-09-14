@@ -185,6 +185,12 @@ function localMediaToolResult(
   return { ok, summary, ...(data === undefined ? {} : { data }), ...(error ? { error } : {}) };
 }
 
+function localMediaImportErrorCode(message: string): string {
+  if (/不存在|已被移除|not found|removed/i.test(message)) return "LOCAL_MEDIA_NOT_FOUND";
+  if (/only available|不可用|unavailable/i.test(message)) return "UNSUPPORTED";
+  return "LOCAL_MEDIA_IMPORT_FAILED";
+}
+
 async function handleLocalMediaTool(
   name: string,
   args: Record<string, unknown>,
@@ -235,7 +241,12 @@ async function handleLocalMediaTool(
         kind: item.kind,
         ...(item.duration === undefined ? {} : { duration: item.duration }),
         capturedAt: item.capturedAt,
-        frames: item.frames.map((frame) => ({ timeSec: frame.timeSec })),
+        frames: item.frames.map((frame, frameIndex) => ({
+          frameIndex,
+          frameId: `${item.mediaId}#${frameIndex}`,
+          mediaId: item.mediaId,
+          timeSec: frame.timeSec,
+        })),
         ...(item.error ? { error: item.error } : {}),
       }));
       const content: McpBridgeContent[] = [{
@@ -243,10 +254,10 @@ async function handleLocalMediaTool(
         text: JSON.stringify({ mode: inspection.mode, maxWidth: inspection.maxWidth, items: publicItems }),
       }];
       for (const item of inspection.items) {
-        for (const frame of item.frames) {
+        for (const [frameIndex, frame] of item.frames.entries()) {
           content.push({
             type: "text",
-            text: `素材 ${item.name} (${item.mediaId})，时间 ${frame.timeSec}s`,
+            text: `素材 ${item.name} (${item.mediaId})，frameIndex=${frameIndex}，frameId=${item.mediaId}#${frameIndex}，时间 ${frame.timeSec}s；下一张图片就是这一帧`,
           });
           content.push({ type: "image", data: frame.base64, mimeType: frame.mimeType });
         }
@@ -329,14 +340,60 @@ async function handleLocalMediaTool(
     return { ok: true, result: localMediaToolResult(false, "Local media import is unavailable", undefined, { code: "UNSUPPORTED", message: "本地素材导入不可用" }) };
   }
   try {
-    const imported = await runExclusive(async () => {
-      const results = [];
+    const outcomes = await runExclusive(async () => {
+      const results: Array<{
+        mediaId: string;
+        ok: true;
+        imported: Awaited<ReturnType<NonNullable<typeof host.importMediaFromLocalMedia>>>;
+      } | {
+        mediaId: string;
+        ok: false;
+        error: { code: string; message: string };
+      }> = [];
       for (const mediaId of mediaIds) {
-        results.push(await host.importMediaFromLocalMedia!(mediaId));
+        try {
+          const imported = await host.importMediaFromLocalMedia!(mediaId);
+          results.push({ mediaId, ok: true, imported });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          results.push({
+            mediaId,
+            ok: false,
+            error: { code: localMediaImportErrorCode(message), message },
+          });
+        }
       }
       return results;
     });
-    return { ok: true, result: localMediaToolResult(true, `Imported ${imported.length} local media file${imported.length === 1 ? "" : "s"}`, imported) };
+
+    const succeeded = outcomes.filter((outcome): outcome is Extract<typeof outcome, { ok: true }> => outcome.ok);
+    const failed = outcomes.filter((outcome): outcome is Extract<typeof outcome, { ok: false }> => !outcome.ok);
+    const status = failed.length === 0 ? "completed" : succeeded.length > 0 ? "partial" : "failed";
+    const summary = status === "completed"
+      ? `Imported ${succeeded.length} local media file${succeeded.length === 1 ? "" : "s"}`
+      : `Imported ${succeeded.length} of ${outcomes.length} local media files`;
+    return {
+      ok: true,
+      result: localMediaToolResult(
+        status !== "failed",
+        summary,
+        {
+          status,
+          requestedMediaIds: mediaIds,
+          importedMediaIds: succeeded.map((outcome) => outcome.imported.mediaId),
+          failedMediaIds: failed.map((outcome) => outcome.mediaId),
+          results: outcomes,
+        },
+        failed.length > 0
+          ? {
+            code: status === "partial" ? "PARTIAL_SUCCESS" : failed[0]?.error.code ?? "LOCAL_MEDIA_IMPORT_FAILED",
+            message: status === "partial"
+              ? "部分素材导入成功，请根据 results 和 importedMediaIds 继续，不要重复导入已成功素材"
+              : failed[0]?.error.message ?? "本地素材导入失败",
+          }
+          : undefined,
+      ),
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return { ok: true, result: localMediaToolResult(false, message, undefined, { code: "LOCAL_MEDIA_ERROR", message }) };

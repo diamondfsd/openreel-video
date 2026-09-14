@@ -1,9 +1,8 @@
 import { useCallback, useState } from "react";
-import { Copy, Plus } from "@/icons/lucide-compat";
+import { Plus } from "@/icons/lucide-compat";
 import { ToolcraftButton as Button } from "@openreel/ui";
 import { ToolcraftText as Text } from "@openreel/ui";
 import { useRouter } from "../../hooks/use-router";
-import { requestAgentPromptCopy } from "../../utils/luna-bridge";
 import { RecentProjects } from "../welcome/RecentProjects";
 import { StartFromScratch } from "../welcome/StartFromScratch";
 import { ChatComposer } from "../editor/chat/ChatComposer";
@@ -53,13 +52,6 @@ export const ProjectListScreen: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
-                    label="复制提示词"
-                    variant="secondary"
-                    size="sm"
-                    icon={<Copy size={16} aria-hidden />}
-                    onClick={requestAgentPromptCopy}
-                  />
-                  <Button
                     label="新建项目"
                     variant="secondary"
                     size="sm"
@@ -71,11 +63,14 @@ export const ProjectListScreen: React.FC = () => {
               {window.openreel?.lunaAgent && (
                 <section className="mb-6 rounded-xl border border-border bg-background-secondary p-4">
                   <Text type="body" color="primary" weight="semibold" className="text-sm text-text-primary">
-                    AI 剪辑
+                    生成剪辑提示词
+                  </Text>
+                  <Text type="supporting" color="secondary" className="mt-1 block text-[11px] text-text-muted">
+                    输入剪辑目标，复制生成的提示词到外部 AI 工具
                   </Text>
                   <div className="mt-3 space-y-3">
                     <ExternalAgentActivity />
-                    <ChatComposer />
+                    <ChatComposer promptOnly />
                   </div>
                 </section>
               )}

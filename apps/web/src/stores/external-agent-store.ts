@@ -15,12 +15,14 @@ export interface ExternalAgentState {
   available: boolean;
   initialized: boolean;
   session: OpenReelAgentSession | null;
+  awaitingAgent: boolean;
   events: OpenReelAgentEvent[];
   lastSequence: number;
   error: string | null;
   initialize: () => Promise<void>;
   submit: (request: string, projectId?: string | null) => Promise<void>;
   cancel: () => Promise<void>;
+  markPromptGenerated: () => void;
   clearError: () => void;
 }
 
@@ -36,6 +38,9 @@ function applyEvent(event: OpenReelAgentEvent): void {
     if (event.sequence <= state.lastSequence) return state;
     return {
       session: event.session,
+      awaitingAgent: event.type === "session-created" || event.type === "session-claimed"
+        ? false
+        : state.awaitingAgent,
       events: [...state.events, event].slice(-MAX_VISIBLE_EVENTS),
       lastSequence: event.sequence,
       error: event.type === "error" ? event.message ?? "外部 Agent 执行失败" : state.error,
@@ -47,6 +52,7 @@ export const useExternalAgentStore = create<ExternalAgentState>((set, get) => ({
   available: false,
   initialized: false,
   session: null,
+  awaitingAgent: false,
   events: [],
   lastSequence: 0,
   error: null,
@@ -67,6 +73,7 @@ export const useExternalAgentStore = create<ExternalAgentState>((set, get) => ({
         const lastSequence = orderedEvents.at(-1)?.sequence ?? 0;
         set({
           session: snapshot.session,
+          awaitingAgent: snapshot.session ? false : get().awaitingAgent,
           events: orderedEvents.slice(-MAX_VISIBLE_EVENTS),
           lastSequence,
           initialized: true,
@@ -117,6 +124,8 @@ export const useExternalAgentStore = create<ExternalAgentState>((set, get) => ({
       set({ error: error instanceof Error ? error.message : "无法停止剪辑任务" });
     }
   },
+
+  markPromptGenerated: () => set({ awaitingAgent: true, error: null }),
 
   clearError: () => set({ error: null }),
 }));

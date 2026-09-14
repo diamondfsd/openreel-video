@@ -14,6 +14,7 @@ const h = vi.hoisted(() => ({
     selectLayer: vi.fn(),
   },
   setDesktopPage: vi.fn(),
+  liveHost: { id: "host" } as Record<string, unknown>,
 }));
 
 vi.mock("@openreel/agent", () => ({
@@ -24,7 +25,7 @@ vi.mock("@openreel/agent", () => ({
 }));
 
 vi.mock("./host-singleton", () => ({
-  getLiveEditorHost: () => ({ id: "host" }),
+  getLiveEditorHost: () => h.liveHost,
   runExclusive: (fn: () => Promise<unknown>) => fn(),
 }));
 
@@ -116,10 +117,50 @@ describe("handleMcpBridgeRequest", () => {
     );
     expect(res.content).toEqual([
       expect.objectContaining({ type: "text" }),
-      { type: "text", text: "素材 test.jpg (local-media:test.jpg)，时间 0s" },
+      { type: "text", text: "素材 test.jpg (local-media:test.jpg)，frameIndex=0，frameId=local-media:test.jpg#0，时间 0s；下一张图片就是这一帧" },
       { type: "image", data: "dGVzdA==", mimeType: "image/jpeg" },
     ]);
+    expect((res.result as { data?: { items?: Array<{ frames: Array<Record<string, unknown>> }> } }).data?.items?.[0]?.frames?.[0]).toEqual({
+      frameIndex: 0,
+      frameId: "local-media:test.jpg#0",
+      mediaId: "local-media:test.jpg",
+      timeSec: 0,
+    });
     delete (window as Window & { openreel?: unknown }).openreel;
+  });
+
+  it("returns per-media outcomes for partial local imports", async () => {
+    h.liveHost.importMediaFromLocalMedia = vi.fn()
+      .mockResolvedValueOnce({ mediaId: "imported-a", name: "a.mp4", type: "video", durationSec: 2 })
+      .mockRejectedValueOnce(new Error("本地素材不存在或已被移除，请重新调用 list_local_media"));
+
+    const res = await handleMcpBridgeRequest({
+      callId: "import",
+      kind: "callTool",
+      name: "import_local_media",
+      args: { mediaIds: ["local-media:a", "local-media:missing"] },
+    });
+
+    expect(res.ok).toBe(true);
+    expect(h.liveHost.importMediaFromLocalMedia).toHaveBeenCalledTimes(2);
+    expect(res.result).toEqual(expect.objectContaining({
+      ok: true,
+      error: expect.objectContaining({ code: "PARTIAL_SUCCESS" }),
+      data: expect.objectContaining({
+        status: "partial",
+        importedMediaIds: ["imported-a"],
+        failedMediaIds: ["local-media:missing"],
+        results: [
+          expect.objectContaining({ mediaId: "local-media:a", ok: true }),
+          expect.objectContaining({
+            mediaId: "local-media:missing",
+            ok: false,
+            error: expect.objectContaining({ code: "LOCAL_MEDIA_NOT_FOUND" }),
+          }),
+        ],
+      }),
+    }));
+    delete h.liveHost.importMediaFromLocalMedia;
   });
 
   it("passes time chunking options to local speech transcription", async () => {

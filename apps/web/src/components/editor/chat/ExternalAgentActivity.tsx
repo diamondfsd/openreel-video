@@ -66,6 +66,7 @@ export function ExternalAgentActivity(): JSX.Element | null {
   const initialize = useExternalAgentStore((state) => state.initialize);
   const available = useExternalAgentStore((state) => state.available);
   const session = useExternalAgentStore((state) => state.session);
+  const awaitingAgent = useExternalAgentStore((state) => state.awaitingAgent);
   const events = useExternalAgentStore((state) => state.events);
   const error = useExternalAgentStore((state) => state.error);
 
@@ -73,13 +74,38 @@ export function ExternalAgentActivity(): JSX.Element | null {
     void initialize();
   }, [initialize]);
 
-  if (!available || !session) {
-    return error ? (
+  if (error) {
+    return (
       <div className="rounded-md border border-status-error/30 bg-status-error/10 px-2.5 py-2 text-[11px] text-status-error">
         {error}
       </div>
-    ) : null;
+    );
   }
+
+  if (awaitingAgent) {
+    return (
+      <section
+        className="space-y-2 rounded-md border border-border bg-bg-2/50 p-2.5"
+        aria-label="外部 Agent 进度"
+        aria-live="polite"
+      >
+        <div className="flex items-center gap-2">
+          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-accent-soft text-accent">
+            <Bot size={13} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="text-[12px] font-medium text-fg">等待外部 Agent</div>
+            <div className="mt-0.5 text-[10px] text-fg-muted">
+              将提示词粘贴到外部 AI 工具后，这里会显示剪辑进度
+            </div>
+          </div>
+          <Loader2 size={13} className="shrink-0 text-fg-muted" />
+        </div>
+      </section>
+    );
+  }
+
+  if (!available || !session) return null;
 
   const visibleEvents = events.slice(-12);
   const terminal = session.status === "completed" || session.status === "failed" || session.status === "cancelled";
