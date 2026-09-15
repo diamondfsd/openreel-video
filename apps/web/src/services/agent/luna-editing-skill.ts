@@ -63,6 +63,13 @@ export const LUNA_EDITING_SKILL = `# Luna AI Cut 剪辑 Skill
 - add_transition 后调用 list_transitions 核对实际保存的类型、时长和两端 clipId。
 - 发现写入结果与预期不一致时停止继续写，先读取当前状态；不要靠重复调用碰运气。除删除素材外，其他项目编辑直接执行并依靠自动保存。
 
+## 背景音乐
+
+- 用户要求背景音乐、节奏感、氛围或更完整的成片时，使用 Luna 内置音乐工具，不下载在线音乐，也不自行编写音频脚本。
+- 先用 list_music_templates 按场景、标签和 dialogueSafe 选模板；有口播、访谈或解说时必须选 dialogue-safe 或降低音乐密度。再用 get_music_template 读取可编辑 Music DSL，按成片时长、节奏和情绪修改 tempo、duration、chords、register、density 与 velocity。
+- 调用 generate_background_music 传入最终 DSL 和短名称。结果 data.mediaId 是 Luna 生成的本地音频素材；项目打开后通过 import_local_media 导入，再用 add_track/add_clip 放到独立音频轨。
+- 音乐必须服务叙事。有对白时用 set_clip_volume 压低音乐，并用 set_clip_fade 做入出淡变；不要让音乐覆盖主要人声。生成失败时按 error.suggestedAction 修正一次 DSL，不要重复提交相同参数。
+
 ## 预览与导出
 
 - 导出前必须做结构自检：用 list_clips/get_editor_state 确认时间线连续、没有不需要的重叠、总时长符合要求，片头标题和效果在正确轨道。

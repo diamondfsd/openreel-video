@@ -380,11 +380,11 @@ declare global {
           limit?: number;
           from?: string;
           to?: string;
-          kind?: "image" | "video";
+          kind?: "image" | "video" | "audio";
         }): Promise<Array<{
           mediaId: string;
           name: string;
-          kind: "image" | "video";
+          kind: "image" | "video" | "audio";
           bytes: number;
           capturedAt: string | null;
           modifiedAt: string;
@@ -396,7 +396,7 @@ declare global {
         getLocalMedia(mediaId: string): Promise<{
           mediaId: string;
           name: string;
-          kind: "image" | "video";
+          kind: "image" | "video" | "audio";
           bytes: number;
           capturedAt: string | null;
           modifiedAt: string;

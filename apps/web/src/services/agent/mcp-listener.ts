@@ -83,14 +83,14 @@ const LOCAL_MEDIA_TOOLS = [
   {
     name: "list_local_media",
     description:
-      "List image and video files in Luna AI Cut's local media library, sorted by capture time (newest first). Use this to find the user's recent outing before editing.",
+      "List image, video, and generated audio files in Luna AI Cut's local media library. Visual media is sorted by capture time; generated music can be requested with kind=audio.",
     inputSchema: {
       type: "object",
       properties: {
         limit: { type: "integer", minimum: 1, maximum: 500, description: "Maximum number of files to return. Defaults to 100." },
         from: { type: "string", description: "Optional ISO date/time lower bound for capture time." },
         to: { type: "string", description: "Optional ISO date/time upper bound for capture time." },
-        kind: { type: "string", enum: ["image", "video"] },
+        kind: { type: "string", enum: ["image", "video", "audio"] },
       },
       additionalProperties: false,
     },
@@ -98,7 +98,7 @@ const LOCAL_MEDIA_TOOLS = [
   {
     name: "import_local_media",
     description:
-      "Start importing selected files from Luna AI Cut's local media library into the currently open project. The operation is asynchronous; poll get_local_media_import_status with the returned jobId before editing. Pass no more than 4 mediaIds per batch.",
+      "Start importing selected files, including generated background music, from Luna AI Cut's local media library into the currently open project. The operation is asynchronous; poll get_local_media_import_status with the returned jobId before editing. Pass no more than 4 mediaIds per batch.",
     inputSchema: {
       type: "object",
       properties: {
@@ -107,7 +107,7 @@ const LOCAL_MEDIA_TOOLS = [
           items: { type: "string" },
           minItems: 1,
           maxItems: 4,
-          description: "One or more mediaIds returned by list_local_media.",
+          description: "One or more mediaIds returned by list_local_media or generate_background_music.",
         },
       },
       required: ["mediaIds"],
@@ -419,12 +419,12 @@ async function handleLocalMediaTool(
       limit?: number;
       from?: string;
       to?: string;
-      kind?: "image" | "video";
+      kind?: "image" | "video" | "audio";
     } = {
       ...(typeof args.limit === "number" ? { limit: args.limit } : {}),
       ...(typeof args.from === "string" ? { from: args.from } : {}),
       ...(typeof args.to === "string" ? { to: args.to } : {}),
-      ...(args.kind === "image" || args.kind === "video" ? { kind: args.kind } : {}),
+      ...(args.kind === "image" || args.kind === "video" || args.kind === "audio" ? { kind: args.kind } : {}),
     };
     try {
       const media = await bridge.listLocalMedia(query);
