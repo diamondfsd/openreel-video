@@ -31875,7 +31875,7 @@ const TOOLS: RegisteredTool[] = [
     domain: "multicam",
     title: "Get multicam transcript",
     description:
-      "Read optional per-participant local Whisper transcript segments from the separate .orma artifact.",
+      "Read optional per-participant local Sherpa transcript segments from the separate .orma artifact.",
     inputSchema: obj({ groupId: str, startMs: num, endMs: num }),
     readOnly: true,
     destructive: false,

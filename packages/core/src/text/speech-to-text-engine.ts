@@ -1,53 +1,25 @@
 import type { Subtitle, SubtitleStyle } from "../types/timeline";
+import { audioBufferToMonoSamples } from "../audio/audio-samples";
 
-interface SpeechRecognitionResult {
-  readonly isFinal: boolean;
-  readonly length: number;
-  [index: number]: SpeechRecognitionAlternative;
+interface NativeSherpaResult {
+  cues: Array<{
+    text: string;
+    startMs: number;
+    endMs: number;
+  }>;
 }
 
-interface SpeechRecognitionAlternative {
-  readonly transcript: string;
-  readonly confidence: number;
+interface NativeTranscriptionApi {
+  transcribeAudioSamples: (
+    samples: Float32Array,
+    options?: { chunkDurationSec?: number; overlapSec?: number },
+  ) => Promise<NativeSherpaResult>;
 }
 
-interface SpeechRecognitionResultList {
-  readonly length: number;
-  [index: number]: SpeechRecognitionResult;
-}
-
-interface SpeechRecognitionEvent extends Event {
-  readonly results: SpeechRecognitionResultList;
-  readonly resultIndex: number;
-}
-
-interface SpeechRecognitionErrorEvent extends Event {
-  readonly error: string;
-  readonly message: string;
-}
-
-interface SpeechRecognitionInstance extends EventTarget {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  maxAlternatives: number;
-  onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
-  onend: (() => void) | null;
-  start(): void;
-  stop(): void;
-  abort(): void;
-}
-
-interface SpeechRecognitionConstructor {
-  new (): SpeechRecognitionInstance;
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition?: SpeechRecognitionConstructor;
-    webkitSpeechRecognition?: SpeechRecognitionConstructor;
-  }
+interface OpenReelWindow {
+  openreel?: {
+    lunaMedia?: NativeTranscriptionApi;
+  };
 }
 
 export interface TranscriptionSegment {
@@ -90,47 +62,17 @@ type ProgressCallback = (progress: TranscriptionProgress) => void;
 type SegmentCallback = (segment: TranscriptionSegment) => void;
 
 const SUPPORTED_LANGUAGES = [
-  { code: "en-US", name: "English (US)" },
-  { code: "en-GB", name: "English (UK)" },
-  { code: "es-ES", name: "Spanish (Spain)" },
-  { code: "es-MX", name: "Spanish (Mexico)" },
-  { code: "fr-FR", name: "French" },
-  { code: "de-DE", name: "German" },
-  { code: "it-IT", name: "Italian" },
-  { code: "pt-BR", name: "Portuguese (Brazil)" },
-  { code: "pt-PT", name: "Portuguese (Portugal)" },
-  { code: "ja-JP", name: "Japanese" },
-  { code: "ko-KR", name: "Korean" },
   { code: "zh-CN", name: "Chinese (Simplified)" },
-  { code: "zh-TW", name: "Chinese (Traditional)" },
-  { code: "ru-RU", name: "Russian" },
-  { code: "ar-SA", name: "Arabic" },
-  { code: "hi-IN", name: "Hindi" },
-  { code: "nl-NL", name: "Dutch" },
-  { code: "pl-PL", name: "Polish" },
-  { code: "sv-SE", name: "Swedish" },
-  { code: "da-DK", name: "Danish" },
-  { code: "fi-FI", name: "Finnish" },
-  { code: "no-NO", name: "Norwegian" },
-  { code: "tr-TR", name: "Turkish" },
-  { code: "th-TH", name: "Thai" },
-  { code: "vi-VN", name: "Vietnamese" },
-  { code: "id-ID", name: "Indonesian" },
-  { code: "ms-MY", name: "Malay" },
-  { code: "el-GR", name: "Greek" },
-  { code: "cs-CZ", name: "Czech" },
-  { code: "ro-RO", name: "Romanian" },
-  { code: "hu-HU", name: "Hungarian" },
-  { code: "uk-UA", name: "Ukrainian" },
-  { code: "he-IL", name: "Hebrew" },
 ];
 
 const DEFAULT_OPTIONS: SpeechToTextOptions = {
-  language: "en-US",
+  language: "zh-CN",
   continuous: true,
   interimResults: false,
   maxAlternatives: 1,
 };
+
+const NATIVE_LANGUAGE = "zh-CN";
 
 const DEFAULT_SUBTITLE_STYLE: SubtitleStyle = {
   fontFamily: "Arial",
@@ -140,124 +82,83 @@ const DEFAULT_SUBTITLE_STYLE: SubtitleStyle = {
   position: "bottom",
 };
 
+function getNativeTranscriptionApi(): NativeTranscriptionApi | null {
+  if (typeof window === "undefined") return null;
+  const media = (window as Window & OpenReelWindow).openreel?.lunaMedia;
+  return typeof media?.transcribeAudioSamples === "function" ? media : null;
+}
+
+function segmentsFromCues(
+  cues: NativeSherpaResult["cues"],
+  sourceOffset: number,
+  sourceDuration: number,
+): TranscriptionSegment[] {
+  return cues.flatMap((cue) => {
+    const text = cue.text.trim();
+    if (!text) return [];
+    const start = Math.max(0, cue.startMs / 1_000);
+    const end = Math.min(sourceDuration, Math.max(start, cue.endMs / 1_000));
+    if (end <= start) return [];
+    return [{
+      text,
+      startTime: sourceOffset + start,
+      endTime: sourceOffset + end,
+      confidence: 1,
+    }];
+  });
+}
+
 export class SpeechToTextEngine {
-  private recognition: SpeechRecognitionInstance | null = null;
-  private audioContext: AudioContext | null = null;
-  private mediaSource: MediaElementAudioSourceNode | null = null;
   private segments: TranscriptionSegment[] = [];
   private isTranscribing = false;
   private currentOptions: SpeechToTextOptions = DEFAULT_OPTIONS;
   private progressCallback: ProgressCallback | null = null;
   private segmentCallback: SegmentCallback | null = null;
-  private startTime = 0;
-  private segmentStartTime = 0;
+  private liveRecorder: MediaRecorder | null = null;
+  private liveStream: MediaStream | null = null;
+  private liveChunks: Blob[] = [];
 
   static isSupported(): boolean {
-    return (
-      typeof window !== "undefined" &&
-      ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
-    );
+    return typeof window !== "undefined" && Boolean(getNativeTranscriptionApi());
   }
 
   static getSupportedLanguages(): Array<{ code: string; name: string }> {
     return [...SUPPORTED_LANGUAGES];
   }
 
-  constructor() {
-    this.initRecognition();
-  }
-
-  private initRecognition(): void {
-    if (!SpeechToTextEngine.isSupported()) {
-      return;
-    }
-
-    const SpeechRecognitionAPI =
-      window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (!SpeechRecognitionAPI) {
-      return;
-    }
-
-    this.recognition = new SpeechRecognitionAPI();
-    this.setupRecognitionHandlers();
-  }
-
-  private setupRecognitionHandlers(): void {
-    if (!this.recognition) return;
-
-    this.recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const result = event.results[event.results.length - 1];
-      if (!result.isFinal) return;
-
-      const transcript = result[0].transcript.trim();
-      if (!transcript) return;
-
-      const currentTime = this.getCurrentTime();
-      const segment: TranscriptionSegment = {
-        text: transcript,
-        startTime: this.segmentStartTime,
-        endTime: currentTime,
-        confidence: result[0].confidence,
-      };
-
-      this.segments.push(segment);
-      this.segmentStartTime = currentTime;
-
-      if (this.segmentCallback) {
-        this.segmentCallback(segment);
-      }
-
-      this.reportProgress("transcribing");
-    };
-
-    this.recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      if (event.error === "no-speech" || event.error === "aborted") {
-        return;
-      }
-      console.error("Speech recognition error:", event.error);
-    };
-
-    this.recognition.onend = () => {
-      if (this.isTranscribing && this.recognition) {
-        try {
-          this.recognition.start();
-        } catch {
-          this.isTranscribing = false;
-          this.reportProgress("completed");
-        }
-      }
-    };
-  }
-
-  private getCurrentTime(): number {
-    return (performance.now() - this.startTime) / 1000;
-  }
-
-  private reportProgress(status: TranscriptionStatus): void {
-    if (!this.progressCallback) return;
-
-    this.progressCallback({
+  private reportProgress(
+    status: TranscriptionStatus,
+    currentTime = 0,
+    totalDuration = 0,
+  ): void {
+    this.progressCallback?.({
       status,
-      progress: status === "completed" ? 100 : 50,
-      currentTime: this.getCurrentTime(),
-      totalDuration: 0,
+      progress: status === "completed" ? 100 : status === "error" ? 0 : 50,
+      currentTime,
+      totalDuration,
       segmentsFound: this.segments.length,
     });
   }
 
-  setOptions(options: Partial<SpeechToTextOptions>): void {
-    this.currentOptions = { ...this.currentOptions, ...options };
-    this.applyOptions();
+  private async transcribeSamples(
+    samples: Float32Array,
+    sourceOffset: number,
+    sourceDuration: number,
+  ): Promise<TranscriptionResult> {
+    const nativeApi = getNativeTranscriptionApi();
+    if (!nativeApi) throw new Error("Native Sherpa transcription is unavailable in this editor.");
+
+    this.reportProgress("preparing", sourceOffset, sourceDuration);
+    const result = await nativeApi.transcribeAudioSamples(samples);
+    const segments = segmentsFromCues(result.cues, sourceOffset, sourceDuration);
+    this.segments = segments;
+    for (const segment of segments) this.segmentCallback?.(segment);
+    this.reportProgress("completed", sourceOffset + sourceDuration, sourceDuration);
+    return { success: true, segments: [...segments], language: NATIVE_LANGUAGE };
   }
 
-  private applyOptions(): void {
-    if (!this.recognition) return;
-
-    this.recognition.lang = this.currentOptions.language;
-    this.recognition.continuous = this.currentOptions.continuous;
-    this.recognition.interimResults = this.currentOptions.interimResults;
-    this.recognition.maxAlternatives = this.currentOptions.maxAlternatives;
+  setOptions(options: Partial<SpeechToTextOptions>): void {
+    this.currentOptions = { ...this.currentOptions, ...options };
   }
 
   onProgress(callback: ProgressCallback): void {
@@ -269,27 +170,64 @@ export class SpeechToTextEngine {
   }
 
   async startLiveTranscription(): Promise<void> {
-    if (!this.recognition) {
-      throw new Error("Speech recognition not supported in this browser");
+    if (!SpeechToTextEngine.isSupported() ||
+      typeof MediaRecorder === "undefined" ||
+      typeof navigator.mediaDevices?.getUserMedia !== "function") {
+      throw new Error("Native Sherpa transcription is unavailable in this editor.");
     }
+    if (this.isTranscribing) return;
 
-    if (this.isTranscribing) {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const recorder = new MediaRecorder(stream);
+    this.segments = [];
+    this.liveChunks = [];
+    this.liveStream = stream;
+    this.liveRecorder = recorder;
+    this.isTranscribing = true;
+    recorder.ondataavailable = (event) => {
+      if (event.data.size > 0) this.liveChunks.push(event.data);
+    };
+    recorder.onerror = () => {
+      this.isTranscribing = false;
+      this.reportProgress("error");
+    };
+    recorder.onstop = () => {
+      void this.finishLiveTranscription();
+    };
+    this.reportProgress("transcribing");
+    recorder.start();
+  }
+
+  private async finishLiveTranscription(): Promise<void> {
+    const chunks = this.liveChunks;
+    this.liveChunks = [];
+    this.liveRecorder = null;
+    this.liveStream?.getTracks().forEach((track) => track.stop());
+    this.liveStream = null;
+    if (chunks.length === 0) {
+      this.isTranscribing = false;
+      this.reportProgress("completed");
       return;
     }
 
-    this.segments = [];
-    this.isTranscribing = true;
-    this.startTime = performance.now();
-    this.segmentStartTime = 0;
-
-    this.applyOptions();
-    this.reportProgress("transcribing");
-
+    let audioContext: AudioContext | null = null;
     try {
-      this.recognition.start();
+      audioContext = new AudioContext();
+      const audioBuffer = await audioContext.decodeAudioData(
+        await new Blob(chunks).arrayBuffer(),
+      );
+      this.isTranscribing = true;
+      await this.transcribeSamples(
+        audioBufferToMonoSamples(audioBuffer),
+        0,
+        audioBuffer.duration,
+      );
     } catch (error) {
+      this.reportProgress("error");
+      console.error("Native Sherpa live transcription failed:", error);
+    } finally {
+      await audioContext?.close().catch(() => undefined);
       this.isTranscribing = false;
-      throw error;
     }
   }
 
@@ -298,101 +236,71 @@ export class SpeechToTextEngine {
       return {
         success: true,
         segments: this.segments,
-        language: this.currentOptions.language,
+        language: NATIVE_LANGUAGE,
       };
     }
 
-    this.isTranscribing = false;
-
-    if (this.recognition) {
-      try {
-        this.recognition.stop();
-      } catch {
-        // Ignore stop errors
-      }
+    const recorder = this.liveRecorder;
+    if (recorder && recorder.state !== "inactive") {
+      recorder.stop();
+      this.reportProgress("preparing");
+    } else {
+      this.isTranscribing = false;
+      this.reportProgress("completed");
     }
-
-    this.reportProgress("completed");
 
     return {
       success: true,
       segments: [...this.segments],
-      language: this.currentOptions.language,
+      language: NATIVE_LANGUAGE,
     };
   }
 
   async transcribeAudioElement(
     audioElement: HTMLAudioElement | HTMLVideoElement,
-    startOffset: number = 0,
+    startOffset = 0,
     duration?: number,
   ): Promise<TranscriptionResult> {
-    if (!this.recognition) {
+    if (!getNativeTranscriptionApi()) {
       return {
         success: false,
         segments: [],
-        error: "Speech recognition not supported. Try Chrome or Edge browser.",
+        error: "Native Sherpa transcription is unavailable in this editor.",
       };
     }
 
-    return new Promise((resolve) => {
-      this.segments = [];
-      this.isTranscribing = true;
-      this.startTime = performance.now();
-      this.segmentStartTime = startOffset;
-
-      const handleEnded = () => {
-        cleanup();
-        resolve(this.stopTranscription());
+    let audioContext: AudioContext | null = null;
+    this.segments = [];
+    this.isTranscribing = true;
+    try {
+      const source = audioElement.currentSrc || audioElement.src;
+      if (!source) throw new Error("The selected media has no readable audio source.");
+      const response = await fetch(source);
+      if (!response.ok) throw new Error("The selected media could not be read.");
+      audioContext = new AudioContext();
+      const audioBuffer = await audioContext.decodeAudioData(await response.arrayBuffer());
+      const start = Math.max(0, Math.min(audioBuffer.duration, startOffset));
+      const end = Math.min(
+        audioBuffer.duration,
+        duration === undefined ? audioBuffer.duration : start + Math.max(0, duration),
+      );
+      if (end <= start) throw new Error("The selected media has no audio range.");
+      return await this.transcribeSamples(
+        audioBufferToMonoSamples(audioBuffer, start, end),
+        start,
+        end - start,
+      );
+    } catch (error) {
+      this.reportProgress("error");
+      return {
+        success: false,
+        segments: [],
+        error: error instanceof Error ? error.message : "Native Sherpa transcription failed.",
       };
-
-      const handleTimeUpdate = () => {
-        if (duration && audioElement.currentTime >= startOffset + duration) {
-          handleEnded();
-        }
-      };
-
-      const cleanup = () => {
-        audioElement.removeEventListener("ended", handleEnded);
-        audioElement.removeEventListener("timeupdate", handleTimeUpdate);
-      };
-
-      audioElement.addEventListener("ended", handleEnded);
-      audioElement.addEventListener("timeupdate", handleTimeUpdate);
-
-      this.applyOptions();
-      this.reportProgress("transcribing");
-
-      audioElement.currentTime = startOffset;
-      audioElement.play().catch(() => {
-        cleanup();
-        resolve({
-          success: false,
-          segments: [],
-          error: "Failed to play audio for transcription",
-        });
-      });
-
-      if (!this.recognition) {
-        cleanup();
-        resolve({
-          success: false,
-          segments: [],
-          error: "Speech recognition not available",
-        });
-        return;
-      }
-
-      try {
-        this.recognition.start();
-      } catch {
-        cleanup();
-        resolve({
-          success: false,
-          segments: [],
-          error: "Failed to start speech recognition",
-        });
-      }
-    });
+    } finally {
+      await audioContext?.close().catch(() => undefined);
+      this.isTranscribing = false;
+    }
   }
 
   segmentsToSubtitles(
@@ -426,19 +334,13 @@ export class SpeechToTextEngine {
   }
 
   dispose(): void {
-    this.stopTranscription();
-
-    if (this.mediaSource) {
-      this.mediaSource.disconnect();
-      this.mediaSource = null;
-    }
-
-    if (this.audioContext) {
-      this.audioContext.close();
-      this.audioContext = null;
-    }
-
-    this.recognition = null;
+    const recorder = this.liveRecorder;
+    if (recorder && recorder.state !== "inactive") recorder.stop();
+    this.liveStream?.getTracks().forEach((track) => track.stop());
+    this.liveRecorder = null;
+    this.liveStream = null;
+    this.liveChunks = [];
+    this.isTranscribing = false;
     this.progressCallback = null;
     this.segmentCallback = null;
   }

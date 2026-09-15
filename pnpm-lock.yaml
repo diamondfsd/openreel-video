@@ -301,9 +301,6 @@ importers:
       '@gsap/react':
         specifier: ^2.1.2
         version: 2.1.2(gsap@3.14.2)(react@19.2.7)
-      '@huggingface/transformers':
-        specifier: 3.8.1
-        version: 3.8.1
       '@mediapipe/tasks-vision':
         specifier: ^0.10.35
         version: 0.10.35
@@ -1577,13 +1574,6 @@ packages:
     peerDependencies:
       gsap: ^3.12.5
       react: '>=17'
-
-  '@huggingface/jinja@0.5.9':
-    resolution: {integrity: sha512-uWTG+l3VJRsl7EXxYizuL3P+cCPoc3cRqbWWRcQN0FhejRfbdq0RNhCmbY/YDtnTcz9icdLYuLDjsnz4d8JMuw==}
-    engines: {node: '>=18'}
-
-  '@huggingface/transformers@3.8.1':
-    resolution: {integrity: sha512-tsTk4zVjImqdqjS8/AOZg2yNLd1z9S5v+7oUPpXaasDRwEDhB+xnglK1k5cad26lL5/ZIaeREgWWy0bs9y9pPA==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -6609,15 +6599,6 @@ snapshots:
     dependencies:
       gsap: 3.14.2
       react: 19.2.7
-
-  '@huggingface/jinja@0.5.9': {}
-
-  '@huggingface/transformers@3.8.1':
-    dependencies:
-      '@huggingface/jinja': 0.5.9
-      onnxruntime-node: 1.21.0
-      onnxruntime-web: 1.22.0-dev.20250409-89f8206ba4
-      sharp: 0.34.5
 
   '@humanfs/core@0.19.1': {}
 

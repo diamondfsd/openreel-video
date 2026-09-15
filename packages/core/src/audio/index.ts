@@ -1,4 +1,5 @@
 export * from "./types";
+export * from "./audio-samples";
 export * from "./clip-volume-automation";
 export * from "./clip-fade-envelope";
 export * from "./transition-audio-fades";

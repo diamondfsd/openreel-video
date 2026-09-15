@@ -36,7 +36,7 @@ function caption(id: string, startTime: number): TextClip {
       opacity: 1,
     },
     keyframes: [],
-    metadata: { captionSource: "whisper" },
+    metadata: { captionSource: "sherpa" },
   };
 }
 
@@ -84,7 +84,7 @@ describe("CaptionBatchSelectButton", () => {
     render(<CaptionBatchSelectButton />);
 
     fireEvent.click(
-      screen.getByRole("button", { name: "Select all captions (2)" }),
+      screen.getByRole("button", { name: "选择所有字幕 (2)" }),
     );
 
     expect(useUIStore.getState().selectedItems).toEqual([

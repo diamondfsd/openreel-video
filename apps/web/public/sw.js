@@ -44,7 +44,6 @@ const CACHEABLE_PATTERNS = [
 const NO_CACHE_PATTERNS = [
   /api\.anthropic\.com/,
   /api\.openai\.com/,
-  /whisper/,
   /transcribe/,
   /\/api\//,
 ];

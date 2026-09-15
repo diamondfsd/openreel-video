@@ -507,6 +507,42 @@ declare global {
             totalMs: number;
           };
         }>;
+        transcribeAudioSamples(samples: Float32Array, options?: {
+          chunkDurationSec?: number;
+          overlapSec?: number;
+        }): Promise<{
+          mediaId: string;
+          name: string;
+          durationSec: number;
+          requestedRange: { startSec: number; endSec: number };
+          chunkDurationSec: number;
+          overlapSec: number;
+          chunks: Array<{
+            index: number;
+            startSec: number;
+            endSec: number;
+            recognitionStartSec: number;
+            recognitionEndSec: number;
+            cueCount: number;
+          }>;
+          requestId: string;
+          language: string;
+          cues: Array<{
+            id: string;
+            startMs: number;
+            endMs: number;
+            text: string;
+            source: "generated" | "edited";
+          }>;
+          model: { id: string; version: string; sha256: string };
+          sourceFingerprint: { size: number; modifiedAtMs: number };
+          performance: {
+            modelLoadMs: number;
+            inferenceMs: number;
+            audioMs: number;
+            totalMs: number;
+          };
+        }>;
         resolveThumbnail(sourcePath: string, kind?: "image" | "video"): Promise<string | null>;
         matchImportAsset?(name: string, size: number): (OpenReelLunaAsset & { size?: number }) | null;
       };

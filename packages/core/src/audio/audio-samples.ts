@@ -1,7 +1,7 @@
-const WHISPER_SAMPLE_RATE = 16_000;
+export const SHERPA_SAMPLE_RATE = 16_000;
 
 /** Mix an AudioBuffer to mono and resample only the selected source range. */
-export function audioBufferToWhisperSamples(
+export function audioBufferToMonoSamples(
   audioBuffer: AudioBuffer,
   startTime = 0,
   endTime = audioBuffer.duration,
@@ -20,14 +20,14 @@ export function audioBufferToWhisperSamples(
 
   const outputLength = Math.max(
     1,
-    Math.round((sourceLength * WHISPER_SAMPLE_RATE) / sourceRate),
+    Math.round((sourceLength * SHERPA_SAMPLE_RATE) / sourceRate),
   );
   const output = new Float32Array(outputLength);
   const channels = Array.from(
     { length: audioBuffer.numberOfChannels },
     (_, index) => audioBuffer.getChannelData(index),
   );
-  const sourceFramesPerOutput = sourceRate / WHISPER_SAMPLE_RATE;
+  const sourceFramesPerOutput = sourceRate / SHERPA_SAMPLE_RATE;
 
   for (let outputIndex = 0; outputIndex < outputLength; outputIndex += 1) {
     const sourcePosition = startFrame + outputIndex * sourceFramesPerOutput;
@@ -45,5 +45,3 @@ export function audioBufferToWhisperSamples(
 
   return output;
 }
-
-export { WHISPER_SAMPLE_RATE };

@@ -1,74 +1,45 @@
-import type { MulticamTranscriptSegment } from "@openreel/core";
-import { audioBufferToWhisperSamples } from "../utils/whisper-audio";
-import type { WhisperModelKey } from "../workers/whisper-models";
+import {
+  audioBufferToMonoSamples,
+  type MulticamTranscriptSegment,
+} from "@openreel/core";
 
-interface WorkerChunk {
+interface SherpaCue {
   text: string;
-  timestamp: [number | null, number | null];
+  startMs: number;
+  endMs: number;
 }
 
-export function whisperChunksToMulticamTranscript(
-  chunks: readonly WorkerChunk[],
+export function sherpaCuesToMulticamTranscript(
+  cues: readonly SherpaCue[],
 ): MulticamTranscriptSegment[] {
-  return chunks.flatMap((chunk) => {
-    const text = chunk.text.trim();
+  return cues.flatMap((cue) => {
+    const text = cue.text.trim();
     if (!text) return [];
-    const start = Math.max(0, chunk.timestamp[0] ?? 0);
-    const end = Math.max(start, chunk.timestamp[1] ?? start + 3);
-    return [{ startMs: Math.round(start * 1_000), endMs: Math.round(end * 1_000), text }];
+    const startMs = Math.max(0, Math.round(cue.startMs));
+    const endMs = Math.max(startMs, Math.round(cue.endMs || startMs + 3_000));
+    return [{ text, startMs, endMs }];
   });
 }
 
 export async function transcribeMulticamChannels(
   buffers: ReadonlyMap<string, AudioBuffer>,
   options: {
-    model?: WhisperModelKey;
-    language?: string;
     onStatus?: (angleId: string, message: string) => void;
   } = {},
 ): Promise<Record<string, MulticamTranscriptSegment[]>> {
-  const worker = new Worker(
-    new URL("../workers/whisper-worker.ts", import.meta.url),
-    { type: "module" },
-  );
-  try {
-    const transcripts: Record<string, MulticamTranscriptSegment[]> = {};
-    for (const [angleId, buffer] of buffers) {
-      const requestId = crypto.randomUUID();
-      options.onStatus?.(angleId, "Loading local Whisper model…");
-      const result = await new Promise<{ chunks: WorkerChunk[] }>((resolve, reject) => {
-        const handleMessage = (event: MessageEvent<Record<string, unknown>>) => {
-          if (event.data.requestId !== requestId) return;
-          const type = event.data.type;
-          if (type === "model-progress") {
-            const progress = Number(event.data.progress ?? 0);
-            options.onStatus?.(
-              angleId,
-              `Loading local Whisper model · ${Math.round((progress > 1 ? progress / 100 : progress) * 100)}%`,
-            );
-          } else if (type === "transcription-progress") {
-            options.onStatus?.(angleId, "Transcribing locally…");
-          } else if (type === "result") {
-            worker.removeEventListener("message", handleMessage);
-            resolve({ chunks: (event.data.chunks as WorkerChunk[] | undefined) ?? [] });
-          } else if (type === "error") {
-            worker.removeEventListener("message", handleMessage);
-            reject(new Error(String(event.data.message ?? "Local transcription failed.")));
-          }
-        };
-        worker.addEventListener("message", handleMessage);
-        worker.postMessage({
-          requestId,
-          type: "transcribe",
-          audio: audioBufferToWhisperSamples(buffer),
-          model: options.model ?? "fast",
-          language: options.language,
-        });
-      });
-      transcripts[angleId] = whisperChunksToMulticamTranscript(result.chunks);
-    }
-    return transcripts;
-  } finally {
-    worker.terminate();
+  const lunaMedia = window.openreel?.lunaMedia;
+  if (typeof lunaMedia?.transcribeAudioSamples !== "function") {
+    throw new Error("Native Sherpa transcription is unavailable in this editor.");
   }
+
+  const transcripts: Record<string, MulticamTranscriptSegment[]> = {};
+  for (const [angleId, buffer] of buffers) {
+    options.onStatus?.(angleId, "Preparing native Sherpa transcription…");
+    const result = await lunaMedia.transcribeAudioSamples(
+      audioBufferToMonoSamples(buffer),
+    );
+    transcripts[angleId] = sherpaCuesToMulticamTranscript(result.cues);
+    options.onStatus?.(angleId, "Native Sherpa transcription complete");
+  }
+  return transcripts;
 }
