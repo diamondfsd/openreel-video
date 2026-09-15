@@ -15519,6 +15519,86 @@ const TOOLS: RegisteredTool[] = [
       return ok(`Imported ${ref.type} "${ref.name}" (${ref.durationSec.toFixed(2)}s)`, ref);
     },
   },
+  {
+    name: "analyze_media_beats",
+    domain: "audio",
+    title: "Analyze media beats",
+    description:
+      "Analyze an imported audio or video asset and return the real BPM, confidence, beat grid, downbeats, and suggested cut times. Use this for generated background music and any user-provided music before cutting the timeline. The returned times are source-media seconds.",
+    inputSchema: obj({ mediaId: str }, ["mediaId"]),
+    readOnly: true,
+    destructive: false,
+    expensive: true,
+    handler: async (args, host) => {
+      if (typeof host.analyzeMediaBeats !== "function") {
+        return fail("analyze_media_beats is not available in this host", "UNSUPPORTED");
+      }
+      host.requireOpenProject();
+      const mediaId = String(args.mediaId ?? "").trim();
+      if (!mediaId) return fail("mediaId is required", "INVALID_PARAMS");
+      const analysis = await host.analyzeMediaBeats(mediaId);
+      return ok(
+        `Detected ${analysis.bpm} BPM with ${analysis.beats.length} beats`,
+        analysis,
+      );
+    },
+  },
+  {
+    name: "sync_timeline_to_beats",
+    domain: "audio",
+    title: "Sync timeline to beats",
+    description:
+      "Apply a detected music beat grid to visual clips. mode='split' splits visual clips at beat boundaries without removing content; mode='align' moves and trims clips into beat-sized slots. Use audioMediaId from generated music or user-imported music. Returns exact cut times and affected clip ids.",
+    inputSchema: obj(
+      {
+        audioMediaId: str,
+        targetClipIds: { type: "array" },
+        mode: str,
+        beatUnit: str,
+        beatsPerCut: num,
+        minClipDuration: num,
+        maxClipDuration: num,
+        sensitivity: num,
+        snapTolerance: num,
+      },
+      ["audioMediaId"],
+    ),
+    readOnly: false,
+    destructive: false,
+    expensive: true,
+    handler: async (args, host) => {
+      if (typeof host.syncTimelineToBeats !== "function") {
+        return fail("sync_timeline_to_beats is not available in this host", "UNSUPPORTED");
+      }
+      host.requireOpenProject();
+      const audioMediaId = String(args.audioMediaId ?? "").trim();
+      if (!audioMediaId) return fail("audioMediaId is required", "INVALID_PARAMS");
+      const targetClipIds = Array.isArray(args.targetClipIds)
+        ? args.targetClipIds.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+        : undefined;
+      const mode = args.mode === "align" ? "align" : "split";
+      const beatUnit = args.beatUnit === "beats" || args.beatUnit === "segments"
+        ? args.beatUnit
+        : "downbeats";
+      const result = await host.syncTimelineToBeats({
+        audioMediaId,
+        targetClipIds,
+        mode,
+        beatUnit,
+        beatsPerCut: typeof args.beatsPerCut === "number" ? args.beatsPerCut : undefined,
+        minClipDuration: typeof args.minClipDuration === "number" ? args.minClipDuration : undefined,
+        maxClipDuration: typeof args.maxClipDuration === "number" ? args.maxClipDuration : undefined,
+        sensitivity: typeof args.sensitivity === "number" ? args.sensitivity : undefined,
+        snapTolerance: typeof args.snapTolerance === "number" ? args.snapTolerance : undefined,
+      });
+      return ok(
+        mode === "split"
+          ? `Split ${result.splitCount} visual cut${result.splitCount === 1 ? "" : "s"} on beats`
+          : `Aligned ${result.alignedCount} visual clip${result.alignedCount === 1 ? "" : "s"} to beats`,
+        result,
+      );
+    },
+  },
   actionTool({ name: "delete_media", domain: "media", actionType: "media/delete", title: "Delete media", description: "Delete a media library item. This is the only operation that requires user confirmation.", inputSchema: obj({ mediaId: str }, ["mediaId"]), destructive: true }),
   actionTool({ name: "rename_media", domain: "media", actionType: "media/rename", title: "Rename media", description: "Rename a media item.", inputSchema: obj({ mediaId: str, name: str }, ["mediaId", "name"]) }),
 

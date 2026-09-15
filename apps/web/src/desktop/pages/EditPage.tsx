@@ -1,7 +1,7 @@
 import type { JSX } from "react";
 import type React from "react";
-import { lazy, Suspense } from "react";
-import { ToolcraftText as Text } from "@openreel/ui";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { Tabs, TabsList, TabsTrigger, ToolcraftText as Text } from "@openreel/ui";
 
 import { AssetsPanel } from "../../components/editor/AssetsPanel";
 import { InspectorPanel } from "../../components/editor/InspectorPanel";
@@ -111,21 +111,13 @@ export function EditPage(): JSX.Element {
     direction: 1,
     storageKey: "openreel-desktop-media-w",
   });
-  const inspectorW = useResizable({
-    initial: 340,
-    min: 260,
-    max: 560,
-    axis: "x",
-    direction: -1,
-    storageKey: "openreel-desktop-inspector-w",
-  });
-  const chatW = useResizable({
+  const rightDockW = useResizable({
     initial: 380,
     min: 320,
     max: 560,
     axis: "x",
     direction: -1,
-    storageKey: "openreel-desktop-chat-w",
+    storageKey: "openreel-desktop-right-dock-w",
   });
   const timelineH = useResizable({
     initial: 320,
@@ -136,19 +128,19 @@ export function EditPage(): JSX.Element {
     storageKey: "openreel-desktop-timeline-h",
   });
 
-  const gridStyle: React.CSSProperties = chatVisible
-    ? {
-        gridTemplateColumns: `${mediaW.value}px 1fr ${inspectorW.value}px ${chatW.value}px`,
-        gridTemplateRows: `1fr ${timelineH.value}px`,
-        gridTemplateAreas:
-          "'media stage inspector chat' 'timeline timeline timeline timeline'",
-      }
-    : {
-        gridTemplateColumns: `${mediaW.value}px 1fr ${inspectorW.value}px`,
-        gridTemplateRows: `1fr ${timelineH.value}px`,
-        gridTemplateAreas:
-          "'media stage inspector' 'timeline timeline timeline'",
-      };
+  const [rightTab, setRightTab] = useState<"inspector" | "chat">(
+    chatVisible ? "chat" : "inspector",
+  );
+
+  useEffect(() => {
+    setRightTab(chatVisible ? "chat" : "inspector");
+  }, [chatVisible]);
+
+  const gridStyle: React.CSSProperties = {
+    gridTemplateColumns: `${mediaW.value}px 1fr ${rightDockW.value}px`,
+    gridTemplateRows: `1fr ${timelineH.value}px`,
+    gridTemplateAreas: "'media stage inspector' 'timeline timeline timeline'",
+  };
 
   return (
     <div
@@ -167,26 +159,56 @@ export function EditPage(): JSX.Element {
         </Suspense>
       </DockRegion>
 
-      <DockRegion label="检查器" name="检查器" area="inspector" icon="slider.horizontal.3">
-        <InspectorPanel />
-        <ColumnHandle edge="left" onPointerDown={inspectorW.onHandlePointerDown} />
-      </DockRegion>
-
-      {chatVisible ? (
-        <div
-          className="relative flex min-h-0 min-w-0 flex-col overflow-hidden bg-bg-1"
-          style={{ gridArea: "chat" }}
-        >
-          <PanelErrorBoundary name="AI 编辑器">
-            <Suspense fallback={<PanelLoading />}>
-              <ChatPanel
-                onClose={() => setPanelVisible("agentChat", false)}
-              />
-            </Suspense>
-          </PanelErrorBoundary>
-          <ColumnHandle edge="left" onPointerDown={chatW.onHandlePointerDown} />
+      <DockRegion label="编辑面板" name="编辑面板" area="inspector" icon="slider.horizontal.3">
+        <div className="flex h-full min-h-0 flex-col bg-bg-1">
+          <Tabs
+            value={rightTab}
+            onValueChange={(value) => {
+              const next = value === "chat" ? "chat" : "inspector";
+              if (next === "chat") setPanelVisible("agentChat", true);
+              setRightTab(next);
+            }}
+            className="shrink-0"
+          >
+            <TabsList
+              aria-label="编辑面板标签"
+              className="grid h-9 w-full grid-cols-2 gap-1 rounded-none border-b border-border bg-bg-1 p-1"
+            >
+              <TabsTrigger
+                value="inspector"
+                onClick={() => setRightTab("inspector")}
+                className="h-7 rounded-[6px] text-[12px] text-fg-3 data-[state=active]:bg-bg-2 data-[state=active]:text-fg"
+              >
+                素材详情
+              </TabsTrigger>
+              <TabsTrigger
+                value="chat"
+                onClick={() => {
+                  setPanelVisible("agentChat", true);
+                  setRightTab("chat");
+                }}
+                className="h-7 rounded-[6px] text-[12px] text-fg-3 data-[state=active]:bg-bg-2 data-[state=active]:text-fg"
+              >
+                AI 编辑器
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <div className="min-h-0 flex-1 overflow-hidden">
+            {rightTab === "chat" && chatVisible ? (
+              <PanelErrorBoundary name="AI 编辑器">
+                <Suspense fallback={<PanelLoading />}>
+                  <ChatPanel
+                    onClose={() => setPanelVisible("agentChat", false)}
+                  />
+                </Suspense>
+              </PanelErrorBoundary>
+            ) : (
+              <InspectorPanel />
+            )}
+          </div>
         </div>
-      ) : null}
+        <ColumnHandle edge="left" onPointerDown={rightDockW.onHandlePointerDown} />
+      </DockRegion>
 
       <DockRegion label="时间线" name="时间线" area="timeline" icon="rectangle.split.3x1" className="bg-tl-bg">
         <Suspense fallback={<PanelLoading />}>

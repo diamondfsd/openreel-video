@@ -41,6 +41,46 @@ export interface ImportedMediaRef {
   readonly height?: number;
 }
 
+export interface MediaBeatMarker {
+  readonly time: number;
+  readonly strength: number;
+  readonly index: number;
+  readonly isDownbeat: boolean;
+}
+
+export interface MediaBeatAnalysis {
+  readonly mediaId: string;
+  readonly bpm: number;
+  readonly confidence: number;
+  readonly duration: number;
+  readonly beats: readonly MediaBeatMarker[];
+  readonly downbeats: readonly number[];
+  readonly suggestedCutTimes: readonly number[];
+}
+
+export interface SyncTimelineToBeatsOptions {
+  readonly audioMediaId: string;
+  readonly targetClipIds?: readonly string[];
+  readonly mode?: "split" | "align";
+  readonly beatUnit?: "beats" | "downbeats" | "segments";
+  readonly beatsPerCut?: number;
+  readonly minClipDuration?: number;
+  readonly maxClipDuration?: number;
+  readonly sensitivity?: number;
+  readonly snapTolerance?: number;
+}
+
+export interface SyncTimelineToBeatsResult {
+  readonly audioMediaId: string;
+  readonly bpm: number;
+  readonly confidence: number;
+  readonly cutTimes: readonly number[];
+  readonly affectedClipIds: readonly string[];
+  readonly splitCount: number;
+  readonly alignedCount: number;
+  readonly analysis: MediaBeatAnalysis;
+}
+
 export type RiggingBackendMode = "configured" | "bundled" | "system";
 
 export interface RiggingBackendProbe {
@@ -255,6 +295,10 @@ export interface EditingHost {
   saveProject?(): Promise<ProjectRef>;
   importMediaFromUrl?(url: string, options?: { name?: string }): Promise<ImportedMediaRef>;
   importMediaFromLocalMedia?(mediaId: string): Promise<ImportedMediaRef>;
+  /** Analyze an imported audio or video asset and return a real beat grid. */
+  analyzeMediaBeats?(mediaId: string): Promise<MediaBeatAnalysis>;
+  /** Apply a beat grid to visual clips by splitting on beats or aligning clip boundaries. */
+  syncTimelineToBeats?(options: SyncTimelineToBeatsOptions): Promise<SyncTimelineToBeatsResult>;
   /**
    * Render a motion composition to a finished video file (mp4 / transparent
    * WebM / ProRes 4444 MOV). Optional because it needs the renderer-side motion

@@ -30,6 +30,9 @@ import type {
   MotionRenderQueueAddError,
   MotionRenderQueueRunResult,
   MulticamHostBridge,
+  MediaBeatAnalysis,
+  SyncTimelineToBeatsOptions,
+  SyncTimelineToBeatsResult,
 } from "@openreel/agent";
 import type { TextStyle, TextAnimationPreset } from "@openreel/core/text/types";
 import type { ShapeStyle, ShapeType } from "@openreel/core/graphics/types";
@@ -56,6 +59,7 @@ import {
 } from "../../motion/stores/motion-store";
 import { runMotionRenderQueue } from "../../motion/render-queue-runner";
 import { createMulticamHostBridge } from "./multicam-bridge";
+import { getBeatDetectionEngine } from "@openreel/core/audio/beat-detection-engine";
 
 const MIME_BY_EXT: Record<string, string> = {
   mp4: "video/mp4",
@@ -347,6 +351,190 @@ export class LiveEditorHost implements EditingHost {
       durationSec: item?.metadata?.duration ?? media.duration ?? 0,
       width: item?.metadata?.width,
       height: item?.metadata?.height,
+    };
+  }
+
+  async analyzeMediaBeats(mediaId: string): Promise<MediaBeatAnalysis> {
+    this.requireOpenProject();
+    const project = useProjectStore.getState().project;
+    const item = project.mediaLibrary.items.find((candidate) => candidate.id === mediaId);
+    if (!item) throw new Error(`Media ${mediaId} was not found`);
+    if (item.type !== "audio" && item.type !== "video") {
+      throw new Error(`Media ${item.name} has no audio track to analyze`);
+    }
+
+    let blob = item.blob;
+    const readFileBytes = window.openreel?.lunaMedia?.readFileBytes;
+    if (!blob && item.sourcePath && typeof readFileBytes === "function") {
+      const bytes = await readFileBytes(item.sourcePath);
+      blob = new File([bytes], item.name, { type: item.type === "audio" ? "audio/wav" : "video/mp4" });
+    }
+    if (!blob && item.originalUrl) {
+      const response = await fetch(item.originalUrl);
+      if (response.ok) blob = await response.blob();
+    }
+    if (!blob) throw new Error(`Media ${item.name} is unavailable for beat analysis`);
+
+    const result = await getBeatDetectionEngine().analyzeFromBlob(blob);
+    const downbeatSet = new Set(result.downbeats);
+    const beats = result.beats.map((beat) => ({
+      time: beat.time,
+      strength: beat.strength,
+      index: beat.index,
+      isDownbeat: downbeatSet.has(beat.time) || beat.index % 4 === 0,
+    }));
+    const analysis: MediaBeatAnalysis = {
+      mediaId,
+      bpm: result.bpm,
+      confidence: result.confidence,
+      duration: result.duration,
+      beats,
+      downbeats: [...result.downbeats],
+      suggestedCutTimes: beats.filter((beat) => beat.isDownbeat).map((beat) => beat.time),
+    };
+
+    const current = useProjectStore.getState().project;
+    useProjectStore.setState({
+      project: {
+        ...current,
+        timeline: {
+          ...current.timeline,
+          beatMarkers: [...analysis.beats],
+          beatAnalysis: {
+            bpm: analysis.bpm,
+            confidence: analysis.confidence,
+            analyzedAt: Date.now(),
+          },
+        },
+        modifiedAt: Date.now(),
+      },
+    });
+    return analysis;
+  }
+
+  async syncTimelineToBeats(options: SyncTimelineToBeatsOptions): Promise<SyncTimelineToBeatsResult> {
+    this.requireOpenProject();
+    const analysis = await this.analyzeMediaBeats(options.audioMediaId);
+    const project = useProjectStore.getState().project;
+    const allClips = project.timeline.tracks.flatMap((track) =>
+      track.clips.map((clip) => ({ clip, track })),
+    );
+    const audioClip = allClips.find(({ clip }) => clip.mediaId === options.audioMediaId)?.clip;
+    const audioSpeed = audioClip?.speed && audioClip.speed > 0 ? audioClip.speed : 1;
+    const audioOrigin = audioClip ? audioClip.startTime - audioClip.inPoint / audioSpeed : 0;
+    const toTimelineTime = (sourceTime: number) => audioOrigin + sourceTime / audioSpeed;
+
+    const sensitivity = Math.max(0, Math.min(options.sensitivity ?? 0.5, 1));
+    const beatUnit = options.beatUnit ?? "downbeats";
+    const beatsPerCut = Math.max(1, Math.round(options.beatsPerCut ?? 4));
+    const selectedBeats = beatUnit === "downbeats"
+      ? analysis.beats.filter((beat) => beat.isDownbeat)
+      : analysis.beats;
+    const rawCutTimes = beatUnit === "segments"
+      ? selectedBeats.filter((_, index) => index % beatsPerCut === 0).map((beat) => beat.time)
+      : selectedBeats
+          .filter((beat) => beat.strength >= 1 - sensitivity)
+          .map((beat) => beat.time);
+    const cutTimes = [0, ...rawCutTimes.map(toTimelineTime)]
+      .filter((time, index, values) => time >= 0 && (index === 0 || time - values[index - 1] > 0.001))
+      .sort((left, right) => left - right);
+
+    const mediaById = new Map(project.mediaLibrary.items.map((item) => [item.id, item]));
+    const requestedIds = options.targetClipIds?.length ? new Set(options.targetClipIds) : null;
+    const visualClips = allClips
+      .filter(({ clip, track }) => {
+        if (requestedIds && !requestedIds.has(clip.id)) return false;
+        const item = mediaById.get(clip.mediaId);
+        return Boolean(item && item.type !== "audio" && track.type !== "audio");
+      })
+      .map(({ clip }) => clip)
+      .sort((left, right) => left.startTime - right.startTime);
+
+    const affected = new Set<string>();
+    let splitCount = 0;
+    let alignedCount = 0;
+
+    if ((options.mode ?? "split") === "split") {
+      for (const clip of visualClips) {
+        const clipEnd = clip.startTime + clip.duration;
+        const internalCuts = cutTimes
+          .filter((time) => time > clip.startTime + 0.05 && time < clipEnd - 0.05)
+          .sort((left, right) => right - left);
+        for (const time of internalCuts) {
+          const result = await this.applyAction({
+            type: "clip/split",
+            id: crypto.randomUUID(),
+            timestamp: Date.now(),
+            params: { clipId: clip.id, time },
+          });
+          if (!result.success) continue;
+          splitCount++;
+          affected.add(clip.id);
+        }
+      }
+    } else {
+      const minDuration = Math.max(0.1, options.minClipDuration ?? 0.4);
+      const maxDuration = Math.max(minDuration, options.maxClipDuration ?? 6);
+      let cutIndex = 0;
+      for (const clip of visualClips) {
+        while (cutIndex + 1 < cutTimes.length && cutTimes[cutIndex + 1] - cutTimes[cutIndex] < minDuration) {
+          cutIndex++;
+        }
+        const slotStart = cutTimes[cutIndex];
+        const slotEnd = cutTimes[cutIndex + 1];
+        if (slotStart === undefined || slotEnd === undefined) break;
+        if (slotEnd - slotStart > maxDuration) {
+          cutIndex++;
+          continue;
+        }
+
+        const media = mediaById.get(clip.mediaId);
+        const sourceDuration = Math.max(0, (media?.metadata.duration ?? clip.outPoint) - clip.inPoint);
+        const duration = Math.min(slotEnd - slotStart, sourceDuration);
+        if (duration < minDuration) {
+          cutIndex++;
+          continue;
+        }
+
+        if (Math.abs(clip.startTime - slotStart) > 0.001) {
+          const moved = await this.applyAction({
+            type: "clip/move",
+            id: crypto.randomUUID(),
+            timestamp: Date.now(),
+            params: { clipId: clip.id, startTime: slotStart },
+          });
+          if (!moved.success) {
+            cutIndex++;
+            continue;
+          }
+        }
+        if (Math.abs(clip.duration - duration) > 0.001) {
+          const trimmed = await this.applyAction({
+            type: "clip/trim",
+            id: crypto.randomUUID(),
+            timestamp: Date.now(),
+            params: { clipId: clip.id, inPoint: clip.inPoint, outPoint: clip.inPoint + duration },
+          });
+          if (!trimmed.success) {
+            cutIndex++;
+            continue;
+          }
+        }
+        affected.add(clip.id);
+        alignedCount++;
+        cutIndex++;
+      }
+    }
+
+    return {
+      audioMediaId: options.audioMediaId,
+      bpm: analysis.bpm,
+      confidence: analysis.confidence,
+      cutTimes,
+      affectedClipIds: [...affected],
+      splitCount,
+      alignedCount,
+      analysis,
     };
   }
 

@@ -28,6 +28,8 @@ const PHASE_LABELS: Record<string, string> = {
 
 const TOOL_PROGRESS_LABELS: Record<string, string> = {
   get_editing_skill: "读取剪辑能力",
+  list_editing_skills: "扫描剪辑技能",
+  get_editing_skill_resource: "读取技能参考",
   list_local_media: "浏览本地素材",
   inspect_local_media: "查看素材画面",
   create_media_contact_sheet: "生成素材联络表",

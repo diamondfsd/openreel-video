@@ -63,9 +63,11 @@ describe("handleMcpBridgeRequest", () => {
   it("returns the registry for listTools", async () => {
     const res = await handleMcpBridgeRequest({ callId: "c1", kind: "listTools" });
     expect(res.ok).toBe(true);
-    expect(res.result).toHaveLength(9);
+    expect(res.result).toHaveLength(11);
     expect((res.result as Array<{ name: string }>).map((tool) => tool.name)).toEqual([
       "get_editing_skill",
+      "list_editing_skills",
+      "get_editing_skill_resource",
       "list_clips",
       "confirm_media_deletion",
       "list_local_media",
@@ -78,16 +80,46 @@ describe("handleMcpBridgeRequest", () => {
     expect(h.executeTool).not.toHaveBeenCalled();
   });
 
-  it("returns the built-in editing skill", async () => {
+  it("lists scene skills and returns a selected skill set with core", async () => {
+    const listed = await handleMcpBridgeRequest({
+      callId: "skill-list",
+      kind: "callTool",
+      name: "list_editing_skills",
+      args: {},
+    });
+    expect(listed.ok).toBe(true);
+    expect((listed.result as { data?: { skills?: Array<{ id: string }> } }).data?.skills?.map((skill) => skill.id)).toContain(
+      "music-beat-sync",
+    );
+
     const res = await handleMcpBridgeRequest({
       callId: "skill",
       kind: "callTool",
       name: "get_editing_skill",
-      args: {},
+      args: { skillIds: ["travel-vlog-story", "music-beat-sync"] },
     });
     expect(res.ok).toBe(true);
-    expect((res.result as { data?: { skill?: string } }).data?.skill).toContain(
-      "没有画面证据时禁止盲剪",
+    const data = (res.result as { data?: { selectedSkillIds?: string[]; skills?: Array<{ skill: string }> } }).data;
+    expect(data?.selectedSkillIds).toEqual([
+      "luna-core",
+      "travel-vlog-story",
+      "music-beat-sync",
+    ]);
+    expect(data?.skills?.map((skill) => skill.skill).join("\n")).toContain("Inspect representative frames");
+    expect(data?.skills?.map((skill) => skill.skill).join("\n")).toContain("Analyze the music before deciding cuts");
+
+    const resource = await handleMcpBridgeRequest({
+      callId: "skill-resource",
+      kind: "callTool",
+      name: "get_editing_skill_resource",
+      args: {
+        skillId: "music-beat-sync",
+        resourcePath: "references/beat-sync.md",
+      },
+    });
+    expect(resource.ok).toBe(true);
+    expect((resource.result as { data?: { content?: string } }).data?.content).toContain(
+      "analyze_media_beats",
     );
   });
 

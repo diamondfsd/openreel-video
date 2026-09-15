@@ -10,7 +10,12 @@ import { getLiveEditorHost, runExclusive } from "./host-singleton";
 import { useMotionStore } from "../../motion/stores/motion-store";
 import { useUIStore } from "../../stores/ui-store";
 import { resolveMotionCreatorPreviewTime } from "../../motion/composition-selection";
-import { LUNA_EDITING_SKILL } from "./luna-editing-skill";
+import {
+  LUNA_EDITING_SKILL_INDEX,
+  getLunaEditingSkillDefinitions,
+  getLunaEditingSkillResource,
+  resolveLunaEditingSkills,
+} from "./luna-editing-skill";
 import {
   annotateContactSheet,
   buildContactSheetIndexText,
@@ -71,10 +76,47 @@ const CONFIRM_MEDIA_DELETION_TOOL = {
 const GET_EDITING_SKILL_TOOL = {
   name: "get_editing_skill",
   description:
-    "Read Luna AI Cut's built-in editing skill. Call this before selecting media or making any edit.",
+    "Read the Luna AI Cut core editing skill and any selected scene skills. Call with no arguments for luna-core, or pass skillId/skillIds to load task-specific skills after checking list_editing_skills.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      skillId: {
+        type: "string",
+        description: "One scene skill id returned by list_editing_skills.",
+      },
+      skillIds: {
+        type: "array",
+        maxItems: 8,
+        items: { type: "string" },
+        description: "Scene skill ids to combine with luna-core.",
+      },
+    },
+    additionalProperties: false,
+  },
+} as const;
+
+const LIST_EDITING_SKILLS_TOOL = {
+  name: "list_editing_skills",
+  description:
+    "Scan Luna AI Cut's built-in core and scene skills with their descriptions and available references. Select luna-core plus 1-3 relevant scene skills, then call get_editing_skill with their ids.",
   inputSchema: {
     type: "object",
     properties: {},
+    additionalProperties: false,
+  },
+} as const;
+
+const GET_EDITING_SKILL_RESOURCE_TOOL = {
+  name: "get_editing_skill_resource",
+  description:
+    "Read one referenced Markdown resource from a selected editing skill. Use only resource paths listed by list_editing_skills or linked from the selected SKILL.md.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      skillId: { type: "string", description: "Skill id that owns the resource." },
+      resourcePath: { type: "string", description: "Relative path such as references/packaging-principles.md." },
+    },
+    required: ["skillId", "resourcePath"],
     additionalProperties: false,
   },
 } as const;
@@ -849,21 +891,97 @@ export async function handleMcpBridgeRequest(
     if (req.kind === "listTools") {
       return {
         ok: true,
-        result: [GET_EDITING_SKILL_TOOL, ...toMcpTools(), CONFIRM_MEDIA_DELETION_TOOL, ...LOCAL_MEDIA_TOOLS],
+        result: [GET_EDITING_SKILL_TOOL, LIST_EDITING_SKILLS_TOOL, GET_EDITING_SKILL_RESOURCE_TOOL, ...toMcpTools(), CONFIRM_MEDIA_DELETION_TOOL, ...LOCAL_MEDIA_TOOLS],
       };
     }
     if (req.kind === "callTool") {
       const name = req.name;
       if (!name) return { ok: false, error: "Missing tool name" };
 
-      if (name === "get_editing_skill") {
-        editingSkillRead = true;
+      if (name === "list_editing_skills") {
         return {
           ok: true,
-          result: localMediaToolResult(true, "Luna editing skill loaded", {
+          result: localMediaToolResult(true, "Luna editing skills listed", {
+            index: LUNA_EDITING_SKILL_INDEX,
+            skills: getLunaEditingSkillDefinitions().map((skill) => ({
+              id: skill.id,
+              name: skill.name,
+              description: skill.description,
+              resources: skill.resources,
+              required: skill.id === "luna-core",
+            })),
+          }),
+        };
+      }
+
+      if (name === "get_editing_skill_resource") {
+        const skillId = typeof req.args?.skillId === "string" ? req.args.skillId.trim() : "";
+        const resourcePath = typeof req.args?.resourcePath === "string" ? req.args.resourcePath.trim() : "";
+        if (!skillId || !resourcePath) {
+          return {
+            ok: true,
+            result: localMediaToolResult(false, "Missing skill resource", undefined, {
+              code: "INVALID_PARAMS",
+              message: "skillId 和 resourcePath 必填",
+            }),
+          };
+        }
+        const content = getLunaEditingSkillResource(skillId, resourcePath);
+        if (content === null) {
+          return {
+            ok: true,
+            result: localMediaToolResult(false, "Skill resource not found", undefined, {
+              code: "SKILL_RESOURCE_NOT_FOUND",
+              message: `未找到技能资源：${skillId}/${resourcePath}`,
+              suggestedAction: "先调用 list_editing_skills，并从返回的 resources 或 SKILL.md 链接中选择路径。",
+            }),
+          };
+        }
+        return {
+          ok: true,
+          result: localMediaToolResult(true, "Luna editing skill resource loaded", {
+            skillId,
+            resourcePath,
+            content,
+          }),
+        };
+      }
+
+      if (name === "get_editing_skill") {
+        const requestedSkillIds = [
+          ...(typeof req.args?.skillId === "string" ? [req.args.skillId] : []),
+          ...(Array.isArray(req.args?.skillIds)
+            ? req.args.skillIds.filter((value): value is string => typeof value === "string")
+            : []),
+        ];
+        const knownSkillIds = new Set<string>(getLunaEditingSkillDefinitions().map((skill) => skill.id));
+        const unknownSkillIds = requestedSkillIds.filter((skillId) => !knownSkillIds.has(skillId));
+        if (unknownSkillIds.length > 0) {
+          return {
+            ok: true,
+            result: localMediaToolResult(false, "Unknown editing skill", undefined, {
+              code: "SKILL_NOT_FOUND",
+              message: `未知技能：${unknownSkillIds.join(", ")}`,
+              suggestedAction: "先调用 list_editing_skills，再使用返回的 skill id。",
+            }),
+          };
+        }
+        const selected = resolveLunaEditingSkills(requestedSkillIds);
+        editingSkillRead = selected.some((skill) => skill.id === "luna-core");
+        return {
+          ok: true,
+          result: localMediaToolResult(true, "Luna editing skills loaded", {
             name: "luna-ai-cut-editing",
-            version: "1.0",
-            skill: LUNA_EDITING_SKILL,
+            version: "2.0",
+            index: LUNA_EDITING_SKILL_INDEX,
+            selectedSkillIds: selected.map((skill) => skill.id),
+            skills: selected.map((skill) => ({
+              id: skill.id,
+              name: skill.name,
+              summary: skill.description,
+              resources: skill.resources,
+              skill: skill.skill,
+            })),
           }),
         };
       }

@@ -41,13 +41,21 @@ describe("EditPage AI Editor dock", () => {
     window.localStorage.clear();
   });
 
-  it("renders the chat as a resizable right-side panel and closes it", async () => {
+  it("shares the right dock between inspector and chat, preserving the preview width", async () => {
     render(<EditPage />);
 
     expect(await screen.findByTestId("desktop-ai-editor")).toBeTruthy();
-    expect(screen.getByTestId("desktop-edit-page").style.gridTemplateAreas).toContain(
-      "chat",
-    );
+    expect(screen.getByTestId("desktop-edit-page").style.gridTemplateAreas).not.toContain("chat");
+    expect(screen.getByTestId("desktop-edit-page").style.gridTemplateColumns.split(" ")).toHaveLength(3);
+
+    fireEvent.click(screen.getByRole("tab", { name: "素材详情" }));
+    expect(await screen.findByText("Inspector panel")).toBeTruthy();
+    await waitFor(() => {
+      expect(screen.queryByTestId("desktop-ai-editor")).toBeNull();
+    });
+
+    fireEvent.click(screen.getByRole("tab", { name: "AI 编辑器" }));
+    expect(await screen.findByTestId("desktop-ai-editor")).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Close AI Editor" }));
 
@@ -55,8 +63,6 @@ describe("EditPage AI Editor dock", () => {
       expect(screen.queryByTestId("desktop-ai-editor")).toBeNull();
     });
     expect(useUIStore.getState().panels.agentChat.visible).toBe(false);
-    expect(screen.getByTestId("desktop-edit-page").style.gridTemplateAreas).not.toContain(
-      "chat",
-    );
+    expect(await screen.findByText("Inspector panel")).toBeTruthy();
   });
 });
