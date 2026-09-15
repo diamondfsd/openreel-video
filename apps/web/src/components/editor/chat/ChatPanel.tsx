@@ -69,14 +69,16 @@ function EmptyState({
 
   if (externalAvailable) {
     return (
-      <div className="flex h-full flex-col items-center justify-center px-2 text-center">
-        <div className="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-accent-soft text-accent">
-          <Sparkles size={18} />
+      <div className="flex items-start gap-2 rounded-md border border-border bg-bg-2/50 px-2.5 py-2 text-left">
+        <div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md bg-accent-soft text-accent">
+          <Sparkles size={14} />
         </div>
-        <div className="text-[13px] font-medium text-fg">外部 Agent</div>
-        <Text type="supporting" color="secondary" className="mt-1 max-w-[14rem] text-[11px] leading-relaxed text-fg-muted">
-          输入目标，生成提示词并复制到外部 AI 工具。
-        </Text>
+        <div className="min-w-0">
+          <div className="text-[12px] font-medium text-fg">外部 Agent</div>
+          <Text type="supporting" color="secondary" className="mt-0.5 text-[10px] leading-relaxed text-fg-muted">
+            输入目标，生成提示词并复制到外部 AI 工具。
+          </Text>
+        </div>
       </div>
     );
   }
@@ -257,9 +259,9 @@ export function ChatPanel({
         className="min-h-0 flex-1 space-y-4 overflow-y-auto p-3"
       >
         {externalAvailable && <ExternalAgentActivity />}
-        {messages.length === 0 ? (
+        {messages.length === 0 && !(externalAvailable && externalSession) ? (
           <EmptyState hasOpenProject={hasOpenProject} />
-        ) : (
+        ) : messages.length > 0 ? (
           messages.map((m, index) => (
             <ChatMessage
               key={m.id}
@@ -267,7 +269,7 @@ export function ChatPanel({
               pending={busy && index === messages.length - 1 && m.role === "assistant"}
             />
           ))
-        )}
+        ) : null}
 
         {pendingConfirm && <InlineConfirmCard call={pendingConfirm.call} />}
 
