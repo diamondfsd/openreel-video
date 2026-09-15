@@ -1,5 +1,10 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
-import { ToolcraftText as Text } from "@openreel/ui";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  ToolcraftText as Text,
+} from "@openreel/ui";
 
 import { Toolbar } from "./Toolbar";
 import { EditorActionRail } from "./EditorActionRail";
@@ -56,18 +61,15 @@ const DEFAULT_MEDIA_W = 460;
 const MIN_MEDIA_W = 320;
 const MAX_MEDIA_W = 640;
 
-const DEFAULT_INSPECTOR_W = 360;
-const MIN_INSPECTOR_W = 280;
-const MAX_INSPECTOR_W = 560;
-
-const DEFAULT_CHAT_W = 380;
-const MIN_CHAT_W = 320;
-const MAX_CHAT_W = 560;
+const DEFAULT_RIGHT_DOCK_W = 380;
+const MIN_RIGHT_DOCK_W = 320;
+const MAX_RIGHT_DOCK_W = 560;
 
 const MIN_STAGE_W = 380;
 const RESIZE_HANDLE = 10;
 
-type ResizeTarget = "timeline" | "media" | "inspector" | "chat";
+type ResizeTarget = "timeline" | "media" | "rightDock";
+type RightDockTab = "inspector" | "chat";
 
 const clamp = (value: number, min: number, max: number): number => {
   return Math.min(Math.max(value, min), max);
@@ -321,24 +323,26 @@ export const EditorInterface: React.FC = () => {
   const rootRef = useRef<HTMLDivElement>(null);
   const resizeRef = useRef<ResizeTarget | null>(null);
   const [mediaWidth, setMediaWidth] = useState(DEFAULT_MEDIA_W);
-  const [inspectorWidth, setInspectorWidth] = useState(DEFAULT_INSPECTOR_W);
-  const [chatWidth, setChatWidth] = useState(DEFAULT_CHAT_W);
+  const [rightDockWidth, setRightDockWidth] = useState(DEFAULT_RIGHT_DOCK_W);
   const [timelineVh, setTimelineVh] = useState(DEFAULT_TIMELINE_VH);
 
   const chatVisible = panels.agentChat?.visible ?? false;
+  const [rightDockTab, setRightDockTab] = useState<RightDockTab>(
+    chatVisible ? "chat" : "inspector",
+  );
+
+  useEffect(() => {
+    setRightDockTab(chatVisible ? "chat" : "inspector");
+  }, [chatVisible]);
 
   const mediaRef = useRef(mediaWidth);
-  const inspectorRef = useRef(inspectorWidth);
-  const chatRef = useRef(chatWidth);
+  const rightDockRef = useRef(rightDockWidth);
   useEffect(() => {
     mediaRef.current = mediaWidth;
   }, [mediaWidth]);
   useEffect(() => {
-    inspectorRef.current = inspectorWidth;
-  }, [inspectorWidth]);
-  useEffect(() => {
-    chatRef.current = chatWidth;
-  }, [chatWidth]);
+    rightDockRef.current = rightDockWidth;
+  }, [rightDockWidth]);
 
   const beginResize = useCallback(
     (target: ResizeTarget) => (e: React.MouseEvent) => {
@@ -357,42 +361,22 @@ export const EditorInterface: React.FC = () => {
       const target = resizeRef.current;
       if (!root || !target) return;
       const rect = root.getBoundingClientRect();
-      const chatOpen =
-        useUIStore.getState().panels.agentChat?.visible ?? false;
-      const chatOffset = chatOpen ? chatRef.current + RESIZE_HANDLE : 0;
-
       if (target === "media") {
         const maxByStage =
-          rect.width - inspectorRef.current - chatOffset - MIN_STAGE_W;
+          rect.width - rightDockRef.current - 2 * RESIZE_HANDLE - MIN_STAGE_W;
         setMediaWidth(
           clamp(e.clientX - rect.left, MIN_MEDIA_W, Math.min(MAX_MEDIA_W, maxByStage)),
         );
         return;
       }
-      if (target === "inspector") {
+      if (target === "rightDock") {
         const maxByStage =
-          rect.width - mediaRef.current - chatOffset - MIN_STAGE_W;
-        setInspectorWidth(
-          clamp(
-            rect.right - chatOffset - e.clientX,
-            MIN_INSPECTOR_W,
-            Math.min(MAX_INSPECTOR_W, maxByStage),
-          ),
-        );
-        return;
-      }
-      if (target === "chat") {
-        const maxByStage =
-          rect.width -
-          mediaRef.current -
-          inspectorRef.current -
-          2 * RESIZE_HANDLE -
-          MIN_STAGE_W;
-        setChatWidth(
+          rect.width - mediaRef.current - 2 * RESIZE_HANDLE - MIN_STAGE_W;
+        setRightDockWidth(
           clamp(
             rect.right - e.clientX,
-            MIN_CHAT_W,
-            Math.min(MAX_CHAT_W, maxByStage),
+            MIN_RIGHT_DOCK_W,
+            Math.min(MAX_RIGHT_DOCK_W, maxByStage),
           ),
         );
         return;
@@ -423,10 +407,10 @@ export const EditorInterface: React.FC = () => {
     if (!r) return;
     const tlVh = timelineMaximized ? COMPACT_TIMELINE_VH : timelineVh;
     r.style.setProperty("--media-w", `${mediaWidth}px`);
-    r.style.setProperty("--inspector-w", `${inspectorWidth}px`);
-    r.style.setProperty("--chat-w", `${chatWidth}px`);
+    r.style.setProperty("--inspector-w", `${rightDockWidth}px`);
+    r.style.setProperty("--chat-w", `${rightDockWidth}px`);
     r.style.setProperty("--tl-height", `${tlVh}vh`);
-  }, [mediaWidth, inspectorWidth, chatWidth, timelineVh, timelineMaximized]);
+  }, [mediaWidth, rightDockWidth, timelineVh, timelineMaximized]);
 
   if (initializing || !initialized) {
     return (
@@ -450,19 +434,12 @@ export const EditorInterface: React.FC = () => {
   const effectiveTimelineVh = timelineMaximized
     ? COMPACT_TIMELINE_VH
     : timelineVh;
-  const gridStyle: React.CSSProperties = chatVisible
-    ? {
-        gridTemplateColumns: `${mediaWidth}px ${RESIZE_HANDLE}px 1fr ${RESIZE_HANDLE}px ${inspectorWidth}px ${RESIZE_HANDLE}px ${chatWidth}px`,
-        gridTemplateRows: `1fr ${RESIZE_HANDLE}px ${effectiveTimelineVh}vh`,
-        gridTemplateAreas:
-          "'media mh stage ih inspector ch chat' 'th th th th th th th' 'timeline timeline timeline timeline timeline timeline timeline'",
-      }
-    : {
-        gridTemplateColumns: `${mediaWidth}px ${RESIZE_HANDLE}px 1fr ${RESIZE_HANDLE}px ${inspectorWidth}px`,
-        gridTemplateRows: `1fr ${RESIZE_HANDLE}px ${effectiveTimelineVh}vh`,
-        gridTemplateAreas:
-          "'media mh stage ih inspector' 'th th th th th' 'timeline timeline timeline timeline timeline'",
-      };
+  const gridStyle: React.CSSProperties = {
+    gridTemplateColumns: `${mediaWidth}px ${RESIZE_HANDLE}px 1fr ${RESIZE_HANDLE}px ${rightDockWidth}px`,
+    gridTemplateRows: `1fr ${RESIZE_HANDLE}px ${effectiveTimelineVh}vh`,
+    gridTemplateAreas:
+      "'media mh stage ih inspector' 'th th th th th' 'timeline timeline timeline timeline timeline'",
+  };
 
   return (
     <div
@@ -506,34 +483,49 @@ export const EditorInterface: React.FC = () => {
         <div
           className="grid place-items-center cursor-col-resize group/h"
           style={{ gridArea: "ih" }}
-          onMouseDown={beginResize("inspector")}
+          onMouseDown={beginResize("rightDock")}
         >
           <span className="h-10 w-1 rounded-full bg-transparent group-hover/h:bg-accent/40 transition-colors" />
         </div>
 
         <div
-          className="bg-bg-1 min-w-0 min-h-0 overflow-hidden rounded-xl border border-border shadow-sm"
+          className="bg-bg-1 min-w-0 min-h-0 overflow-hidden rounded-xl border border-border shadow-sm flex flex-col"
           style={{ gridArea: "inspector" }}
         >
-          <PanelErrorBoundary name="Inspector">
-            <InspectorPanel />
-          </PanelErrorBoundary>
-        </div>
-
-        {chatVisible && (
-          <>
-            <div
-              className="grid place-items-center cursor-col-resize group/h"
-              style={{ gridArea: "ch" }}
-              onMouseDown={beginResize("chat")}
+          <Tabs
+            value={rightDockTab}
+            onValueChange={(value) => {
+              const next: RightDockTab = value === "chat" ? "chat" : "inspector";
+              if (next === "chat") setPanelVisible("agentChat", true);
+              setRightDockTab(next);
+            }}
+            className="shrink-0"
+          >
+            <TabsList
+              aria-label="编辑面板标签"
+              className="grid h-9 w-full grid-cols-2 gap-1 rounded-none border-b border-border bg-bg-1 p-1"
             >
-              <span className="h-10 w-1 rounded-full bg-transparent group-hover/h:bg-accent/40 transition-colors" />
-            </div>
-
-            <div
-              className="bg-bg-1 min-w-0 min-h-0 overflow-hidden rounded-xl border border-border shadow-sm"
-              style={{ gridArea: "chat" }}
-            >
+              <TabsTrigger
+                value="inspector"
+                onClick={() => setRightDockTab("inspector")}
+                className="h-7 rounded-[6px] text-[12px] text-fg-3 data-[state=active]:bg-bg-2 data-[state=active]:text-fg"
+              >
+                素材详情
+              </TabsTrigger>
+              <TabsTrigger
+                value="chat"
+                onClick={() => {
+                  setPanelVisible("agentChat", true);
+                  setRightDockTab("chat");
+                }}
+                className="h-7 rounded-[6px] text-[12px] text-fg-3 data-[state=active]:bg-bg-2 data-[state=active]:text-fg"
+              >
+                AI 编辑器
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <div className="min-h-0 flex-1 overflow-hidden">
+            {rightDockTab === "chat" && chatVisible ? (
               <PanelErrorBoundary name="AI Editor">
                 <React.Suspense
                   fallback={
@@ -547,9 +539,13 @@ export const EditorInterface: React.FC = () => {
                   />
                 </React.Suspense>
               </PanelErrorBoundary>
-            </div>
-          </>
-        )}
+            ) : (
+              <PanelErrorBoundary name="Inspector">
+                <InspectorPanel />
+              </PanelErrorBoundary>
+            )}
+          </div>
+        </div>
 
         <div
           className="grid place-items-center cursor-row-resize group/h"

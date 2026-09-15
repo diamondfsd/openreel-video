@@ -175,8 +175,8 @@ export interface ProjectState {
   ) => Promise<ActionResult>;
 
   // Media library actions
-  importMedia: (file: File) => Promise<ActionResult>;
-  importWorkspaceAsset: (asset: OpenReelLunaAsset) => Promise<ActionResult>;
+  importMedia: (file: File, options?: { mediaId?: string }) => Promise<ActionResult>;
+  importWorkspaceAsset: (asset: OpenReelLunaAsset, options?: { mediaId?: string }) => Promise<ActionResult>;
   deleteMedia: (mediaId: string) => Promise<ActionResult>;
   replaceMediaAsset: (mediaId: string, file: File, sourceFolder?: string) => Promise<ActionResult>;
   renameMedia: (mediaId: string, name: string) => Promise<ActionResult>;

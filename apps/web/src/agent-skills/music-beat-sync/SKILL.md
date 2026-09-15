@@ -19,8 +19,10 @@ description: Music selection, generated BGM, beat analysis, and timeline synchro
 
 ## Cut mapping
 
-- Use `sync_timeline_to_beats` mode `split` to cut existing visual clips at beat boundaries without discarding source content.
-- Use mode `align` to move and trim short visual clips into beat-sized slots.
+- Keep each selected source as one visual shot. Beats determine where different shots change, not how many pieces one source is cut into.
+- Use `sync_timeline_to_beats` mode `align` by default to move and trim complete visual clips into beat-sized slots.
+- Use mode `split` only when the user explicitly asks to cut existing timeline clips at beat boundaries. Never use it to turn one source into repeated 0.5-second fragments.
+- If automatic alignment would create fragments from the same `mediaId`, stop and rebuild the rhythm from separate source media instead.
 - Prefer downbeats or strong beats for major cuts. Use kick for impact, snare for substitutions, and hihat for micro-motion density.
 - Do not cut on every beat. Low-energy sections should keep longer shots and holds.
 - Reserve the strongest hits for the opening, climax, and ending. Read [references/beat-sync.md](references/beat-sync.md) for the detailed mapping and verification flow.

@@ -310,7 +310,7 @@ interface LocalMediaImportJob {
   error?: LocalMediaToolError;
 }
 
-const MAX_IMPORT_BATCH_SIZE = 4;
+const MAX_IMPORT_BATCH_SIZE = 20;
 const IMPORT_JOB_TTL_MS = 30 * 60 * 1000;
 const localMediaImportJobs = new Map<string, LocalMediaImportJob>();
 const localMediaImportJobsByKey = new Map<string, string>();

@@ -741,6 +741,25 @@ describe("ProjectStore", () => {
       });
     });
 
+    it("preserves the short local media id when importing a Luna asset", async () => {
+      const asset = {
+        id: "luna-asset-short-id",
+        name: "晨雾.mp4",
+        path: "/Users/test/晨雾.mp4",
+        kind: "video" as const,
+        fileSize: 2048,
+      };
+
+      const first = await useProjectStore.getState().importWorkspaceAsset(asset, { mediaId: "m7" });
+      const second = await useProjectStore.getState().importWorkspaceAsset(asset, { mediaId: "m7" });
+      const items = useProjectStore.getState().project.mediaLibrary.items;
+
+      expect(first).toMatchObject({ success: true, actionId: "m7" });
+      expect(second).toMatchObject({ success: true, actionId: "m7" });
+      expect(items).toHaveLength(1);
+      expect(items[0].id).toBe("m7");
+    });
+
     it("restores a Luna asset from its saved local path", async () => {
       const readFileBytes = vi.fn(async () => new Uint8Array([0, 1, 2]).buffer);
       const resolveThumbnail = vi.fn(async () => "file:///tmp/clip.v2.webp");

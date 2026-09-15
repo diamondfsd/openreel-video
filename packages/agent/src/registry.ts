@@ -15548,12 +15548,12 @@ const TOOLS: RegisteredTool[] = [
     domain: "audio",
     title: "Sync timeline to beats",
     description:
-      "Apply a detected music beat grid to visual clips. mode='split' splits visual clips at beat boundaries without removing content; mode='align' moves and trims clips into beat-sized slots. Use audioMediaId from generated music or user-imported music. Returns exact cut times and affected clip ids.",
+      "Apply a detected music beat grid to visual clips. The default mode='align' moves and trims complete visual clips so shot boundaries land on beats without breaking one source into fragments. Use mode='split' only when the user explicitly asks to cut existing timeline clips at beat boundaries. Use audioMediaId from generated music or user-imported music. Returns exact cut times and affected clip ids.",
     inputSchema: obj(
       {
         audioMediaId: str,
         targetClipIds: { type: "array" },
-        mode: str,
+        mode: { type: "string", enum: ["align", "split"], default: "align" },
         beatUnit: str,
         beatsPerCut: num,
         minClipDuration: num,
@@ -15576,7 +15576,7 @@ const TOOLS: RegisteredTool[] = [
       const targetClipIds = Array.isArray(args.targetClipIds)
         ? args.targetClipIds.filter((value): value is string => typeof value === "string" && value.trim().length > 0)
         : undefined;
-      const mode = args.mode === "align" ? "align" : "split";
+      const mode = args.mode === "split" ? "split" : "align";
       const beatUnit = args.beatUnit === "beats" || args.beatUnit === "segments"
         ? args.beatUnit
         : "downbeats";

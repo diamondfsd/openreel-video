@@ -336,7 +336,7 @@ export class LiveEditorHost implements EditingHost {
     const mime = MIME_BY_EXT[media.name.split(".").pop()?.toLowerCase() ?? ""]
       ?? (media.kind === "image" ? "image/jpeg" : "video/mp4");
     const file = new File([bytes], media.name, { type: mime });
-    const result = await useProjectStore.getState().importMedia(file);
+    const result = await useProjectStore.getState().importMedia(file, { mediaId });
     if (!result.success || !result.actionId) {
       throw new Error(result.error?.message ?? "Media import failed");
     }
@@ -454,7 +454,7 @@ export class LiveEditorHost implements EditingHost {
     let splitCount = 0;
     let alignedCount = 0;
 
-    if ((options.mode ?? "split") === "split") {
+    if ((options.mode ?? "align") === "split") {
       for (const clip of visualClips) {
         const clipEnd = clip.startTime + clip.duration;
         const internalCuts = cutTimes

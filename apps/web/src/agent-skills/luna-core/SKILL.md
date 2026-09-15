@@ -26,15 +26,17 @@ Apply this skill to every editing task. Then load the scene skills whose descrip
 
 ## Media analysis
 
-1. Use `list_local_media` and its structured `mediaId` values. Never construct ids from names or paths.
+1. Use `list_local_media` and its structured short `mediaId` values such as `m1`, `m2`, and `m3`. Generated music uses the same sequence. Never construct ids from names or paths, and never rename returned ids.
 2. Use `inspect_local_media` in `overview` mode first. For large groups, use `create_media_contact_sheet` and map frames only through returned `mediaId`, `frameId`, `timecode`, labels, and cell coordinates.
 3. Inspect likely videos in `detail` mode at beginning, middle, and end before fixing source in/out points.
 4. For spoken content, use `transcribe_local_media` first and work from its absolute source timestamps.
 
 ## Timeline writes
 
-- Import media only after a project exists. Poll `get_local_media_import_status` until the job is completed, partial, or failed.
+- Import media only after a project exists. Local and generated assets keep the same short `mediaId` after import. Poll `get_local_media_import_status` until the job is completed, partial, or failed.
+- Submit import batches at the documented limit instead of splitting a normal shoot into many tiny jobs.
 - Prefer an atomic `add_clip` with source `inPoint/outPoint`. Use `trim_clip` for an existing clip.
+- When adding several clips or tracks with known raw action parameters, prefer `batch_actions` over one round trip per clip, then verify the resulting timeline once with `list_clips` or `get_editor_state`.
 - Verify every write with the relevant `list_*`, `get_clip`, or `get_editor_state` call. Confirm ids, track, timing, source range, and overlaps.
 - Text, graphics, titles, and scrims must be on foreground overlay tracks. Verify with `list_tracks` and `list_overlays` because `list_clips` does not include overlays.
 - After `add_transition`, use `list_transitions` to verify the saved type, duration, and clip ids.

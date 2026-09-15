@@ -136,8 +136,8 @@ export interface ProjectState {
   renameProject: (name: string) => Promise<ActionResult>;
   updateSettings: (settings: Partial<ProjectSettings>) => Promise<ActionResult>;
 
-  importMedia: (file: File) => Promise<ActionResult>;
-  importWorkspaceAsset: (asset: OpenReelLunaAsset) => Promise<ActionResult>;
+  importMedia: (file: File, options?: { mediaId?: string }) => Promise<ActionResult>;
+  importWorkspaceAsset: (asset: OpenReelLunaAsset, options?: { mediaId?: string }) => Promise<ActionResult>;
   deleteMedia: (mediaId: string) => Promise<ActionResult>;
   renameMedia: (mediaId: string, name: string) => Promise<ActionResult>;
   getMediaItem: (mediaId: string) => MediaItem | undefined;

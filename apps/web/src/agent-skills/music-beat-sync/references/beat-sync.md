@@ -16,8 +16,9 @@
 
 ## Applying the grid
 
-- `split`: preserve the existing footage and divide visual clips at chosen beat boundaries.
-- `align`: assign short visual clips to beat-sized slots, moving and trimming them to the grid.
+- `align` is the default: assign complete visual clips to beat-sized slots, moving and trimming them to the grid.
+- `split` is an explicit destructive intention only: use it when the user asks to cut existing timeline clips, never to manufacture rhythm by fragmenting one source.
+- Do not create two or more adjacent cuts from the same `mediaId` merely because the beat grid is dense. Use another source shot or keep the shot longer.
 - Start with `beatUnit=downbeats`, moderate sensitivity, and 2-4 beat segments. Increase density only for a visibly high-energy section.
 
 ## Verification

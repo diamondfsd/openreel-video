@@ -105,10 +105,13 @@ export type MediaSlice = Pick<
 
 export function createMediaSlice(set: Set, get: Get): MediaSlice {
   return {
-    importWorkspaceAsset: async (asset: OpenReelLunaAsset) => {
+    importWorkspaceAsset: async (asset: OpenReelLunaAsset, options) => {
       const { project } = get();
+      const requestedMediaId = options?.mediaId?.trim();
       const existing = project.mediaLibrary.items.find((item) => (
-        item.sourceAssetId === asset.id || item.sourcePath === asset.path
+        item.sourceAssetId === asset.id ||
+        item.sourcePath === asset.path ||
+        (requestedMediaId ? item.id === requestedMediaId : false)
       ));
       if (existing) return { success: true, actionId: existing.id };
 
@@ -119,7 +122,7 @@ export function createMediaSlice(set: Set, get: Get): MediaSlice {
         thumbnailUrl = await resolveThumbnail(asset.path, asset.kind).catch(() => null);
       }
       const mediaItem: MediaItem = {
-        id: `luna-asset-${asset.id}`,
+        id: requestedMediaId || `luna-asset-${asset.id}`,
         name: asset.name,
         type: asset.kind,
         fileHandle: null,
@@ -160,14 +163,19 @@ export function createMediaSlice(set: Set, get: Get): MediaSlice {
       return { success: true, actionId: mediaItem.id };
     },
 
-    importMedia: async (file: File) => {
+    importMedia: async (file: File, options) => {
       const { project } = get();
+      const requestedMediaId = options?.mediaId?.trim();
+      const existingMediaId = requestedMediaId
+        ? project.mediaLibrary.items.find((item) => item.id === requestedMediaId)
+        : undefined;
+      if (existingMediaId) return { success: true, actionId: existingMediaId.id };
 
       try {
         const matchImportAsset = window.openreel?.lunaMedia?.matchImportAsset;
         const sourceAsset = matchImportAsset ? matchImportAsset(file.name, file.size) : null;
         if (sourceAsset) {
-          return get().importWorkspaceAsset(sourceAsset);
+          return get().importWorkspaceAsset(sourceAsset, options);
         }
 
         const mediaBridge = getMediaBridge();
@@ -257,7 +265,7 @@ export function createMediaSlice(set: Set, get: Get): MediaSlice {
         }
 
         const newMediaItem: MediaItem = {
-          id: uuidv4(),
+          id: requestedMediaId || uuidv4(),
           name: file.name,
           type: mediaType,
           fileHandle: null,
